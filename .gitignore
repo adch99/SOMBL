@@ -1,3 +1,11 @@
+# Temporary directories
+build/
+logs/
+
+# Offline only directories
+data/
+plots/
+
 # Prerequisites
 *.d
 
