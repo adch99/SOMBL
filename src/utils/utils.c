@@ -1,6 +1,9 @@
 #include <math.h>
+#include <complex.h>
+#include <lapacke.h>
+#include "../constants.h"
 
-double utils_loc_len(double energy, double * eigenvals, double hop_strength, int len, int eigenfunc_num)
+double utils_loc_len(DTYPE energy, DTYPE * eigenvals, DTYPE hop_strength, int len, int eigenfunc_num)
 {
     /*
     Calculates the localization length from the so-called "Lyapunov exponent"
@@ -13,8 +16,8 @@ double utils_loc_len(double energy, double * eigenvals, double hop_strength, int
     that eigenfunction, otherwise, we assume the energy given is not an eigenvalue.
     */
 
-    double lambda = 0;
-    double eig;
+    DTYPE lambda = 0;
+    DTYPE eig;
     int i;
     int skip_one;
     skip_one = (eigenfunc_num >=0 && eigenfunc_num < len);
@@ -36,4 +39,53 @@ double utils_loc_len(double energy, double * eigenvals, double hop_strength, int
     lambda += log(fabs(hop_strength));
 
     return(1/lambda);    
+}
+
+int utils_preprocess_lapack(CDTYPE * matrix, int size, CDTYPE * preprocd)
+{
+    /*
+        This function takes a sizexsize matrix and returns the column major
+        version of it with whatever other preprocessing is needed to get it to
+        work with LAPACK.
+        We assume a SQUARE MATRIX and that preprocd has already been allocated
+        a size^2 array of CDTYPE.
+    */
+    int i, j;
+
+    for(i = 0; i < size; i++)
+    {
+        for(j = 0; j < size; j++)
+        {
+            *(preprocd + i + size*j) = *(matrix + i*size + j);
+        }
+    }
+
+    return(0);
+}
+
+int utils_get_eigvalsh(CDTYPE * matrix, int size, DTYPE * eigvals)
+{
+    /*
+    Returns the eigenvalues of the hermitian matrix given in the
+    array of eigvals given.
+    We assume the array has already been preprocessed for the used
+    library (currently LAPACK).
+    NOTE: The matrix given to diagonalize will be destroyed by this
+    function.
+    */
+
+    // Convert first to column major
+    // double * colMajorMatrix = malloc(sizeof(complex double)*(size*size));
+    
+
+    // Diagonalize with LAPACK
+    int info = LAPACKE_zheev(LAPACK_COL_MAJOR, 'N', 'U', size, matrix, size, eigvals);
+    if (info != 0)
+        return info; // Some error has occured.
+
+    
+    // Extract and return eigenvalues
+
+
+    return 0;
 }
