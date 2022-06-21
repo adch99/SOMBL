@@ -5,6 +5,7 @@ logs/
 # Offline only directories
 data/
 plots/
+.vscode/
 
 # Prerequisites
 *.d

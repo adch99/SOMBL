@@ -2,9 +2,11 @@
 #include <stdlib.h>
 #include <math.h>
 #include "../src/utils/utils.h"
+#include "../src/constants.h"
 #define TOL 1e-6
 
 int test_loc_len();
+int test_get_eigvalsh();
 
 int main(int argc, char ** argv)
 {
@@ -13,21 +15,24 @@ int main(int argc, char ** argv)
         printf("Test Passed:\ttest_loc_len\n");
     else
         printf("Test Failed:\ttest_loc_len\n");
+
+    test_get_eigvalsh();
+
     return(0);
 }
 
 int test_loc_len()
 {
     int len = 30;
-    double * eigvals;
-    double hop_strength = 1.45;
-    double result;
+    DTYPE * eigvals;
+    DTYPE hop_strength = 1.45;
+    DTYPE result;
     int i, success;
 
     /* Independent energy */
-    double energy = 14.68;
+    DTYPE energy = 14.68;
 
-    eigvals = malloc(sizeof(double)*len);
+    eigvals = malloc(sizeof(DTYPE)*len);
 
     for(i=0;i<len;i++)
     {
@@ -60,4 +65,30 @@ int test_loc_len()
     free(eigvals);
 
     return(success);
+}
+
+int test_get_eigvalsh()
+{
+    CDTYPE matrix[4][4] = {{0, 5, 0, 0}, {5, 0, 0, 0}, {0, 0, 0, -3*I}, {0, 0, 3*I, 0}};
+    CDTYPE colMajorMat[16];
+    DTYPE eigvals[4];    
+    utils_preprocess_lapack(matrix[0], 4, colMajorMat);
+    int info = utils_get_eigvalsh(colMajorMat, 4, eigvals);
+    if (info != 0)
+    {
+        printf("Error occured: Code %d", info);
+        return(info);
+    }
+    else
+    {
+        printf("eigvals: ");
+        int i;
+        for(i = 0; i < 4; i++)
+        {
+            printf("%lf ", *(eigvals + i));
+        }
+        printf("\n");
+        return(0);
+    }
+
 }
