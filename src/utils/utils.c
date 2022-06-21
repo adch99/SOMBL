@@ -16,8 +16,9 @@ double utils_loc_len(double energy, double * eigenvals, double hop_strength, int
     double lambda = 0;
     double eig;
     int i;
-    
-    if(eigenfunc_num >=0 && eigenfunc_num < len)
+    int skip_one;
+    skip_one = (eigenfunc_num >=0 && eigenfunc_num < len);
+    if (skip_one)
         energy = *(eigenvals + eigenfunc_num);
 
     for(i=0;i<len;i++)
@@ -28,8 +29,11 @@ double utils_loc_len(double energy, double * eigenvals, double hop_strength, int
         lambda += log(fabs(energy - eig)); /* + log(cabsd(*(hop_strengths+i))) if needed*/
     }
 
-    lambda /= len;
+    if (skip_one)
+        lambda /= len - 1;
+    else
+        lambda /= len;
     lambda += log(fabs(hop_strength));
 
-    return(lambda);    
+    return(1/lambda);    
 }
