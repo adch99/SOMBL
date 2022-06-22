@@ -1,9 +1,12 @@
 #include <math.h>
 #include <complex.h>
 #include <lapacke.h>
+#include <stdlib.h>
+#include <time.h>
 #include "../constants.h"
+ 
 
-double utils_loc_len(DTYPE energy, DTYPE * eigenvals, DTYPE hop_strength, int len, int eigenfunc_num)
+DTYPE utils_loc_len(DTYPE energy, DTYPE * eigenvals, DTYPE hop_strength, int len, int eigenfunc_num)
 {
     /*
     Calculates the localization length from the so-called "Lyapunov exponent"
@@ -79,6 +82,11 @@ int utils_get_eigvalsh(CDTYPE * matrix, int size, DTYPE * eigvals)
     
 
     // Diagonalize with LAPACK
+    /*
+        If this isn't done by LAPACKE, then we need to call zheev twice.
+        First time to get the optimal number of eigenvalues that are to
+        be calculated (WORK, LWORK).
+    */
     int info = LAPACKE_zheev(LAPACK_COL_MAJOR, 'N', 'U', size, matrix, size, eigvals);
     if (info != 0)
         return info; // Some error has occured.
@@ -87,5 +95,30 @@ int utils_get_eigvalsh(CDTYPE * matrix, int size, DTYPE * eigvals)
     // Extract and return eigenvalues
 
 
+    return 0;
+}
+
+int utils_row_to_col(int index1, int index2, int size)
+{
+    // index1 should be in [0, size-1]
+    return(index1 + index2*size);
+}
+
+int utils_uniform_dist(double low, double high, int num_samples, double * samples)
+{
+    /*
+        Generates 'num_samples' numbers in the range [low, high]
+        using a uniform distribution.
+    */
+    int randint, i;
+    double div, scale = (high - low);
+    srandom((unsigned) time(NULL));
+    
+    for(i = 0; i < num_samples; i++)
+    {
+        randint = random();
+        div = ((double) randint) / ((double) RAND_MAX);
+        *(samples + i) = low + scale * div;
+    }
     return 0;
 }
