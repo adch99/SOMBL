@@ -6,9 +6,9 @@ ERRORLOG=logs/compiler_error.log
 default: exactdiag
 
 exactdiag: hamgen utils
-	$(CC) $(CFLAGS) src/exact_diag_simulation.c -o build/exact_diag_simulation build/ham_gen/ham_gen.o $(LFLAGS)| tee $(ERRORLOG)
+	$(CC) $(CFLAGS) src/exact_diag_simulation.c -o build/exact_diag_simulation build/ham_gen/ham_gen.o build/utils/utils.o $(LFLAGS)| tee $(ERRORLOG)
 
-hamgen: 
+hamgen: utils
 	$(CC) $(CFLAGS) src/ham_gen/ham_gen.c -o build/ham_gen/ham_gen.o -c
 
 utils: 

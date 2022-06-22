@@ -5,18 +5,27 @@
 #include "../src/constants.h"
 #define TOL 1e-6
 
+// Helper Functions
+int tester(int (*test_func)(), char * name);
+
+// Test Functions
 int test_loc_len();
 int test_get_eigvalsh();
 
 int main(int argc, char ** argv)
 {
-    int result = test_loc_len();
-    if (result)
-        printf("Test Passed:\ttest_loc_len\n");
-    else
-        printf("Test Failed:\ttest_loc_len\n");
+    tester(test_loc_len, "test_loc_len");
+    tester(test_get_eigvalsh, "test_get_eigvalsh");
+    return(0);
+}
 
-    test_get_eigvalsh();
+int tester(int (*test_func)(), char * name)
+{
+    int result = test_func();
+    if (result)
+        printf("Test Passed:\t%s\n", name);
+    else
+        printf("Test Failed:\t%s\n", name);
 
     return(0);
 }
@@ -77,18 +86,25 @@ int test_get_eigvalsh()
     if (info != 0)
     {
         printf("Error occured: Code %d", info);
-        return(info);
+        return(0);
     }
     else
     {
-        printf("eigvals: ");
-        int i;
+        // printf("eigvals: ");
+        // int i;
+        // for(i = 0; i < 4; i++)
+        // {
+        //     printf("%lf ", *(eigvals + i));
+        // }
+        // printf("\n");
+        DTYPE answer[4] = {-5, -3, 3, 5};
+        int i, success = 1;
         for(i = 0; i < 4; i++)
         {
-            printf("%lf ", *(eigvals + i));
+            if(answer[i] != *(eigvals + i))
+                success = 0;
         }
-        printf("\n");
-        return(0);
+        return(success);
     }
 
 }
