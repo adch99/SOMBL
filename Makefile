@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-Wall -g
+CFLAGS=-Wall -Wextra -g
 LFLAGS=-llapacke -lm
 ERRORLOG=logs/compiler_error.log
 
