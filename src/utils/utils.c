@@ -1,8 +1,10 @@
+#include "utils.h"
 #include <math.h>
 #include <complex.h>
 #include <lapacke.h>
 #include <stdlib.h>
 #include <time.h>
+#include <stdio.h>
 #include "../constants.h"
  
 
@@ -39,7 +41,7 @@ DTYPE utils_loc_len(DTYPE energy, DTYPE * eigenvals, DTYPE hop_strength, int len
         lambda /= len - 1;
     else
         lambda /= len;
-    lambda += log(fabs(hop_strength));
+    lambda += -log(fabs(hop_strength));
 
     return(1/lambda);    
 }
@@ -87,10 +89,13 @@ int utils_get_eigvalsh(CDTYPE * matrix, int size, DTYPE * eigvals)
         First time to get the optimal number of eigenvalues that are to
         be calculated (WORK, LWORK).
     */
+    // printf("Entered utils_get_eigvalsh\n");
     int info = LAPACKE_zheev(LAPACK_COL_MAJOR, 'N', 'U', size, matrix, size, eigvals);
     if (info != 0)
+    {
+        printf("LAPACKE_zheev error! Code: %d", info);
         return info; // Some error has occured.
-
+    }
     
     // Extract and return eigenvalues
 
@@ -121,4 +126,20 @@ int utils_uniform_dist(double low, double high, int num_samples, double * sample
         *(samples + i) = low + scale * div;
     }
     return 0;
+}
+
+int utils_print_matrix(CDTYPE * matrix, int m, int n)
+{
+    // Prints a matrix stored in Column Major Form
+    int i, j;
+    CDTYPE element;
+    for(i = 0; i < m; i++)
+    {
+        for(j = 0; j < n; j++)
+        {
+            element = *(matrix + RTC(i,j,m));
+            printf("%lf + i%lf  ", creal(element), cimag(element));
+        }
+        printf("\n");
+    }
 }

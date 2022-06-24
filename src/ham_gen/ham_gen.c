@@ -2,17 +2,19 @@
 Functions to create Spin-Orbit coupled Hamiltonians
 for a 2d spin lattice
 */
-#include "ham_gen.h"
+#include <stdio.h>
 #include <lapacke.h>
+#include "ham_gen.h"
 #include "../utils/utils.h"
 
 int hamiltonian(CDTYPE * ham, int len, int width,
                 DTYPE coupling_const, DTYPE disorder_strength,
-                DTYPE hop_strength, int * neighbours[NEIGHS])
+                DTYPE hop_strength, int (*neighbours)[NEIGHS])
 {
     int num_sites = len*width;
     // Produce disorder
-    DTYPE * disorder = malloc(sizeof(DTYPE)*(num_sites));
+    DTYPE * disorder;
+    disorder = malloc(sizeof(DTYPE)*num_sites);
     utils_uniform_dist(0, disorder_strength, num_sites, disorder);
 
     // Produce matrix
@@ -30,9 +32,10 @@ int hamiltonian(CDTYPE * ham, int len, int width,
 
             if (site1 == site2)
             {
-                *(ham + index_up_up) = disorder[site1];
-                *(ham + index_dn_dn) = disorder[site1];
-                *(ham + index_up_dn) = *(ham + index_dn_up) = 0;
+                *(ham + index_up_up) = *(disorder + site1);
+                *(ham + index_dn_dn) = *(disorder + site1);
+                *(ham + index_up_dn) = 0;
+                *(ham + index_dn_up) = 0;
             }
 
             else
@@ -42,30 +45,36 @@ int hamiltonian(CDTYPE * ham, int len, int width,
                 switch(loc)
                 {
                     case -1:
-                        *(ham + index_up_up) = *(ham + index_dn_dn) = 0;
-                        *(ham + index_up_dn) = *(ham + index_dn_up) = 0;
+                        *(ham + index_up_up) = 0;
+                        *(ham + index_dn_dn) = 0;
+                        *(ham + index_up_dn) = 0;
+                        *(ham + index_dn_up) = 0;
                         break;
 
                     case 0:
-                        *(ham + index_up_up) = *(ham + index_dn_dn) = -hop_strength;
+                        *(ham + index_up_up) = -hop_strength;
+                        *(ham + index_dn_dn) = -hop_strength;
                         *(ham + index_up_dn) = coupling_const;
                         *(ham + index_dn_up) = -coupling_const;
                         break; 
 
                     case 1:
-                        *(ham + index_up_up) = *(ham + index_dn_dn) = -hop_strength;
+                        *(ham + index_up_up) = -hop_strength;
+                        *(ham + index_dn_dn) = -hop_strength;
                         *(ham + index_up_dn) = -coupling_const;
                         *(ham + index_dn_up) = coupling_const;
                         break; 
 
                     case 2:
-                        *(ham + index_up_up) = *(ham + index_dn_dn) = -hop_strength;
+                        *(ham + index_up_up) = -hop_strength;
+                        *(ham + index_dn_dn) = -hop_strength;
                         *(ham + index_up_dn) = -I*coupling_const;
                         *(ham + index_dn_up) = -I*coupling_const;
                         break; 
 
                     case 3:
-                        *(ham + index_up_up) = *(ham + index_dn_dn) = -hop_strength;
+                        *(ham + index_up_up) = -hop_strength;
+                        *(ham + index_dn_dn) = -hop_strength;
                         *(ham + index_up_dn) = I*coupling_const;
                         *(ham + index_dn_up) = -I*coupling_const;
                         break; 
@@ -78,7 +87,7 @@ int hamiltonian(CDTYPE * ham, int len, int width,
     return(0);
 }
 
-int get_neighbour_lists(int * neighbours[NEIGHS], int len, int width)
+int get_neighbour_lists(int (*neighbours)[NEIGHS], int len, int width)
 {
     /*
         Creates a neighbour list for each index
