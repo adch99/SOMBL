@@ -142,4 +142,5 @@ int utils_print_matrix(CDTYPE * matrix, int m, int n)
         }
         printf("\n");
     }
+    return 0;
 }
