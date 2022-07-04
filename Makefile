@@ -1,5 +1,6 @@
 CC=gcc
 CFLAGS=-Wall -Wextra -g
+# CFLAGS=-O2
 LFLAGS=-llapacke -lm
 ERRORLOG=logs/compiler_error.log
 
@@ -19,3 +20,4 @@ tests: utils hamgen
 
 clean:
 	rm -rf build/*/*.o build/exact_diag_simulation
+
