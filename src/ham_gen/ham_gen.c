@@ -15,7 +15,7 @@ int hamiltonian(CDTYPE * ham, int len, int width,
     // Produce disorder
     DTYPE * disorder;
     disorder = malloc(sizeof(DTYPE)*num_sites);
-    utils_uniform_dist(0, disorder_strength, num_sites, disorder);
+    utils_uniform_dist(0, disorder_strength, num_sites, disorder, 0);
 
     // Produce matrix
     int site1, site2, index_up_up, index_dn_dn, index_up_dn, index_dn_up;
@@ -168,4 +168,44 @@ int check_neighbour(int index, int * nlist)
             loc = i;
     } 
     return(loc);
+}
+
+
+int hamiltonian_nospin(CDTYPE * ham, int len, int width,
+                DTYPE disorder_strength, DTYPE hop_strength,
+                int (*neighbours)[NEIGHS])
+{
+    int num_sites = len*width;
+    // Produce disorder
+    DTYPE * disorder;
+    disorder = malloc(sizeof(DTYPE)*num_sites);
+    utils_uniform_dist(0, disorder_strength, num_sites, disorder, 0);
+
+    // Produce matrix
+    int site1, site2, index;
+
+    for(site1 = 0; site1 < num_sites; site1++)
+    {
+        for(site2 = 0; site2 < num_sites; site2++)
+        {
+            // RTC is row to column major
+            index = RTC(site1, site2, num_sites);
+
+            if (site1 == site2)
+                *(ham + index) = *(disorder + site1);
+
+            else
+            {
+                int loc = check_neighbour(site1, *(neighbours + site2));
+
+                if (loc == -1)
+                    *(ham + index) = 0;
+                else
+                    *(ham + index) = -hop_strength;
+            }
+        }
+    }
+
+    free(disorder);
+    return(0);
 }

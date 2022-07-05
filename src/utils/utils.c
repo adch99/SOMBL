@@ -109,15 +109,17 @@ int utils_row_to_col(int index1, int index2, int size)
     return(index1 + index2*size);
 }
 
-int utils_uniform_dist(double low, double high, int num_samples, double * samples)
+int utils_uniform_dist(double low, double high, int num_samples, double * samples,
+                        int seed_with_time)
 {
     /*
         Generates 'num_samples' numbers in the range [low, high]
-        using a uniform distribution.
+        using a uniform distribution. Please ensure that you
     */
     int randint, i;
     double div, scale = (high - low);
-    srandom((unsigned) time(NULL));
+    if (seed_with_time)
+        srandom((unsigned) time(NULL));
     
     for(i = 0; i < num_samples; i++)
     {
