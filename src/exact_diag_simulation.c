@@ -110,7 +110,7 @@ struct OutStream set_up_datastream(struct SystemParams params)
     char basename[64];
     char eigvalsname[64];
     char loclensname[64];
-    sprintf(basename, "data/mbl%dx%d_W%.2g_C%.2g_T%.2g_", params.len, params.width,
+    sprintf(basename, "data/mbl%dx%d_W%.4g_C%.4g_T%.4g_", params.len, params.width,
             params.disorder_strength, params.coupling_const, params.hop_strength);
     sprintf(eigvalsname, "%seigvals.dat", basename);
     sprintf(loclensname, "%sloclens.dat", basename);

@@ -3,8 +3,11 @@ import matplotlib.pyplot as plt
 from scipy.stats import binned_statistic
 
 
-def getData(length, width):
-    basename = f"data/mbl{length}x{width}_"
+def getData(params):
+    basename = f"data/mbl{params['length']}x{params['width']}" \
+                + f"_W{params['disorder']:.2g}" \
+                + f"_C{params['coupling']:.2g}" \
+                + f"_T{params['hopping']:.2g}_"
     eigvals = np.loadtxt(basename+"eigvals.dat", np.float64, delimiter=" ")
     loc_lens = np.loadtxt(basename+"loclens.dat", np.float64, delimiter=" ")
 
@@ -12,7 +15,7 @@ def getData(length, width):
     print(f"loc_lens.shape: {loc_lens.shape}")
     return eigvals, loc_lens
 
-def processData(data, length, width):
+def processData(data, params):
     eigvals, loc_lens = data
     print(f"min: {eigvals.min()}")
     eigvalsf = eigvals.ravel() # flattened version
@@ -31,12 +34,12 @@ def processData(data, length, width):
     std_loc_lens = std_result[0]
     return (bins, bin_edges, hist, mean_loc_lens, std_loc_lens)
 
-def plotData(proc_data, length, width):
+def plotData(proc_data, params):
     bins, bin_edges, hist, mean_loc_lens, std_loc_lens = proc_data
 
     fig, axes = plt.subplots(nrows=2, ncols=1, sharex=True)
     
-    fig.suptitle(f"Spin Orbit Coupled MBL {length}x{width}")
+    fig.suptitle(f"Spin Orbit Coupled MBL {params['length']}x{params['width']}")
 
     axes[0].hist(bin_edges[:-1], bin_edges, weights=hist)
     axes[0].set_xlabel("Energy")
@@ -53,15 +56,21 @@ def plotData(proc_data, length, width):
     # axes[1].set_xlim(-1, 1)
 
     fig.tight_layout()
-    fig.savefig(f"plots/mbl{length}x{width}.pdf")
-    fig.savefig(f"plots/mbl{length}x{width}.png")
+    fig.savefig(f"plots/mbl{params['length']}x{params['width']}.pdf")
+    fig.savefig(f"plots/mbl{params['length']}x{params['width']}.png")
 
-def main(length, width):
-    data = getData(length, width)
-    proc_data = processData(data, length, width)
-    plotData(proc_data, length, width)
+def main(params):
+    data = getData(params)
+    proc_data = processData(data, params)
+    plotData(proc_data, params)
 
 if __name__ == "__main__":
-    length = width = 20
-    main(length, width)
+    params = {
+        "length": 30,
+        "width": 30,
+        "disorder": 15,
+        "coupling": 0.0,
+        "hopping": 1.0
+    }
+    main(params)
     plt.show()
