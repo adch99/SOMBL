@@ -17,6 +17,8 @@ struct SystemParams {
     DTYPE disorder_strength;
     DTYPE hop_strength;
     int (*neighbours)[NEIGHS];
+    int numRuns; // Technically not a system parameter but it's convenient
+    // to have it here.
 };
 
 struct OutStream {
@@ -47,13 +49,14 @@ const char *argp_program_bug_address =
 static char doc[] =
   "exact_diag_simulation -- a simulation of spin-orbit coupled 2d many-body localized systems.";
 // A description of the arguments we accept.
-static char args_doc[] = "-s <size> -c <coupling_const> -w <disorder_strength> -t <hop_strength>";
+static char args_doc[] = "-s <size> -c <coupling_const> -w <disorder_strength> -t <hop_strength> -n <num_runs>";
 // The options we understand.
 static struct argp_option options[] = {
   {"size",     's', "SIZE",     0, "Length and width of the lattice" },
   {"coupling", 'c', "COUPLING", 0, "Spin-orbit coupling constant" },
   {"disorder", 'w', "DISORDER", 0, "Strength of the disorder"},
   {"hopping",  't', "HOPPING",  0, "Strength of the hopping"},
+  {"runs",     'n', "NUMRUNS",  0, "Number of runs in the disorder average"},
   { 0 }
 };
 // Our argp parser.
@@ -69,7 +72,7 @@ int main(int argc, char ** argv)
     params.coupling_const = 0;
     params.disorder_strength = 10;
     params.hop_strength = 1;
-
+    params.numRuns = 100;
 
     /* Parse our arguments; every option seen by parse_opt will
         be reflected in params. */
@@ -81,7 +84,6 @@ int main(int argc, char ** argv)
 
 
     int ctr;
-    int numRuns = 100;
     struct OutStream outfiles = set_up_datastream(params);
 
     DTYPE avg_loc_len = 0;
@@ -92,7 +94,7 @@ int main(int argc, char ** argv)
 
 
     printf("Starting Simulation for Exact Diagonalization...\n");
-    for(ctr = 1; ctr <= numRuns; ctr++)
+    for(ctr = 1; ctr <= params.numRuns; ctr++)
     {
         printf("Run %d started...", ctr);
         fflush(stdout);
@@ -102,7 +104,7 @@ int main(int argc, char ** argv)
         
         printf("\tDone\n");
     }
-    avg_loc_len /= (double) numRuns;
+    avg_loc_len /= (double) params.numRuns;
     printf("Disorder Averaged Loc Len: %lf\n", avg_loc_len);
 
     fclose(outfiles.eigvals);
@@ -266,18 +268,9 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state)
     case 't':
       params->hop_strength = atof(arg);
       break;
-
-    // case ARGP_KEY_ARG:
-    //   if (state->arg_num >= 2)
-    //     /* Too many arguments. */
-    //     argp_usage (state);
-    //   break;
-
-    // case ARGP_KEY_END:
-    //   if (state->arg_num < 2)
-    //     /* Not enough arguments. */
-    //     argp_usage (state);
-    //   break;
+    case 'n':
+      params->numRuns = atoi(arg);
+      break;
 
     default:
       return ARGP_ERR_UNKNOWN;
