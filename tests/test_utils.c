@@ -50,10 +50,12 @@ int test_loc_len()
     
     result = utils_loc_len(energy, eigvals, hop_strength, len, -1);
 
-    if(fabs(1/result - 2.096965023993401) > TOL)
+    // if(fabs(1/result - 2.096965023993401) > TOL)
+    if(fabs(1/result - 1.3538379111284349) > TOL)
     {
         success = 0;
-        printf("Failed test for utils_loc_len independent energy.");
+        printf("Failed test for utils_loc_len independent energy.\n");
+        printf("Diff: %g\n", 1/result - 1.3538379111284349);
     }
     else
         success = 1;
@@ -62,10 +64,12 @@ int test_loc_len()
     energy = *(eigvals + 20);
     result = utils_loc_len(energy, eigvals, hop_strength, len, 20);
 
-    if(fabs(1/result - 2.2728547268061026) > TOL)
+    // if(fabs(1/result - 2.2728547268061026) > TOL)
+    if(fabs(1/result - 1.5297276139411364) > TOL)
     {
         success = 0;
-        printf("Failed test for utils_loc_len particular eigenfunc.");
+        printf("Failed test for utils_loc_len particular eigenfunc.\n");
+        printf("Diff: %g\n", 1/result - 1.5297276139411364);
     }
     else
         success *= 1;
