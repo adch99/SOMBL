@@ -3,9 +3,9 @@
 
 #include "../constants.h"
 
-#define RTC(i1, i2, size) (i1 + i2*size) // row major to col major
+#define RTC(i1, i2, size) ((i1) + (i2)*(size)) // row major to col major
 
-DTYPE utils_loc_len(DTYPE energy, DTYPE * eigenvals, DTYPE hop_strength,
+DTYPE utils_loc_len(DTYPE energy, const DTYPE * eigenvals, DTYPE hop_strength,
                     int len, int eigenfunc_num);
 int utils_preprocess_lapack(CDTYPE * matrix, int size, CDTYPE * preprocd);
 int utils_get_eigvalsh(CDTYPE * matrix, int size, DTYPE * eigvals);
