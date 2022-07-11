@@ -29,12 +29,12 @@ struct OutStream {
 //------------------------------------------------------------------------
 
 /* Function Declarations */ 
-double run(struct SystemParams * params, int create_neighbours,
+DTYPE run(struct SystemParams * params, int create_neighbours,
             struct OutStream outfiles);
-double run_nospin(struct SystemParams * params, int create_neighbours,
+DTYPE run_nospin(struct SystemParams * params, int create_neighbours,
             struct OutStream outfiles);
-struct OutStream set_up_datastream(struct SystemParams params);
-int analysis(DTYPE * eigvals, int num_eigvals, struct SystemParams *params,
+struct OutStream set_up_datastream(struct SystemParams params, int nospin);
+DTYPE analysis(DTYPE * eigvals, int num_eigvals, struct SystemParams *params,
             struct OutStream outfiles);
 static error_t parse_opt (int key, char *arg, struct argp_state *state);
 
@@ -66,6 +66,8 @@ static struct argp argp = { options, parse_opt, args_doc, doc };
 
 int main(int argc, char ** argv)
 {
+  int nospin = 1;
+
     struct SystemParams params;
     /* Default Values of Parameters */
     params.len = params.width = 20;
@@ -84,7 +86,7 @@ int main(int argc, char ** argv)
 
 
     int ctr;
-    struct OutStream outfiles = set_up_datastream(params);
+    struct OutStream outfiles = set_up_datastream(params, nospin);
 
     DTYPE avg_loc_len = 0;
     int create_neighbours = 1;
@@ -105,7 +107,7 @@ int main(int argc, char ** argv)
         printf("\tDone\n");
     }
     avg_loc_len /= (double) params.numRuns;
-    printf("Disorder Averaged Loc Len: %lf\n", avg_loc_len);
+    printf("Disorder Averaged Loc Len: %e\n", avg_loc_len);
 
     fclose(outfiles.eigvals);
     fclose(outfiles.loc_lens);
@@ -113,13 +115,20 @@ int main(int argc, char ** argv)
     return(0);
 }
 
-struct OutStream set_up_datastream(struct SystemParams params)
+struct OutStream set_up_datastream(struct SystemParams params, int nospin)
 {
     struct OutStream outfiles;
+    char base[32];
     char basename[64];
     char eigvalsname[64];
     char loclensname[64];
-    sprintf(basename, "data/mbl_nospin_%dx%d_W%.4g_C%.4g_T%.4g_", params.len, params.width,
+
+    if (nospin)
+      strcpy(base, "data/mbl_nospin");
+    else
+      strcpy(base, "data/mbl");
+
+    sprintf(basename, "%s_%dx%d_W%.4g_C%.4g_T%.4g_", base, params.len, params.width,
             params.disorder_strength, params.coupling_const, params.hop_strength);
     sprintf(eigvalsname, "%seigvals.dat", basename);
     sprintf(loclensname, "%sloclens.dat", basename);
@@ -158,7 +167,7 @@ double run(struct SystemParams * params, int create_neighbours, struct OutStream
         get_neighbour_lists(params->neighbours, params->len, params->width);
     }
 
-    CDTYPE * ham = malloc(sizeof(CDTYPE)*(num_states*num_states));
+    CDTYPE * ham = calloc(num_states*num_states,sizeof(CDTYPE));
     
     hamiltonian(ham, params->len, params->width, params->coupling_const,
                 params->disorder_strength, params->hop_strength,
@@ -197,7 +206,7 @@ double run_nospin(struct SystemParams * params, int create_neighbours, struct Ou
         get_neighbour_lists(params->neighbours, params->len, params->width);
     }
 
-    CDTYPE * ham = malloc(sizeof(CDTYPE)*(num_states*num_states));
+    CDTYPE * ham = calloc(num_states*num_states, sizeof(CDTYPE));
     
     hamiltonian_nospin(ham, params->len, params->width,
                 params->disorder_strength, params->hop_strength,
@@ -220,17 +229,17 @@ double run_nospin(struct SystemParams * params, int create_neighbours, struct Ou
     return(avg_loc_len);
 }
 
-int analysis(DTYPE * eigvals, int num_eigvals, struct SystemParams *params,
+DTYPE analysis(DTYPE * eigvals, int num_eigvals, struct SystemParams *params,
             struct OutStream outfiles)
 {
     /* Calculate localization lengths */
     int i;
-    DTYPE avg_loc_len = 0;
+    DTYPE avg_loc_len = 0.0;
     DTYPE loc_len;
     for(i = 0; i < num_eigvals; i++)
     {
         loc_len = utils_loc_len(-1, eigvals, params->hop_strength,
-                                    params->len, i); 
+                                    num_eigvals, i); 
         avg_loc_len += loc_len;
         fprintf(outfiles.eigvals, "%e", *(eigvals + i));
         fprintf(outfiles.loc_lens, "%e", loc_len);
@@ -243,7 +252,7 @@ int analysis(DTYPE * eigvals, int num_eigvals, struct SystemParams *params,
     }
     fprintf(outfiles.eigvals, "\n");
     fprintf(outfiles.loc_lens, "\n");
-    avg_loc_len /= num_eigvals;
+    avg_loc_len /= (DTYPE) num_eigvals;
     return(avg_loc_len);
 }
 

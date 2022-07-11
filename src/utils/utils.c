@@ -8,7 +8,7 @@
 #include "../constants.h"
  
 
-DTYPE utils_loc_len(DTYPE energy, DTYPE * eigenvals, DTYPE hop_strength, int len, int eigenfunc_num)
+DTYPE utils_loc_len(DTYPE energy, const DTYPE * eigenvals, DTYPE hop_strength, int len, int eigenfunc_num)
 {
     /*
     Calculates the localization length from the so-called "Lyapunov exponent"
@@ -31,19 +31,19 @@ DTYPE utils_loc_len(DTYPE energy, DTYPE * eigenvals, DTYPE hop_strength, int len
 
     for(i=0;i<len;i++)
     {
-        if(i == eigenfunc_num)
+        if(skip_one && i == eigenfunc_num)
             continue;
         eig = *(eigenvals + i);
         lambda += log(fabs(energy - eig)); /* + log(cabsd(*(hop_strengths+i))) if needed*/
     }
 
     if (skip_one)
-        lambda /= len - 1;
+        lambda /= (DTYPE) (len - 1);
     else
-        lambda /= len;
+        lambda /= (DTYPE) len;
     lambda += -log(fabs(hop_strength));
 
-    return(1/lambda);    
+    return(1.0 / lambda);    
 }
 
 int utils_preprocess_lapack(CDTYPE * matrix, int size, CDTYPE * preprocd)
@@ -140,7 +140,7 @@ int utils_print_matrix(CDTYPE * matrix, int m, int n)
         for(j = 0; j < n; j++)
         {
             element = *(matrix + RTC(i,j,m));
-            printf("%lf + i%lf  ", creal(element), cimag(element));
+            printf("%08.4lf+%08.4lfj\t", creal(element), cimag(element));
         }
         printf("\n");
     }

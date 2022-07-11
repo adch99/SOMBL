@@ -4,7 +4,7 @@ from scipy.stats import binned_statistic
 
 
 def getData(params):
-    basename = f"data/mbl{params['length']}x{params['width']}" \
+    basename = f"data/mbl_nospin_{params['length']}x{params['width']}" \
                 + f"_W{params['disorder']:.2g}" \
                 + f"_C{params['coupling']:.2g}" \
                 + f"_T{params['hopping']:.2g}_"
@@ -56,8 +56,12 @@ def plotData(proc_data, params):
     # axes[1].set_xlim(-1, 1)
 
     fig.tight_layout()
-    fig.savefig(f"plots/mbl{params['length']}x{params['width']}.pdf")
-    fig.savefig(f"plots/mbl{params['length']}x{params['width']}.png")
+    filename = f"plots/mbl{params['length']}x{params['width']}"\
+                + f"_W{params['disorder']}"\
+                + f"_C{params['coupling']}"\
+                + f"_T{params['hopping']}"
+    fig.savefig(filename + ".pdf")
+    fig.savefig(filename + ".png")
 
 def main(params):
     data = getData(params)
@@ -68,7 +72,7 @@ if __name__ == "__main__":
     params = {
         "length": 30,
         "width": 30,
-        "disorder": 15,
+        "disorder": 5.0,
         "coupling": 0.0,
         "hopping": 1.0
     }

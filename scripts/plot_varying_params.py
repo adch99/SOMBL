@@ -7,7 +7,7 @@ def getData():
     coupling_const = 0.0
     hop_strength = 1.0
     disorder_vals = np.linspace(10, 20, 11)
-    size = 30
+    size = 10
     loc_lens = np.zeros(disorder_vals.shape)
 
     for i, disorder_strength in enumerate(disorder_vals):
@@ -27,6 +27,8 @@ def getData():
 def plotData(disorder_vals, loc_lens, name=None):
     fig, ax = plt.subplots()
     ax.plot(disorder_vals, loc_lens, marker=".")
+    ax.set_ylim(0, 100)
+    ax.set_xlim(0, 21)
     ax.set_xlabel("W")
     ax.set_ylabel(r"$\langle\xi_{loc}\rangle_{disorder}$")
 
@@ -37,7 +39,7 @@ def plotData(disorder_vals, loc_lens, name=None):
 
 def main():
     data = getData()
-    plotData(*data, name="plots/nospin_loc_lens_vs_W_20x20_C0_T1")
+    plotData(*data, name="plots/nospin_loc_lens_vs_W_10x10_C0_T1")
 
 if __name__ == "__main__":
     main()

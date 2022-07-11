@@ -11,11 +11,13 @@ int tester(int (*test_func)(), char * name);
 // Test Functions
 int test_loc_len();
 int test_get_eigvalsh();
+int test_uniform_dist();
 
 int main(int argc, char ** argv)
 {
     tester(test_loc_len, "test_loc_len");
     tester(test_get_eigvalsh, "test_get_eigvalsh");
+    tester(test_uniform_dist, "test_uniform_dist");
     return(0);
 }
 
@@ -111,4 +113,21 @@ int test_get_eigvalsh()
         return(success);
     }
 
+}
+
+int test_uniform_dist()
+{
+    int success = 1;
+    DTYPE * array = calloc(100, sizeof(DTYPE));
+    utils_uniform_dist(40, 65, 100, array, 1);
+    int i;
+    // printf("Uniform Dist: ");
+    for(i = 0; i < 100; i++)
+        if(*(array + i) <= 40 || *(array + i) >= 65)
+            success = 0;
+        // printf("%lf ", *(array + i));
+    
+    // printf("\n");
+
+    return(success);
 }

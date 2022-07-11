@@ -15,8 +15,9 @@ int hamiltonian(CDTYPE * ham, int len, int width,
     // Produce disorder
     DTYPE * disorder;
     disorder = malloc(sizeof(DTYPE)*num_sites);
-    utils_uniform_dist(0, disorder_strength, num_sites, disorder, 0);
-
+    int low = -disorder_strength / 2.0;
+    int high = disorder_strength / 2.0;
+    utils_uniform_dist(low, high, num_sites, disorder, 0);
     // Produce matrix
     int site1, site2, index_up_up, index_dn_dn, index_up_dn, index_dn_up;
 
@@ -123,7 +124,7 @@ int get_neighbours(int index, int len, int width, int * nlist)
         |   .    .    .    .
         -   .    .    .    .
         (i,j) = (1, 3)
-        index = 1 + 3*3 = 10
+        index = 1 + 3*4 = 13
         i = index % len
         j = index // len
     */
@@ -133,24 +134,24 @@ int get_neighbours(int index, int len, int width, int * nlist)
     i = index % len;
     j = index / len;
 
-    // (i-1, j)
-    inew = ((i-1) >= 0)? i-1 : i-1+len;
-    jnew = j;
-    *(nlist) = inew + len*jnew;
-
-    // (i+1, j)
-    inew = ((i+1) < len)? i+1 : i+1-len;
-    jnew = j;
-    *(nlist + 1) = inew + len*jnew;
-
-    // (i, j-1)
+    // x-1 => (i, j-1)
     inew = i;
     jnew = ((j-1) >= 0)? j-1 : j-1+width;
-    *(nlist + 2) = inew + len*jnew;
+    *(nlist) = inew + len*jnew;
 
-    // (i, j+1)
+    // x+1 => (i, j+1)
     inew = i;
     jnew = ((j+1) < width)? j+1 : j+1-width;
+    *(nlist + 1) = inew + len*jnew;
+
+    // y-1 => (i-1, j)
+    inew = ((i-1) >= 0)? i-1 : i-1+len;
+    jnew = j;
+    *(nlist + 2) = inew + len*jnew;
+
+    // y+1 => (i+1, j)
+    inew = ((i+1) < len)? i+1 : i+1-len;
+    jnew = j;
     *(nlist + 3) = inew + len*jnew;
 
     return(0);
