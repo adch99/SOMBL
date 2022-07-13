@@ -8,7 +8,8 @@
 #include "../constants.h"
  
 
-DTYPE utils_loc_len(DTYPE energy, const DTYPE * eigenvals, DTYPE hop_strength, int len, int eigenfunc_num)
+DTYPE utils_loc_len(DTYPE energy, const DTYPE * eigenvals, DTYPE hop_strength,
+                    int len, int eigenfunc_num)
 {
     /*
     Calculates the localization length from the so-called "Lyapunov exponent"
@@ -23,6 +24,7 @@ DTYPE utils_loc_len(DTYPE energy, const DTYPE * eigenvals, DTYPE hop_strength, i
 
     DTYPE lambda = 0;
     DTYPE eig;
+    DTYPE loc_len;
     int i;
     int skip_one;
     skip_one = (eigenfunc_num >=0 && eigenfunc_num < len);
@@ -43,7 +45,8 @@ DTYPE utils_loc_len(DTYPE energy, const DTYPE * eigenvals, DTYPE hop_strength, i
         lambda /= (DTYPE) len;
     lambda += -log(fabs(hop_strength));
 
-    return(1.0 / lambda);    
+    loc_len = 1.0 / lambda;
+    return(loc_len);    
 }
 
 int utils_preprocess_lapack(CDTYPE * matrix, int size, CDTYPE * preprocd)
@@ -145,4 +148,23 @@ int utils_print_matrix(CDTYPE * matrix, int m, int n)
         printf("\n");
     }
     return 0;
+}
+
+int utils_get_eigh(CDTYPE * matrix, int size, DTYPE * eigvals)
+{
+    /*
+        Returns the eigenvalues of the hermitian matrix given in the
+        array of eigvals given.
+        We assume the array has already been preprocessed for the used
+        library (currently LAPACK).
+        NOTE: The matrix given to diagonalize will be destroyed by this
+        function. Orthonormalized eigenvectors will be written into the
+        matrix.
+    */
+    int info = LAPACKE_zheev(LAPACK_COL_MAJOR, 'V', 'U', size, matrix, size, eigvals);
+    if (info != 0)
+    {
+        printf("LAPACKE_zheev error! Code: %d", info);
+        return info; // Some error has occured.
+    }
 }

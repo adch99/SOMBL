@@ -52,15 +52,15 @@ static char doc[] =
 static char args_doc[] = "-s <size> -c <coupling_const> -w <disorder_strength> -t <hop_strength> -n <num_runs>";
 // The options we understand.
 static struct argp_option options[] = {
-  {"size",     's', "SIZE",     0, "Length and width of the lattice" },
-  {"coupling", 'c', "COUPLING", 0, "Spin-orbit coupling constant" },
-  {"disorder", 'w', "DISORDER", 0, "Strength of the disorder"},
-  {"hopping",  't', "HOPPING",  0, "Strength of the hopping"},
-  {"runs",     'n', "NUMRUNS",  0, "Number of runs in the disorder average"},
+  {"size",     's', "SIZE",     0, "Length and width of the lattice",        0},
+  {"coupling", 'c', "COUPLING", 0, "Spin-orbit coupling constant",           0},
+  {"disorder", 'w', "DISORDER", 0, "Strength of the disorder",               0},
+  {"hopping",  't', "HOPPING",  0, "Strength of the hopping",                0},
+  {"runs",     'n', "NUMRUNS",  0, "Number of runs in the disorder average", 0},
   { 0 }
 };
 // Our argp parser.
-static struct argp argp = { options, parse_opt, args_doc, doc };
+static struct argp argp = { options, parse_opt, args_doc, doc, 0, 0, 0};
 
 //------------------------------------------------------------------------
 
@@ -118,10 +118,10 @@ int main(int argc, char ** argv)
 struct OutStream set_up_datastream(struct SystemParams params, int nospin)
 {
     struct OutStream outfiles;
-    char base[32];
+    char base[16];
     char basename[64];
-    char eigvalsname[64];
-    char loclensname[64];
+    char eigvalsname[80];
+    char loclensname[80];
 
     if (nospin)
       strcpy(base, "data/mbl_nospin");
@@ -156,7 +156,7 @@ double run(struct SystemParams * params, int create_neighbours, struct OutStream
     /* Set parameters */
     /* Create hamiltonian */
 
-    DTYPE energy = 1;
+    // DTYPE energy = 1;
 
     int num_sites = params->len * params->width;
     int num_states = 2*num_sites;
@@ -195,7 +195,7 @@ double run_nospin(struct SystemParams * params, int create_neighbours, struct Ou
     /* Set parameters */
     /* Create hamiltonian */
 
-    DTYPE energy = 1;
+    // DTYPE energy = 1;
 
     int num_sites = params->len * params->width;
     int num_states = num_sites;
@@ -235,12 +235,14 @@ DTYPE analysis(DTYPE * eigvals, int num_eigvals, struct SystemParams *params,
     /* Calculate localization lengths */
     int i;
     DTYPE avg_loc_len = 0.0;
+    // DTYPE avg_inv_loc_len = 0.0;
     DTYPE loc_len;
     for(i = 0; i < num_eigvals; i++)
     {
         loc_len = utils_loc_len(-1, eigvals, params->hop_strength,
-                                    num_eigvals, i); 
+                                      num_eigvals, i); 
         avg_loc_len += loc_len;
+        // avg_inv_loc_len += 1.0/loc_len;
         fprintf(outfiles.eigvals, "%e", *(eigvals + i));
         fprintf(outfiles.loc_lens, "%e", loc_len);
 
@@ -253,38 +255,42 @@ DTYPE analysis(DTYPE * eigvals, int num_eigvals, struct SystemParams *params,
     fprintf(outfiles.eigvals, "\n");
     fprintf(outfiles.loc_lens, "\n");
     avg_loc_len /= (DTYPE) num_eigvals;
+    // avg_inv_loc_len /= (DTYPE) num_eigvals;
+
+    // printf("<xi> - 1/<1/xi> = %e", (avg_loc_len - 1/avg_inv_loc_len));
+
     return(avg_loc_len);
 }
 
 /* Parse a single option. */
 static error_t parse_opt (int key, char *arg, struct argp_state *state)
 {
-  /* Get the input argument from argp_parse, which we
+    /* Get the input argument from argp_parse, which we
      know is a pointer to our arguments structure. */
-  struct SystemParams *params = state->input;
+    struct SystemParams *params = state->input;
 
-  switch (key)
-    {
-    case 's':
-      params->len = params->width = atoi(arg);
-      break;
-    case 'c':
-      params->coupling_const = atof(arg);
-      break;
-    case 'w':
-      params->disorder_strength = atof(arg);
-      break;
-    case 't':
-      params->hop_strength = atof(arg);
-      break;
-    case 'n':
-      params->numRuns = atoi(arg);
-      break;
+    switch (key)
+        {
+        case 's':
+            params->len = params->width = atoi(arg);
+            break;
+        case 'c':
+            params->coupling_const = atof(arg);
+            break;
+        case 'w':
+            params->disorder_strength = atof(arg);
+            break;
+        case 't':
+            params->hop_strength = atof(arg);
+            break;
+        case 'n':
+            params->numRuns = atoi(arg);
+            break;
 
-    default:
-      return ARGP_ERR_UNKNOWN;
-    }
-  return 0;
+        default:
+            return ARGP_ERR_UNKNOWN;
+        }
+    return 0;
 }
 
 

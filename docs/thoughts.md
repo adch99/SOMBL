@@ -9,7 +9,8 @@
 - I keep getting this feeling that the Lyapunov
     exponent calculation is getting messed up
     somewhere. It keeps giving negative localization
-    lengths.
+    lengths. Answer: It was getting messed up because
+    of passing the wrong parameter.
 
 ## Done
 
@@ -21,3 +22,12 @@
     Answer: The LAPACKE functions set the workspace
     variables on their own unless we want to do it
     explicitly. So this is not needed.
+
+
+## Parts of the Program
+
+1. Initializing parameters
+2. get_neighbour_lists - Tested - OK
+3. hamiltonian_nospin - Tested - OK
+4. utils_get_eigvalsh - Tested - OK
+5. analysis - Not Tested
