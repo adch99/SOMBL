@@ -21,7 +21,7 @@ utils:
 tests: utils hamgen
 	$(CC) $(CFLAGS) tests/test_utils.c -o build/tests/test_utils build/utils/utils.o $(LFLAGS)
 	$(CC) $(CFLAGS) tests/test_ham_gen.c -o build/tests/test_ham_gen build/utils/utils.o build/ham_gen/ham_gen.o $(LFLAGS)
-
+	$(CC) $(CFLAGS) tests/check_matrix.c -o build/tests/check_matrix build/utils/utils.o build/ham_gen/ham_gen.o $(LFLAGS)
 clean:
 	rm -rf build/*/*.o build/exact_diag_simulation
 

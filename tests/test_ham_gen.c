@@ -44,7 +44,7 @@ int test_hermitian(CDTYPE * matrix, int size)
         {
             index = RTC(i, j, size);
             index_flip = RTC(j, i, size);
-            if(*(matrix + index) != conj(*(matrix + index_flip)))
+            if(*(matrix + index) != conj(*  (matrix + index_flip)))
                 success = 0;
         }
     }
@@ -91,10 +91,12 @@ int test_hamiltonian_nospin()
 {
     int success = 1;
     int length, width;
-    length = width = 2;
+    length = width = 10;
     int num_sites = length*width;
     int num_states = num_sites;
+    int i, j, index, site1, site2;
     CDTYPE * ham = calloc(num_states*num_states, sizeof(CDTYPE));
+    CDTYPE value;
     int (*neighbour)[NEIGHS] = malloc((num_sites * NEIGHS) * sizeof(int));
     get_neighbour_lists(neighbour, length, width);
     hamiltonian_nospin(ham, length, width, 15.0, 1.0, neighbour);
@@ -105,29 +107,80 @@ int test_hamiltonian_nospin()
         success = 0;
     }
 
-    printf("H (spinless):\n");
-    utils_print_matrix(ham, num_states, num_states);
-
-    printf("\nneighbours:\n");
-    int i, j;
-    for(i = 0; i < num_sites; i++)
+    for (i=0;i<num_sites;i++)
     {
-        printf("%d: ", i);
-        for(j = 0; j < NEIGHS; j++)
-        {
-            printf("%d ", *(*(neighbour + i) + j));
+        for(j=0;j<NEIGHS;j++)
+        {   
+            site1 = i;
+            site2 = *(*(neighbour + i) + j);
+            index = RTC(site1, site2, num_states);
+            if (*(ham + index) != -1.0)
+            {
+                printf("Problem at site (%d,%d) index=%d", site1, site2, index);
+                success = 0;
+            }
         }
-        printf("\n");
+    }
+
+    // printf("H (spinless):\n");
+    // utils_print_matrix(ham, num_states, num_states);
+
+    // printf("\nneighbours:\n");
+    // for(i = 0; i < num_sites; i++)
+    // {
+    //     printf("%d: ", i);
+    //     for(j = 0; j < NEIGHS; j++)
+    //     {
+    //         printf("%d ", *(*(neighbour + i) + j));
+    //     }
+    //     printf("\n");
+    // }
+
+    for(i=0;i<num_states;i++)
+    {
+        for(j=0;j<num_states;j++)
+        {
+            index = RTC(i, j, num_states);
+            value = *(ham + index);
+
+            if(i == j)
+            {
+                if(value == 0+0*I)
+                {
+                    printf("Problem at (%d,%d) index=%d!\n", i, j, index);
+                    printf("H(i,j) = %e+%ej\n", creal(value), cimag(value));
+                    success = 0;
+                }
+            }
+            else if(check_neighbour(j, *(neighbour + i)) >= 0)
+            {
+                if(value != -1+0*I)
+                {
+                    printf("Problem at (%d,%d) index=%d!\n", i, j, index);
+                    printf("H(i,j) = %e+%ej =/= -1\n", creal(value), cimag(value));
+                    success = 0;
+                }
+            }
+            else
+            {
+                if(value != 0+0*I)
+                {
+                    printf("Problem at (%d,%d) index=%d\n!", i, j, index);
+                    printf("H(i,j) = %e+%ej =/= 0\n", creal(value), cimag(value));
+                    success = 0;
+                }
+            }
+        }
     }
 
     DTYPE * eigvals = malloc(num_states*sizeof(DTYPE));
     utils_get_eigvalsh(ham, num_states, eigvals);
-    printf("\nEigvals:\n");
-    for(i = 0; i < num_states; i++)
-    {
-        printf("%-.4g ", *(eigvals + i));
-    }
-    printf("\n");
+    // printf("\nEigvals:\n");
+    // for(i = 0; i < num_states; i++)
+    // {
+    //     printf("%-.4g ", *(eigvals + i));
+    // }
+    // printf("\n");
     return success;
 }
 
