@@ -1,5 +1,11 @@
 # Thoughts and Questions to Ask
 
+> Turns out I am an idiot and didn't realize that the
+    eigenvalue method worked only for 1D open boundary
+    systems. Now I need to find other methods to deal
+    with this. Most will involve getting eigenfunctions
+    which is obviously not great computationally. 
+
 - Should I average over the localization lengths
     $ξ(E_i)$ or over the lyapunov exponents $γ(E_i)$?
 

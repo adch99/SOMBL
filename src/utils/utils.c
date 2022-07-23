@@ -1,10 +1,11 @@
-#include "utils.h"
-#include <math.h>
-#include <complex.h>
-#include <lapacke.h>
 #include <stdlib.h>
 #include <time.h>
 #include <stdio.h>
+#include <math.h>
+#include <complex.h>
+#include <lapacke.h>
+#include <gsl/gsl_math.h>
+#include "utils.h"
 #include "../constants.h"
  
 
@@ -167,4 +168,68 @@ int utils_get_eigh(CDTYPE * matrix, int size, DTYPE * eigvals)
         printf("LAPACKE_zheev error! Code: %d", info);
         return info; // Some error has occured.
     }
+    return 0;
+}
+
+int utils_get_green_func_lim(CDTYPE * eigenvectors, int size, DTYPE * green_func)
+{
+    /*
+        This function takes the eigenvectors, calculates the long time limit
+        of the Green's function and ADDS it the given matrix. If you want only
+        the Green's function for the given eigenvectors, then please ensure that
+        the green_func array is initialized to zeroes.
+        This behaviour helps us calculate the disorder averaged Green's function
+        in-place which saves memory. 
+    */
+    // Construct green function limit
+    int i, j, k;
+    int index1, index2;
+    DTYPE value;
+    for(i = 0; i < size; i++)
+    {
+        for(j = 0; j < i; j++)
+        {
+            for(k = 0; k < size; k++)
+            {
+                index1 = RTC(i, k, size);
+                index2 = RTC(j, k, size);
+                value = cabs(*(eigenvectors + index1) * conj(*(eigenvectors + index2)));
+                *(green_func + i*size + j) += value*value;
+            }
+        }
+    }    
+
+    return 0;
+}
+
+int utils_fit_exponential(DTYPE * data, int length, DTYPE * exponent, DTYPE * mantissa, DTYPE * residuals)
+{
+    DTYPE * logdata = malloc(length*sizeof(DTYPE));
+    DTYPE diff;
+    int i;
+    
+    // Take log of the data
+    for(i = 0; i < length; i++)
+        *(logdata + i) = log(*(data + i));
+    
+    // Create the (x,y) pairs
+    DTYPE * x = malloc(length*sizeof(DTYPE));
+    for(i = 0; i < length; i++)
+        *(x + i) = i;
+
+    // Fit line to data using GSL or with our own formulas.
+    DTYPE c0, c1, cov00, cov01, cov11, sumsq;
+    gsl_fit_linear(x, 1, logdata, 1, length, &c0, &c1, &cov00, &cov01, &cov11, &sumsq);
+    *mantissa = exp(c0);
+    *exponent = c1;
+
+    // Calculate residuals
+    *residuals = 0;
+    for(i = 0; i < length; i++)
+    {   
+        diff = (*mantissa) * exp((*exponent) * i);
+        *residuals += diff*diff/length;
+    }
+
+    return 0;
 }
