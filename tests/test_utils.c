@@ -131,3 +131,58 @@ int test_uniform_dist()
 
     return(success);
 }
+
+int test_get_eigh()
+{
+    int success = 1;
+    CDTYPE expected_eigvecs[4][4] = {
+        {-0.70710678, 0,             0,            0.70710678},
+        { 0.70710678, 0,             0,            0.70710678},
+        { 0,         -0.70710678,   -0.70710678,   0},
+        { 0,          0.70710678*I, -0.70710678*I, 0}}
+    DTYPE expected_eigvals[4] = {-5, -3, 3, 5};
+
+
+    CDTYPE matrix[4][4] = {{0, 5, 0, 0}, {5, 0, 0, 0}, {0, 0, 0, -3*I}, {0, 0, 3*I, 0}};
+    CDTYPE colMajorMat[16];
+    DTYPE eigvals[4];    
+    utils_preprocess_lapack(matrix[0], 4, colMajorMat);
+    int info = utils_get_eigvalsh(colMajorMat, 4, eigvals);
+    if (info != 0)
+    {
+        printf("Error occured: Code %d", info);
+        return(0);
+    }
+    else
+    {
+        // printf("eigvals: ");
+        // int i;
+        // for(i = 0; i < 4; i++)
+        // {
+        //     printf("%lf ", *(eigvals + i));
+        // }
+        // printf("\n");
+        int i, j, success = 1;
+        for(i = 0; i < 4; i++)
+        {
+            if(answer[i] != *(eigvals + i))
+                success = 0;
+        }
+
+
+
+        return(success);
+    }
+}
+
+int test_get_green_func_lim()
+{
+    int success = 1;
+    return(success);
+}
+
+int test_fit_exponential()
+{
+    int success = 1;
+    return(success);
+}

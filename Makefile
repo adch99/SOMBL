@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=-Wall -Wextra -g
 # CFLAGS=-O2
-LFLAGS=-llapacke -lm
+LFLAGS=-llapacke -lm -lgsl
 ERRORLOG=logs/compiler_error.log
 
 default: exactdiag
