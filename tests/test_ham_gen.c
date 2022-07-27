@@ -15,6 +15,8 @@ int test_get_neighbour_list();
 
 int main(int argc, char ** argv)
 {
+    (void) argc;
+    (void) argv;
     srandom(17);
     // tester(test_hamiltonian, "test_hamiltonian");
     tester(test_hamiltonian_nospin, "test_hamiltonian_nospin");
@@ -63,7 +65,7 @@ int test_hamiltonian()
     hamiltonian(ham, length, width, 0, 15.0, 1.0, neighbour);
 
     printf("H (with spin):\n");
-    utils_print_matrix(ham, num_states, num_states);
+    utils_print_matrix_complex_F(ham, num_states, num_states);
 
     printf("\nneighbours:\n");
     int i, j;
@@ -123,7 +125,7 @@ int test_hamiltonian_nospin()
     }
 
     // printf("H (spinless):\n");
-    // utils_print_matrix(ham, num_states, num_states);
+    // utils_print_matrix_complex_F(ham, num_states, num_states);
 
     // printf("\nneighbours:\n");
     // for(i = 0; i < num_sites; i++)
