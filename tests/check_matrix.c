@@ -6,6 +6,8 @@
 
 int main(int argc, char ** argv)
 {
+    (void) argc;
+    (void) argv;
     int length, width;
     length = width = 50;
     int num_sites = length*width;

@@ -19,23 +19,22 @@ struct SystemParams {
     int (*neighbours)[NEIGHS];
     int numRuns; // Technically not a system parameter but it's convenient
     // to have it here.
+    int nospin;
+    int num_states;
 };
 
 struct OutStream {
-    FILE * eigvals;
-    FILE * loc_lens;
+    FILE * gfuncsq;
 };
 
 //------------------------------------------------------------------------
 
 /* Function Declarations */ 
-DTYPE run(struct SystemParams * params, int create_neighbours,
-            struct OutStream outfiles);
-DTYPE run_nospin(struct SystemParams * params, int create_neighbours,
-            struct OutStream outfiles);
-struct OutStream set_up_datastream(struct SystemParams params, int nospin);
-DTYPE analysis(DTYPE * eigvals, int num_eigvals, struct SystemParams *params,
-            struct OutStream outfiles);
+int run(struct SystemParams * params, int create_neighbours,
+            DTYPE * gfunc);
+struct OutStream set_up_datastream(struct SystemParams params);
+DTYPE post_process(struct SystemParams * params, struct OutStream outfiles,
+                DTYPE * gfunc);
 static error_t parse_opt (int key, char *arg, struct argp_state *state);
 
 //------------------------------------------------------------------------
@@ -47,9 +46,12 @@ const char *argp_program_bug_address =
   "<aditya.chincholi@students.iiserpune.ac.in>";
 // Program documentation.
 static char doc[] =
-  "exact_diag_simulation -- a simulation of spin-orbit coupled 2d many-body localized systems.";
+  "exact_diag_simulation -- a simulation of spin-orbit coupled" 
+  "2d many-body localized systems.";
 // A description of the arguments we accept.
-static char args_doc[] = "-s <size> -c <coupling_const> -w <disorder_strength> -t <hop_strength> -n <num_runs>";
+static char args_doc[] = "-s <size> -c <coupling_const>"
+                        "-w <disorder_strength>"
+                        " -t <hop_strength> -n <num_runs>";
 // The options we understand.
 static struct argp_option options[] = {
   {"size",     's', "SIZE",     0, "Length and width of the lattice",        0},
@@ -66,8 +68,6 @@ static struct argp argp = { options, parse_opt, args_doc, doc, 0, 0, 0};
 
 int main(int argc, char ** argv)
 {
-  int nospin = 1;
-
     struct SystemParams params;
     /* Default Values of Parameters */
     params.len = params.width = 20;
@@ -75,6 +75,7 @@ int main(int argc, char ** argv)
     params.disorder_strength = 10;
     params.hop_strength = 1;
     params.numRuns = 100;
+    params.nospin = 0;
 
     /* Parse our arguments; every option seen by parse_opt will
         be reflected in params. */
@@ -84,9 +85,13 @@ int main(int argc, char ** argv)
         params.len, params.coupling_const, params.disorder_strength,
         params.hop_strength);
 
+    if(params.nospin)
+        params.num_states = params.len*params.width;
+    else
+        params.num_states = 2*params.len*params.width;
 
     int ctr;
-    struct OutStream outfiles = set_up_datastream(params, nospin);
+    struct OutStream outfiles = set_up_datastream(params);
 
     DTYPE avg_loc_len = 0;
     int create_neighbours = 1;
@@ -95,171 +100,162 @@ int main(int argc, char ** argv)
     srandom((unsigned) time(NULL));
 
 
+
+    // Allocate Green's Function Matrix
+    // Represents long time limit of the green's function squared.
+    DTYPE * gfunc = calloc(params.num_states*params.num_states, sizeof(DTYPE));
+
+    /*
+        run()
+        -
+        |    Create Hamiltonian
+        |    Calculate Eigenvectors
+        |    Calculate green's function
+        |    Add to the existing gfunc matrix
+        -
+        post_process()
+        -
+        |    Divide the gfunc matrix to get disorder avged Green's function
+        |    Output the disorder avged gfunc matrix
+        |    Construct gfunc vs distance datapoints
+        |    Fit exponential to the data
+        |    Get localization length from exponent
+        -
+    */
     printf("Starting Simulation for Exact Diagonalization...\n");
     for(ctr = 1; ctr <= params.numRuns; ctr++)
     {
         printf("Run %d started...", ctr);
         fflush(stdout);
         /* Call run */
-        avg_loc_len += run_nospin(&params, create_neighbours, outfiles);
+        run(&params, create_neighbours, gfunc);
         create_neighbours = 0;
         
         printf("\tDone\n");
     }
-    avg_loc_len /= (double) params.numRuns;
+
+    avg_loc_len = post_process(&params,     outfiles, gfunc);
     printf("Disorder Averaged Loc Len: %e\n", avg_loc_len);
 
-    fclose(outfiles.eigvals);
-    fclose(outfiles.loc_lens);
+    fclose(outfiles.gfuncsq);
     free(params.neighbours);
+    free(gfunc);
     return(0);
 }
 
-struct OutStream set_up_datastream(struct SystemParams params, int nospin)
+struct OutStream set_up_datastream(struct SystemParams params)
 {
     struct OutStream outfiles;
     char base[16];
     char basename[64];
-    char eigvalsname[80];
-    char loclensname[80];
+    char gfuncname[80];
 
-    if (nospin)
+    if (params.nospin)
       strcpy(base, "data/mbl_nospin");
     else
       strcpy(base, "data/mbl");
 
-    sprintf(basename, "%s_%dx%d_W%.4g_C%.4g_T%.4g_", base, params.len, params.width,
-            params.disorder_strength, params.coupling_const, params.hop_strength);
-    sprintf(eigvalsname, "%seigvals.dat", basename);
-    sprintf(loclensname, "%sloclens.dat", basename);
+    sprintf(basename, "%s_%dx%d_W%.4g_C%.4g_T%.4g_", base, params.len,
+            params.width, params.disorder_strength, params.coupling_const,
+            params.hop_strength);
+    sprintf(gfuncname, "%sgreenfuncsq.dat", basename);
 
-    outfiles.eigvals = fopen(eigvalsname, "w");
-    outfiles.loc_lens = fopen(loclensname, "w");
+    outfiles.gfuncsq = fopen(gfuncname, "w");
     
-    if (outfiles.eigvals == NULL)
+    if (outfiles.gfuncsq == NULL)
     {
-        printf("Failed to open %s", eigvalsname);
+        printf("Failed to open %s", gfuncname);
         exit(1);
     }
-
-    if (outfiles.loc_lens == NULL)
-    {
-        printf("Failed to open %s", loclensname);
-        exit(1);
-    }
-
     return(outfiles);
 }
 
-double run(struct SystemParams * params, int create_neighbours, struct OutStream outfiles)
+/*
+    Creates a hamiltonian based on params, calculates the
+    long time green's function squared and ADDS it to gfunc.
+    Please ensure gfunc is initialized properly for your
+    purpose.
+*/
+int run(struct SystemParams * params, int create_neighbours,
+            DTYPE * gfunc)
 {
-    /* Set parameters */
-    /* Create hamiltonian */
-
-    // DTYPE energy = 1;
-
     int num_sites = params->len * params->width;
-    int num_states = 2*num_sites;
+    int num_states = params->num_states;
 
+    // Create neighbour list if not present
     if (create_neighbours)
     {
         params->neighbours = malloc((num_sites*NEIGHS)*sizeof(int)); 
         get_neighbour_lists(params->neighbours, params->len, params->width);
     }
 
+    // Create hamiltonian
     CDTYPE * ham = calloc(num_states*num_states,sizeof(CDTYPE));
     
-    hamiltonian(ham, params->len, params->width, params->coupling_const,
+    if(params->nospin)
+        hamiltonian_nospin(ham, params->len, params->width,
+                params->disorder_strength, params->hop_strength,
+                params->neighbours);
+    else
+        hamiltonian(ham, params->len, params->width, params->coupling_const,
                 params->disorder_strength, params->hop_strength,
                 params->neighbours);
 
-    /* Calculate eigenvalues */
-    // DTYPE * eigvals;
+    // Calculate eigenvectors
     DTYPE * eigvals = calloc(num_states, sizeof(DTYPE));
-    utils_get_eigvalsh(ham, num_states, eigvals);
+    utils_get_eigh(ham, num_states, eigvals);
 
-    // printf("\nmin: %lf\tmax: %lf\n", *eigvals, *(eigvals + num_states-1));
-
-    /* Analysis */
-    DTYPE avg_loc_len = analysis(eigvals, num_states, params, outfiles);
+    // Calculate and add green's function long time limit squared
+    utils_get_green_func_lim(ham, num_states, gfunc);
 
     free(eigvals);
     free(ham);
 
-    /* Return the localization lengths */
-    return(avg_loc_len);
+    return(0);
 }
 
-double run_nospin(struct SystemParams * params, int create_neighbours, struct OutStream outfiles)
+/*
+
+*/
+DTYPE post_process(struct SystemParams * params, struct OutStream outfiles,
+                DTYPE * gfunc)
 {
-    /* Set parameters */
-    /* Create hamiltonian */
-
-    // DTYPE energy = 1;
-
-    int num_sites = params->len * params->width;
-    int num_states = num_sites;
-
-    if (create_neighbours)
+    int i, j;
+    int num_states = params->num_states;
+    // Divide the gfunc matrix to get disorder avged Green's function
+    for(i = 0; i < (num_states*num_states); i++)
     {
-        params->neighbours = malloc((num_sites*NEIGHS)*sizeof(int)); 
-        get_neighbour_lists(params->neighbours, params->len, params->width);
+        *(gfunc + i) /= (DTYPE) params->numRuns;
     }
 
-    CDTYPE * ham = calloc(num_states*num_states, sizeof(CDTYPE));
-    
-    hamiltonian_nospin(ham, params->len, params->width,
-                params->disorder_strength, params->hop_strength,
-                params->neighbours);
-
-    /* Calculate eigenvalues */
-    // DTYPE * eigvals;
-    DTYPE * eigvals = calloc(num_states, sizeof(DTYPE));
-    utils_get_eigvalsh(ham, num_states, eigvals);
-
-    // printf("\nmin: %lf\tmax: %lf\n", *eigvals, *(eigvals + num_states-1));
-
-    /* Analysis */
-    DTYPE avg_loc_len = analysis(eigvals, num_states, params, outfiles);
-
-    free(eigvals);
-    free(ham);
-
-    /* Return the localization lengths */
-    return(avg_loc_len);
-}
-
-DTYPE analysis(DTYPE * eigvals, int num_eigvals, struct SystemParams *params,
-            struct OutStream outfiles)
-{
-    /* Calculate localization lengths */
-    int i;
-    DTYPE avg_loc_len = 0.0;
-    // DTYPE avg_inv_loc_len = 0.0;
-    DTYPE loc_len;
-    for(i = 0; i < num_eigvals; i++)
+    // Output the disorder avged gfunc matrix
+    for(i = 0; i < num_states; i++)
     {
-        loc_len = utils_loc_len(-1, eigvals, params->hop_strength,
-                                      num_eigvals, i); 
-        avg_loc_len += loc_len;
-        // avg_inv_loc_len += 1.0/loc_len;
-        fprintf(outfiles.eigvals, "%e", *(eigvals + i));
-        fprintf(outfiles.loc_lens, "%e", loc_len);
-
-        if (i != num_eigvals-1)
+        for(j = 0; j < num_states; j++)
         {
-            fprintf(outfiles.eigvals, " ");
-            fprintf(outfiles.loc_lens, " ");
+            fprintf(outfiles.gfuncsq ,"%e ", *(gfunc + RTC(i,j,num_states)));
         }
+        fprintf(outfiles.gfuncsq, "\n");
     }
-    fprintf(outfiles.eigvals, "\n");
-    fprintf(outfiles.loc_lens, "\n");
-    avg_loc_len /= (DTYPE) num_eigvals;
-    // avg_inv_loc_len /= (DTYPE) num_eigvals;
 
-    // printf("<xi> - 1/<1/xi> = %e", (avg_loc_len - 1/avg_inv_loc_len));
+    // Construct gfunc vs distance datapoints
+    DTYPE * dists;
+    DTYPE * gfuncsq_vals;
+    int data_len;
+    DTYPE exponent, mantissa, residuals;
+    data_len = utils_construct_data_vs_dist(gfunc, num_states,
+                                        dists, gfuncsq_vals);
+    // Fit exponential to the data
+    utils_fit_exponential(dists, gfuncsq_vals, data_len,
+                        &exponent, &mantissa, &residuals);
+    
+    printf("Residuals: %e", residuals);
+    // Get localization length from exponent
+    DTYPE loclen = -2 / exponent;
 
-    return(avg_loc_len);
+    free(dists);
+    free(gfuncsq_vals);
+    return(loclen);
 }
 
 /* Parse a single option. */
