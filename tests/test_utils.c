@@ -273,12 +273,12 @@ int test_fit_exponential()
     utils_uniform_dist(-1e-4, 1e-4, 10, noise, 1);
     for(i = 0; i < 10; i++)
     {
-        x[i] = (DTYPE) i;
+        x[i] = 0.25 * (DTYPE) i;
         y[i] = mantissa * exp(x[i] * exponent) + noise[i];
         // printf("(%.3e, %.3e)\n", x[i], y[i]);
     }
 
-    utils_fit_exponential(y, 10, &est_exp, &est_mant, &residuals);
+    utils_fit_exponential(x, y, 10, &est_exp, &est_mant, &residuals);
     // printf("Estimates: %e * exp(%e x)\n", est_mant, est_exp);;
     // printf("Residuals per datapoint: %e\n", residuals/10);
 

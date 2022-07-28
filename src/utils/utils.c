@@ -281,8 +281,9 @@ int utils_fit_exponential(DTYPE * x, DTYPE * y, int length, DTYPE * exponent,
     
     // Take log of the data
     for(i = 0; i < length; i++)
+    {
         *(logdata + i) = log(*(y + i));
-    
+    }
     // Fit line to data using GSL or with our own formulas.
     DTYPE c0, c1, cov00, cov01, cov11, sumsq;
     gsl_fit_linear(x, 1, logdata, 1, length, &c0, &c1, &cov00,
@@ -298,6 +299,7 @@ int utils_fit_exponential(DTYPE * x, DTYPE * y, int length, DTYPE * exponent,
         *residuals += diff*diff/length;
     }
 
+    free(logdata);
     return 0;
 }
 
@@ -305,9 +307,12 @@ int utils_fit_exponential(DTYPE * x, DTYPE * y, int length, DTYPE * exponent,
 
 struct FuncDataPoint
 {
-    DTYPE dist;
     DTYPE func_val;
+    int dist; // Keeping ints allows us to compare easily
     int counter;
+    // spins: up,up = 0b00, up,down=0b01, down,up=0b10=2
+    // down,down=0b11=3
+    unsigned int spins; 
 };
 
 /*
@@ -319,15 +324,15 @@ struct FuncDataPoint
     And remember to free them after use.
 */
 int utils_construct_data_vs_dist(DTYPE * matrix, int size, int length,
-                                DTYPE * dists, DTYPE * func,
-                                int index_to_site(int, int, int *, int *))
+                                DTYPE ** dists, DTYPE ** func)
 {
     // Construct a list of all possible lengths
     // Max possible lengths is (L/2)^2 choose 2, so we'll
     // use that as our baseline for array length.
 
     int i, j, k, total_lens, match;
-    DTYPE len;
+    int len, dx, dy;
+    int nospin = (size==length*length)?0:1;
 
     // int max_poss_lens = (size*size)*((size*size) - 4) / 32;
 
@@ -335,14 +340,21 @@ int utils_construct_data_vs_dist(DTYPE * matrix, int size, int length,
     // (w/o PBCs) of side n. We computed D(n) numerically
     // for n=0-100 and found D(n) ~ 0.33n^2 + 3.38n - 15.22
     // D(n) ~ n^1.83 * 10^(-0.106) For lattice with PBC
-    // D_pbc(n) ≈ D(n/2) So we use a safe upper bound by
-    // doing the following:    
-    int max_poss_lens = 0.1*size*size + 2*size - 15;
+    // D_pbc(n) ≈ D(n/2) and also by the way we define our
+    // lattice, length = n + 1. So we use a safe upper bound
+    // by doing the following:    
+    int max_poss_lens;
+    if(nospin)
+        max_poss_lens = 0.4*length*length + 5*length - 14;
+    else
+        max_poss_lens = 0.1*length*length + 2.5*length - 14;
+
     if(max_poss_lens < 32)
         max_poss_lens = 32; 
     match = 0;
     total_lens = 0;
-    struct FuncDataPoint * data, * datapoint;
+    struct FuncDataPoint * data;
+    struct FuncDataPoint * datapoint;
     data = calloc(max_poss_lens, sizeof(struct FuncDataPoint));
 
     // While the property is named dist, within this
@@ -352,10 +364,17 @@ int utils_construct_data_vs_dist(DTYPE * matrix, int size, int length,
     // At the end, however, we will calculate the square
     // roots and the passed value is of the distances.
 
- 
+
+    int site_index1, site_index2;
+    unsigned int spin_index1, spin_index2;
+    unsigned int spins;
+    unsigned int spin1down, spin2down;
+    spin1down = spin2down = 0;
+    BIT_SET(spin1down,1);
+    BIT_SET(spin2down, 0);
     int site1x, site2x, site1y, site2y;
 
-    for(i = 0; i < size/2 + 1; i++)
+    for(i = 0; i < size; i++)
     {
         for(j = 0; j <= i; j++)
         {
@@ -364,24 +383,51 @@ int utils_construct_data_vs_dist(DTYPE * matrix, int size, int length,
             // I really don't want to write an insertion
             // sort.
 
-            site1x = i % length;
-            site1y = i / length; 
-            len = i*i + j*j;
+            if(nospin)
+            {
+                site_index1 = i;
+                site_index2 = j;
+                spin_index1 = spin_index2 = 0;
+            }
+            else
+            {
+                site_index1 = i / 2;
+                site_index2 = j / 2;
+                spin_index1 = i % 2;
+                spin_index2 = j % 2;
+            }
+
+            site1x = site_index1 % length;
+            site1y = site_index1 / length;
+            site2x = site_index2 % length;
+            site2y = site_index2 / length;
+ 
+
+            dx = abs(site1x - site2x);
+            dy = abs(site1y - site2y);
+            dx = INTMIN(abs(length/2-dx), dx);
+            dy = INTMIN(abs(length/2-dy), dy);
+            len = dx*dx + dy*dy;
+            spins = spin_index1*spin1down + spin_index2*spin2down;
             match = 0;
 
             for(k = 0; k < total_lens; k++)
             {
-                if((data + k)->dist == len)
-                {
-                    datapoint = data + k;
+                datapoint = data + k;
+                if((datapoint->dist == len) && (datapoint->spins == spins))
+                {   
                     match = 1;
                     break;
                 }
             }
-            if(~match)
+            if(match == 0)
             {
-                datapoint = data + total_lens;
+                datapoint = data + total_lens; // This is redundant but
+                // present for clarity
                 datapoint->dist = len;
+                datapoint->spins = spins;
+                datapoint->counter = 0;
+                datapoint->func_val = 0;
                 total_lens += 1;
             }
 
@@ -409,14 +455,14 @@ int utils_construct_data_vs_dist(DTYPE * matrix, int size, int length,
     // Sort the array
     qsort(data, total_lens, sizeof(struct FuncDataPoint), utils_compare_datapoints);
 
-    dists = malloc(total_lens * sizeof(DTYPE));
-    func = malloc(total_lens * sizeof(DTYPE));
+    *dists = malloc(total_lens * sizeof(DTYPE));
+    *func = malloc(total_lens * sizeof(DTYPE));
     
     for(i = 0; i < total_lens; i++)
     {
         datapoint = data + i;
-        *(dists + i) = sqrt(datapoint->dist);
-        *(func + i) = datapoint->func_val;
+        *(*dists + i) = sqrt((DTYPE) datapoint->dist);
+        *(*func + i) = datapoint->func_val;
     }
     
     free(data);
