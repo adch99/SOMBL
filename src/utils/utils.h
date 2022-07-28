@@ -21,10 +21,28 @@ int utils_fit_exponential(DTYPE * x, DTYPE * y, int length, DTYPE * exponent,
                         DTYPE * mantissa, DTYPE * residuals);
 int utils_get_green_func_lim(CDTYPE * eigenvectors, int size,
                         DTYPE * green_func);
-int utils_construct_data_vs_dist(DTYPE * matrix, int size,
-                                DTYPE * dists, DTYPE * func);
+int utils_construct_data_vs_dist(DTYPE * matrix, int size, int length,
+                                DTYPE ** dists, DTYPE ** func);
 int utils_compare_datapoints(const void * a, const void * b);
 
+// Bitwise manipulations
+// From SO community wiki post
+/* a=target variable, b=bit number to act upon 0-n */
+#define BIT_SET(a,b) ((a) |= (1ULL<<(b)))
+#define BIT_CLEAR(a,b) ((a) &= ~(1ULL<<(b)))
+#define BIT_FLIP(a,b) ((a) ^= (1ULL<<(b)))
+#define BIT_CHECK(a,b) (!!((a) & (1ULL<<(b))))        // '!!' to make sure this returns 0 or 1
+
+#define BITMASK_SET(x, mask) ((x) |= (mask))
+#define BITMASK_CLEAR(x, mask) ((x) &= (~(mask)))
+#define BITMASK_FLIP(x, mask) ((x) ^= (mask))
+#define BITMASK_CHECK_ALL(x, mask) (!(~(x) & (mask)))
+#define BITMASK_CHECK_ANY(x, mask) ((x) & (mask))
+
+// Can't believe this isn't a std library function
+// Do NOT use these for floats/doubles
+#define INTMIN(a,b) (((a) > (b))?(b):(a))
+#define INTMAX(a,b) (((a) < (b))?(b):(a))
 
 
 #endif //MBL_UTILS_H

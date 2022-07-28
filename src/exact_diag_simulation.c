@@ -3,6 +3,7 @@
 #include <string.h>
 #include <argp.h>
 #include <time.h>
+#include <math.h>
 #include "constants.h"
 #include "ham_gen/ham_gen.h"
 #include "utils/utils.h"
@@ -25,6 +26,7 @@ struct SystemParams {
 
 struct OutStream {
     FILE * gfuncsq;
+    FILE * dist_vs_gfuncsq;
 };
 
 //------------------------------------------------------------------------
@@ -33,7 +35,7 @@ struct OutStream {
 int run(struct SystemParams * params, int create_neighbours,
             DTYPE * gfunc);
 struct OutStream set_up_datastream(struct SystemParams params);
-DTYPE post_process(struct SystemParams * params, struct OutStream outfiles,
+DTYPE post_process(struct SystemParams params, struct OutStream outfiles,
                 DTYPE * gfunc);
 static error_t parse_opt (int key, char *arg, struct argp_state *state);
 
@@ -134,7 +136,7 @@ int main(int argc, char ** argv)
         printf("\tDone\n");
     }
 
-    avg_loc_len = post_process(&params,     outfiles, gfunc);
+    avg_loc_len = post_process(params, outfiles, gfunc);
     printf("Disorder Averaged Loc Len: %e\n", avg_loc_len);
 
     fclose(outfiles.gfuncsq);
@@ -149,6 +151,7 @@ struct OutStream set_up_datastream(struct SystemParams params)
     char base[16];
     char basename[64];
     char gfuncname[80];
+    char dvsgfname[80];
 
     if (params.nospin)
       strcpy(base, "data/mbl_nospin");
@@ -159,14 +162,22 @@ struct OutStream set_up_datastream(struct SystemParams params)
             params.width, params.disorder_strength, params.coupling_const,
             params.hop_strength);
     sprintf(gfuncname, "%sgreenfuncsq.dat", basename);
+    sprintf(dvsgfname, "%sdistvsgfsq.dat", basename);
 
     outfiles.gfuncsq = fopen(gfuncname, "w");
+    outfiles.dist_vs_gfuncsq = fopen(dvsgfname, "w");
     
     if (outfiles.gfuncsq == NULL)
     {
         printf("Failed to open %s", gfuncname);
         exit(1);
     }
+    if (outfiles.dist_vs_gfuncsq == NULL)
+    {
+        printf("Failed to open %s", dvsgfname);
+        exit(1);
+    }
+
     return(outfiles);
 }
 
@@ -217,15 +228,20 @@ int run(struct SystemParams * params, int create_neighbours,
 /*
 
 */
-DTYPE post_process(struct SystemParams * params, struct OutStream outfiles,
+DTYPE post_process(struct SystemParams params, struct OutStream outfiles,
                 DTYPE * gfunc)
 {
     int i, j;
-    int num_states = params->num_states;
+    int num_states = params.num_states;
     // Divide the gfunc matrix to get disorder avged Green's function
     for(i = 0; i < (num_states*num_states); i++)
     {
-        *(gfunc + i) /= (DTYPE) params->numRuns;
+        *(gfunc + i) /= (DTYPE) params.numRuns;
+        if(isnan(*(gfunc + i)))
+        {
+            printf("We have a problem!!\n");
+            printf("NaN detected at i=%d in gfunc", i);
+        }
     }
 
     // Output the disorder avged gfunc matrix
@@ -243,13 +259,23 @@ DTYPE post_process(struct SystemParams * params, struct OutStream outfiles,
     DTYPE * gfuncsq_vals;
     int data_len;
     DTYPE exponent, mantissa, residuals;
-    data_len = utils_construct_data_vs_dist(gfunc, num_states,
-                                        dists, gfuncsq_vals);
+    // exponent = mantissa = residuals = 0;
+    data_len = utils_construct_data_vs_dist(gfunc, num_states, params.len,
+                                        &dists, &gfuncsq_vals);
+
+
+    // Write the values to a file
+    for(i = 0; i < data_len; i++)
+    {
+        fprintf(outfiles.dist_vs_gfuncsq, "%e %e\n",
+                *(dists + i), *(gfuncsq_vals + i));
+    }
+
     // Fit exponential to the data
     utils_fit_exponential(dists, gfuncsq_vals, data_len,
                         &exponent, &mantissa, &residuals);
     
-    printf("Residuals: %e", residuals);
+    printf("Residuals: %e\n", residuals);
     // Get localization length from exponent
     DTYPE loclen = -2 / exponent;
 
