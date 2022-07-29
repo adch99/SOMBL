@@ -191,8 +191,10 @@ int hamiltonian_nospin(CDTYPE * ham, int len, int width,
     // Produce matrix
     int site1, site2, index;
 
+    #pragma omp parallel for
     for(site1 = 0; site1 < num_sites; site1++)
     {
+        #pragma omp parallel for
         for(site2 = 0; site2 < num_sites; site2++)
         {
             // RTC is row to column major
