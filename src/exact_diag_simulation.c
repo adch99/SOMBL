@@ -53,7 +53,8 @@ static char doc[] =
 // A description of the arguments we accept.
 static char args_doc[] = "-s <size> -c <coupling_const>"
                         "-w <disorder_strength>"
-                        " -t <hop_strength> -n <num_runs>";
+                        " -t <hop_strength> -n <num_runs>"
+                        " [-p]";
 // The options we understand.
 static struct argp_option options[] = {
   {"size",     's', "SIZE",     0, "Length and width of the lattice",        0},
@@ -61,6 +62,7 @@ static struct argp_option options[] = {
   {"disorder", 'w', "DISORDER", 0, "Strength of the disorder",               0},
   {"hopping",  't', "HOPPING",  0, "Strength of the hopping",                0},
   {"runs",     'n', "NUMRUNS",  0, "Number of runs in the disorder average", 0},
+  {"spinless", 'p', 0,          0, "Use a spinless model hamiltonian.",      0},
   { 0 }
 };
 // Our argp parser.
@@ -83,9 +85,10 @@ int main(int argc, char ** argv)
         be reflected in params. */
     argp_parse (&argp, argc, argv, 0, 0, &params);
 
-    printf("len: %d coupling: %.2e\ndisorder: %.2e hopping: %.2e\n",
-        params.len, params.coupling_const, params.disorder_strength,
-        params.hop_strength);
+    printf("len: %d\t nospin: %d\t coupling: %.2e\n"
+        "disorder: %.2e\t hopping: %.2e\n",
+        params.len, params.nospin, params.coupling_const,
+        params.disorder_strength, params.hop_strength);
 
     if(params.nospin)
         params.num_states = params.len*params.width;
@@ -308,7 +311,9 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state)
         case 'n':
             params->numRuns = atoi(arg);
             break;
-
+        case 'p':
+            params->nospin = 1;
+            break;
         default:
             return ARGP_ERR_UNKNOWN;
         }

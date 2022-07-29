@@ -347,7 +347,7 @@ int utils_construct_data_vs_dist(DTYPE * matrix, int size, int length,
     if(nospin)
         max_poss_lens = 0.4*length*length + 5*length - 14;
     else
-        max_poss_lens = 0.1*length*length + 2.5*length - 14;
+        max_poss_lens = 0.4*length*length + 5*length - 14;
 
     if(max_poss_lens < 32)
         max_poss_lens = 32; 

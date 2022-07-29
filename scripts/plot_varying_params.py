@@ -6,8 +6,9 @@ import matplotlib.pyplot as plt
 def getData():
     coupling_const = 0.0
     hop_strength = 1.0
-    disorder_vals = np.linspace(10, 20, 11)
-    size = 10
+    disorder_vals = np.linspace(5, 20, 11)
+    size = 20
+    num_runs = 100
     loc_lens = np.zeros(disorder_vals.shape)
 
     for i, disorder_strength in enumerate(disorder_vals):
@@ -15,7 +16,9 @@ def getData():
                 "-s", f"{size}",
                 "-c", f"{coupling_const}",
                 "-t", f"{hop_strength}",
-                "-w", f"{disorder_strength}"]
+                "-w", f"{disorder_strength}",
+                "-n", f"{num_runs}",
+                "-p"]
 
         result = subprocess.run(args, capture_output=True, text=True)
         result.check_returncode()

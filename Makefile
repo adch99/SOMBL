@@ -1,7 +1,7 @@
 CC=gcc
-CFLAGS=-Wall -Wextra -g -fdiagnostics-color=always
+# CFLAGS=-Wall -Wextra -g -fdiagnostics-color=always
 # CFLAGS=-Wall -Wextra -g
-# CFLAGS=-O2
+CFLAGS=-O2
 LFLAGS=-llapacke -lm -lgsl -lcblas
 ERRORLOG=logs/compiler_error.log
 
