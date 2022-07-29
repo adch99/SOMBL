@@ -252,6 +252,8 @@ int utils_get_green_func_lim(CDTYPE * eigenvectors, int size, DTYPE * green_func
     int i, j, k;
     int index1, index2;
     DTYPE value;
+    CDTYPE psi1, psi2;
+    DTYPE mod1, mod2;
     for(i = 0; i < size; i++)
     {
         for(j = 0; j <= i; j++)
@@ -260,11 +262,16 @@ int utils_get_green_func_lim(CDTYPE * eigenvectors, int size, DTYPE * green_func
             {
                 index1 = RTC(k, i, size);
                 index2 = RTC(k, j, size);
-                value = cabs(*(eigenvectors + index1)
-                        * conj(*(eigenvectors + index2)));
-                *(green_func + i*size + j) += value*value;
+                // value = cabs(*(eigenvectors + index1)
+                //         * conj(*(eigenvectors + index2)));
+                psi1 = *(eigenvectors + index1);
+                psi2 = *(eigenvectors + index2);
+                mod1 = creal(psi1)*creal(psi1) + cimag(psi1)*cimag(psi1);
+                mod2 = creal(psi2)*creal(psi2) + cimag(psi2)*cimag(psi2);
+                value = mod1 * mod2;
+                *(green_func + i*size + j) += value;
                 if(i != j)
-                    *(green_func + j*size + i) += value*value;
+                    *(green_func + j*size + i) += value;
             }
         }
     }    
