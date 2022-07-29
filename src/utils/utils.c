@@ -5,6 +5,7 @@
 #include <complex.h>
 #include <lapacke.h>
 #include <gsl/gsl_fit.h>
+#include <omp.h>
 #include "utils.h"
 #include "../constants.h"
  
@@ -252,10 +253,13 @@ int utils_get_green_func_lim(CDTYPE * eigenvectors, int size, DTYPE * green_func
     int i, j, k;
     int index1, index2;
     DTYPE value;
+    #pragma omp parallel for
     for(i = 0; i < size; i++)
     {
+        #pragma omp parallel for
         for(j = 0; j <= i; j++)
         {
+            #pragma omp parallel for
             for(k = 0; k < size; k++)
             {
                 index1 = RTC(k, i, size);

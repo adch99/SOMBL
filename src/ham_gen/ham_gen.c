@@ -4,6 +4,7 @@ for a 2d spin lattice
 */
 #include <stdio.h>
 #include <lapacke.h>
+#include <omp.h>
 #include "ham_gen.h"
 #include "../utils/utils.h"
 
@@ -21,8 +22,10 @@ int hamiltonian(CDTYPE * ham, int len, int width,
     // Produce matrix
     int site1, site2, index_up_up, index_dn_dn, index_up_dn, index_dn_up;
 
+    #pragma omp parallel for
     for(site1 = 0; site1 < num_sites; site1++)
     {
+        #pragma omp parallel for
         for(site2 = 0; site2 < num_sites; site2++)
         {
             // RTC is row major to column major
@@ -98,6 +101,7 @@ int get_neighbour_lists(int (*neighbours)[NEIGHS], int len, int width)
 
     int index;
 
+    #pragma omp parallel for
     for(index = 0; index < len*width; index++)
     {
         get_neighbours(index, len, width, *(neighbours + index));
