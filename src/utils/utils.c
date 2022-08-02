@@ -250,38 +250,58 @@ int utils_get_green_func_lim(CDTYPE * eigenvectors, int size, DTYPE * green_func
 {
 
     // Construct green function limit squared
-    int i, j, k;
-    int index1, index2;
-    DTYPE value;
-    #pragma omp parallel for
-    CDTYPE psi1, psi2;
-    DTYPE mod1, mod2;
+    int i, j;
+    // int num_threads;
+    // #pragma omp critical
+    // {
+    //     num_threads = omp_get_num_threads();
+    // }
+    
+    #pragma omp parallel for collapse(2)
     for(i = 0; i < size; i++)
     {
-        #pragma omp parallel for
         for(j = 0; j <= i; j++)
         {
-            #pragma omp parallel for
-            for(k = 0; k < size; k++)
+            DTYPE sum = utils_compute_gfsq_elem(i, j, eigenvectors, size);
+            #pragma omp critical
             {
-                index1 = RTC(k, i, size);
-                index2 = RTC(k, j, size);
-                // value = cabs(*(eigenvectors + index1)
-                //         * conj(*(eigenvectors + index2)));
-                psi1 = *(eigenvectors + index1);
-                psi2 = *(eigenvectors + index2);
-                mod1 = creal(psi1)*creal(psi1) + cimag(psi1)*cimag(psi1);
-                mod2 = creal(psi2)*creal(psi2) + cimag(psi2)*cimag(psi2);
-                value = mod1 * mod2;
-                *(green_func + i*size + j) += value;
+                *(green_func + i*size + j) += sum;
                 if(i != j)
-                    *(green_func + j*size + i) += value;
+                    *(green_func + j*size + i) += sum;
             }
+
         }
     }    
-
+    // printf("Threads: %d\n", num_threads);
     return 0;
 }
+
+/*
+    Computes the (i,j)th element of the Green's function
+    squared in the long time limit.
+*/
+DTYPE utils_compute_gfsq_elem(int i, int j, CDTYPE * eigenvectors, int size)
+{
+    DTYPE sum = 0.0;
+    int k;
+    #pragma omp parallel for reduction (+:sum) schedule(static)
+    for(k = 0; k < size; k++)
+    {
+        int index1, index2;
+        CDTYPE psi1, psi2;
+        DTYPE mod1, mod2;
+        index1 = RTC(k, i, size);
+        index2 = RTC(k, j, size);
+        psi1 = *(eigenvectors + index1);
+        psi2 = *(eigenvectors + index2);
+        mod1 = creal(psi1)*creal(psi1) + cimag(psi1)*cimag(psi1);
+        mod2 = creal(psi2)*creal(psi2) + cimag(psi2)*cimag(psi2);
+        sum += mod1 * mod2;
+    }
+
+    return(sum);
+}
+
 
 int utils_fit_exponential(DTYPE * x, DTYPE * y, int length, DTYPE * exponent,
                         DTYPE * mantissa, DTYPE * residuals)
