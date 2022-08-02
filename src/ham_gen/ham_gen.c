@@ -167,8 +167,13 @@ int check_neighbour(int index, int * nlist)
     // If yes, then return the index.
 
     int i, loc = -1;
+    #pragma omp parallel for
     for(i = 0; i < NEIGHS; i++)
     {
+        // We expect only one value of
+        // i to satisfy the below condition.
+        // So it is not necessary to protect
+        // the shared variable loc.
         if(*(nlist + i) == index)
             loc = i;
     } 
@@ -191,10 +196,8 @@ int hamiltonian_nospin(CDTYPE * ham, int len, int width,
     // Produce matrix
     int site1, site2, index;
 
-    #pragma omp parallel for
     for(site1 = 0; site1 < num_sites; site1++)
     {
-        #pragma omp parallel for
         for(site2 = 0; site2 < num_sites; site2++)
         {
             // RTC is row to column major
