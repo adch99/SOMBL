@@ -8,6 +8,11 @@
 #include "ham_gen/ham_gen.h"
 #include "utils/utils.h"
 
+// For NaN detection
+// #define _GNU_SOURCE
+// #include <fenv.h>
+
+
 //------------------------------------------------------------------------
 
 /* Struct Declarations */
@@ -72,6 +77,9 @@ static struct argp argp = { options, parse_opt, args_doc, doc, 0, 0, 0};
 
 int main(int argc, char ** argv)
 {
+    // For NaN detection
+    // feenableexcept(FE_INVALID | FE_OVERFLOW);
+
     struct SystemParams params;
     /* Default Values of Parameters */
     params.len = params.width = 20;
@@ -261,17 +269,23 @@ DTYPE post_process(struct SystemParams params, struct OutStream outfiles,
     DTYPE * dists;
     DTYPE * gfuncsq_vals;
     int data_len;
+    int bins = 10;
     DTYPE exponent, mantissa, residuals;
     // exponent = mantissa = residuals = 0;
     data_len = utils_construct_data_vs_dist(gfunc, num_states, params.len,
-                                        &dists, &gfuncsq_vals);
+                                        bins, &dists, &gfuncsq_vals);
 
 
     // Write the values to a file
     for(i = 0; i < data_len; i++)
     {
+        if(isnan(*(dists + i)) || isnan(*(gfuncsq_vals + i)))
+            printf("NaN detected in postprocess.");
+
         fprintf(outfiles.dist_vs_gfuncsq, "%e %e\n",
                 *(dists + i), *(gfuncsq_vals + i));
+        printf("%e %e\n", *(dists + i), *(gfuncsq_vals + i));
+
     }
 
     // Fit exponential to the data
@@ -279,6 +293,7 @@ DTYPE post_process(struct SystemParams params, struct OutStream outfiles,
                         &exponent, &mantissa, &residuals);
     
     printf("Residuals: %e\n", residuals);
+    printf("Exponent: %e\tMantissa: %e\n", exponent, mantissa);
     // Get localization length from exponent
     DTYPE loclen = -2 / exponent;
 
