@@ -1,5 +1,5 @@
 CC=gcc
-# CFLAGS=-Wall -Wextra -g -fdiagnostics-color=always -ffast-math -pg  -fopenmp
+# CFLAGS=-Wall -Wextra -g -fdiagnostics-color=always -ffast-math -pg -fopenmp
 # CFLAGS=-Wall -Wextra -g -fdiagnostics-color=always \
 # 	-ffast-math -pg -pedantic -W \
 # 	-Wmissing-prototypes -Wstrict-prototypes \
