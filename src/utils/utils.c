@@ -314,37 +314,54 @@ int utils_fit_exponential(DTYPE * x, DTYPE * y, int length, DTYPE * exponent,
     for(i = 0; i < length; i++)
     {
         *(logdata + i) = log(*(y + i));
+        if(isnan(*(logdata + i)))
+            printf("NaN detected in log output.\n");
     }
-    // Fit line to data using GSL or with our own formulas.
+
+    // Construct a weight function for the fitting
+    // We use 1 for the middle 80% of the data
+    // We use a linearly decaying rate for the ends.
+
+    int start_of_mid = ceil(0.1 * length);
+    int end_of_mid = length - ceil(0.1 * length);
+    DTYPE * weights = malloc(length * sizeof(DTYPE));
+    DTYPE slope = 1.0 / (DTYPE) start_of_mid;
+    for(i = start_of_mid; i < end_of_mid; i++)
+        *(weights + i) = 1;
+    
+    for(i = 0; i < start_of_mid; i++)
+        *(weights + i) = slope * i;
+
+    for(i = end_of_mid; i < length; i++)
+        *(weights + i) = 1 - slope * (i - end_of_mid);
+
+    // Fit line to data using GSL.
     DTYPE c0, c1, cov00, cov01, cov11, sumsq;
-    gsl_fit_linear(x, 1, logdata, 1, length, &c0, &c1, &cov00,
-                    &cov01, &cov11, &sumsq);
+    gsl_fit_wlinear(x, 1, weights, 1, logdata, 1, length,
+                &c0, &c1, &cov00, &cov01, &cov11, &sumsq);
+
+    if(isnan(c0) || isnan(c1))
+        printf("gsl returned NaN.\n");  
+    
     *mantissa = exp(c0);
     *exponent = c1;
+
+    if(isnan(*mantissa) || isnan(*exponent))
+        printf("mantissa or exponent are NaN.\n");  
+
 
     // Calculate residuals
     *residuals = 0;
     for(i = 0; i < length; i++)
     {   
         diff = (*mantissa) * exp((*exponent) * i);
-        *residuals += diff*diff/length;
+        *residuals += *(weights + i)  * diff*diff/length;
     }
 
     free(logdata);
     return 0;
 }
 
-
-
-struct FuncDataPoint
-{
-    DTYPE func_val;
-    int dist; // Keeping ints allows us to compare easily
-    int counter;
-    // spins: up,up = 0b00, up,down=0b01, down,up=0b10=2
-    // down,down=0b11=3
-    unsigned int spins; 
-};
 
 /*
     Takes the matrix M and calculates the function
@@ -355,155 +372,164 @@ struct FuncDataPoint
     And remember to free them after use.
 */
 int utils_construct_data_vs_dist(DTYPE * matrix, int size, int length,
-                                DTYPE ** dists, DTYPE ** func)
+                            int bins, DTYPE ** dists, DTYPE ** func)
 {
-    // Construct a list of all possible lengths
-    // Max possible lengths is (L/2)^2 choose 2, so we'll
-    // use that as our baseline for array length.
+    int i, j;
+    int nospin = (size==length*length)?1:0;
 
-    int i, j, k, total_lens, match;
-    int len, dx, dy;
-    int nospin = (size==length*length)?0:1;
-
-    // int max_poss_lens = (size*size)*((size*size) - 4) / 32;
-
-    // Let D(n) = number of distinct distances on a lattice
-    // (w/o PBCs) of side n. We computed D(n) numerically
-    // for n=0-100 and found D(n) ~ 0.33n^2 + 3.38n - 15.22
-    // D(n) ~ n^1.83 * 10^(-0.106) For lattice with PBC
-    // D_pbc(n) ≈ D(n/2) and also by the way we define our
-    // lattice, length = n + 1. So we use a safe upper bound
-    // by doing the following:    
-    int max_poss_lens;
-    if(nospin)
-        max_poss_lens = 0.4*length*length + 5*length - 14;
-    else
-        max_poss_lens = 0.4*length*length + 5*length - 14;
-
-    if(max_poss_lens < 32)
-        max_poss_lens = 32; 
-    match = 0;
-    total_lens = 0;
-    struct FuncDataPoint * data;
-    struct FuncDataPoint * datapoint;
-    data = calloc(max_poss_lens, sizeof(struct FuncDataPoint));
-
-    // While the property is named dist, within this
-    // function it will actually store dist^2 values
-    // because for the sake of comparison, it is far better
-    // to avoid the extra cost of calculating square roots.
-    // At the end, however, we will calculate the square
-    // roots and the passed value is of the distances.
-
-
-    int site_index1, site_index2;
-    unsigned int spin_index1, spin_index2;
-    unsigned int spins;
     unsigned int spin1down, spin2down;
     spin1down = spin2down = 0;
-    BIT_SET(spin1down,1);
+    BIT_SET(spin1down, 1);
     BIT_SET(spin2down, 0);
-    int site1x, site2x, site1y, site2y;
+
+    DTYPE lowest = 0;
+    DTYPE highest = length / sqrt(2);
+    DTYPE bin_width = (highest - lowest) / (DTYPE) bins;
+    int * counts = calloc(bins, sizeof(int));
+    *dists = calloc(bins, sizeof(DTYPE));
+    *func = calloc(bins, sizeof(DTYPE));
+
+    // printf("bin_width = %e\n", bin_width);
+
+    // Initialize the x values
+    // to the midpoints of the bins
+    for(i = 0; i < bins; i++)
+    {
+        *(*dists + i) = ((DTYPE) i + 0.5) * bin_width; 
+        // printf("i=%d dist=%e\n", i, *(*dists + i));
+    }
+
+    // printf("size = %d\tlength = %d\n", size, length);
 
     for(i = 0; i < size; i++)
     {
         for(j = 0; j <= i; j++)
         {
-            // I know a linear search is not the best, but
-            // the alternative is to sort at each stage and
-            // I really don't want to write an insertion
-            // sort.
+            int site1x, site2x, site1y, site2y;
+            int dx, dy;
+            unsigned int spin_index1, spin_index2;
+            unsigned int spins;
+            DTYPE len, value;
 
-            if(nospin)
-            {
-                site_index1 = i;
-                site_index2 = j;
-                spin_index1 = spin_index2 = 0;
-            }
-            else
-            {
-                site_index1 = i / 2;
-                site_index2 = j / 2;
-                spin_index1 = i % 2;
-                spin_index2 = j % 2;
-            }
-
-            site1x = site_index1 % length;
-            site1y = site_index1 / length;
-            site2x = site_index2 % length;
-            site2y = site_index2 / length;
+            utils_get_lattice_index(i, length, nospin,
+                            &site1x, &site1y, &spin_index1);
+            utils_get_lattice_index(j, length, nospin,
+                            &site2x, &site2y, &spin_index2);
  
-
             dx = abs(site1x - site2x);
             dy = abs(site1y - site2y);
+            // printf("i = %d\tj = %d\n", i, j);
+            // printf("x1 = %d\ty1 = %d\tx2 = %d\ty2 = %d\n", site1x, site1y, site2x, site2y);
+            // printf("dx = %d\tdy = %d\n", dx, dy);
             dx = INTMIN(abs(length/2-dx), dx);
             dy = INTMIN(abs(length/2-dy), dy);
-            len = dx*dx + dy*dy;
+            len = sqrt((DTYPE) (dx*dx + dy*dy));
+            // printf("dx = %d\tdy = %d\tlen = %e\n", dx, dy, len);
             spins = spin_index1*spin1down + spin_index2*spin2down;
-            match = 0;
-
-            for(k = 0; k < total_lens; k++)
-            {
-                datapoint = data + k;
-                if((datapoint->dist == len) && (datapoint->spins == spins))
-                {   
-                    match = 1;
-                    break;
-                }
-            }
-            if(match == 0)
-            {
-                datapoint = data + total_lens; // This is redundant but
-                // present for clarity
-                datapoint->dist = len;
-                datapoint->spins = spins;
-                datapoint->counter = 0;
-                datapoint->func_val = 0;
-                total_lens += 1;
-            }
 
             if(i == j)
             {
-                datapoint->counter += 1;
-                datapoint->func_val += *(matrix + RTC(i,j,size));
+                value = *(matrix + RTC(i, j, size));
+                utils_bin_data(len, value, bins, counts,
+                                lowest, bin_width, *func);
             }
             else
             {
-                datapoint->counter += 2;
-                datapoint->func_val += *(matrix + RTC(i,j,size));
-                datapoint->func_val += *(matrix + RTC(j,i,size));
+                value = *(matrix + RTC(i, j, size));
+                utils_bin_data(len, value, bins, counts,
+                                lowest, bin_width, *func);
+                value = *(matrix + RTC(j, i, size));
+                utils_bin_data(len, value, bins, counts,
+                                lowest, bin_width, *func);
             }
         }
     }
 
     // Calculate the averages
-    for(i = 0; i < total_lens; i++)
+    for(i = 0; i < bins; i++)
     {
-        datapoint = data + i;
-        datapoint->func_val /= (DTYPE) datapoint->counter;
+        if(isnan(*(*func + i)))
+        {
+            printf("NaN detected at site i = %d\n", i);
+        }
+
+        if(*(counts + i) == 0)
+        {
+            *(*func + i) = DBL_MIN;
+            // printf("bin i=%d has counts=%d\n", i, *(counts + i));
+        }
+        else
+            *(*func + i) /= (DTYPE) *(counts + i);
     }
 
-    // Sort the array
-    qsort(data, total_lens, sizeof(struct FuncDataPoint), utils_compare_datapoints);
-
-    *dists = malloc(total_lens * sizeof(DTYPE));
-    *func = malloc(total_lens * sizeof(DTYPE));
-    
-    for(i = 0; i < total_lens; i++)
-    {
-        datapoint = data + i;
-        *(*dists + i) = sqrt((DTYPE) datapoint->dist);
-        *(*func + i) = datapoint->func_val;
-    }
-    
-    free(data);
-
-    return(total_lens);
+    return(bins);
 }
 
-int utils_compare_datapoints(const void * a, const void * b)
+/*
+    Given the matrix index `index`, returns the (x,y)
+    position index on the lattice as well the appropriate
+    spin index. For nospin=1, spin is set to 0. 
+*/
+int utils_get_lattice_index(int index, int length, int nospin,
+                        int * x, int * y, unsigned int * spin)
 {
-  const struct FuncDataPoint * da = (const struct FuncDataPoint *) a;
-  const struct FuncDataPoint * db = (const struct FuncDataPoint *) b;
-  return (da->dist > db->dist) - (da->dist < db->dist);
+    int site_index;
+    if(nospin == 1)
+    {
+        site_index = index;
+        *spin = 0;
+    }
+    else
+    {
+        site_index = index / 2;
+        *spin = (unsigned int) (index % 2);
+    }
+    
+    *x = site_index % length;
+    *y = site_index / length;
+
+    return(0);
+}
+
+int utils_bin_data(DTYPE index, DTYPE value, int bins, int * counts,
+                DTYPE lowest, DTYPE bin_width, DTYPE * value_hist)
+{
+    /*
+        Each data point is an index and a value.
+        The index determines which bin the data
+        point goes into. The value is added to
+        the sum corresponding to that bin.
+        At the end, this will be averaged out. 
+    */
+
+    if(isnan(value) || isnan(index))
+    {
+        printf("NaN value passed\nvalue = %e\nindex = %e\n", value, index);
+        return(-1);
+    }
+
+    int bin_num = (int) floor((index - lowest) / bin_width);
+
+    if (bin_num >= bins || bin_num < 0)
+    {
+        printf("Value %e doesn't lie in range: 0 - %e\n", index, bin_width*bins);
+        return(-1);
+    }
+
+    *(counts + bin_num) += 1;
+    *(value_hist + bin_num) += value;
+
+    return(0);
+}
+
+
+DTYPE utils_pbc_chord_length(int index1, int length1, int index2, int length2)
+{
+    DTYPE radius1 = (DTYPE) length1 / (2.0 * M_PI);
+    DTYPE radius2 = (DTYPE) length2 / (2.0 * M_PI);
+
+    DTYPE angle1 = 2.0 * M_PI * ((DTYPE) index1 / (DTYPE) length1);
+    DTYPE angle2 = 2.0 * M_PI * ((DTYPE) index2 / (DTYPE) length2);
+    
+    return 0;   
 }

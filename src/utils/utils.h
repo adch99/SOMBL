@@ -21,10 +21,16 @@ int utils_fit_exponential(DTYPE * x, DTYPE * y, int length, DTYPE * exponent,
                         DTYPE * mantissa, DTYPE * residuals);
 int utils_get_green_func_lim(CDTYPE * eigenvectors, int size,
                         DTYPE * green_func);
+<<<<<<< HEAD
 DTYPE utils_compute_gfsq_elem(int i, int j, CDTYPE * eigenvectors, int size);
+=======
+int utils_get_lattice_index(int index, int length, int nospin,
+                        int * x, int * y, unsigned int * spin);
+>>>>>>> main
 int utils_construct_data_vs_dist(DTYPE * matrix, int size, int length,
-                                DTYPE ** dists, DTYPE ** func);
-int utils_compare_datapoints(const void * a, const void * b);
+                            int bins, DTYPE ** dists, DTYPE ** func);
+int utils_bin_data(DTYPE index, DTYPE value, int bins, int * counts,
+                DTYPE lowest, DTYPE bin_width, DTYPE * value_hist);
 
 // Bitwise manipulations
 // From SO community wiki post
