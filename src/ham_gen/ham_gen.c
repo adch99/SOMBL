@@ -15,8 +15,8 @@ int hamiltonian(CDTYPE * ham, int len, int width,
     // Produce disorder
     DTYPE * disorder;
     disorder = malloc(sizeof(DTYPE)*num_sites);
-    int low = -disorder_strength / 2.0;
-    int high = disorder_strength / 2.0;
+    DTYPE low = -disorder_strength / 2.0;
+    DTYPE high = disorder_strength / 2.0;
     utils_uniform_dist(low, high, num_sites, disorder, 0);
     // Produce matrix
     int site1, site2, index_up_up, index_dn_dn, index_up_dn, index_dn_up;

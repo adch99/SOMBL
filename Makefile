@@ -1,8 +1,14 @@
 CC=gcc
-CFLAGS=-Wall -Wextra -g -fdiagnostics-color=always -ffast-math -pg
+# CFLAGS=-Wall -Wextra -g -fdiagnostics-color=always -ffast-math -pg
+# CFLAGS=-Wall -Wextra -g -fdiagnostics-color=always \
+# 	-ffast-math -pg -pedantic -W \
+# 	-Wmissing-prototypes -Wstrict-prototypes \
+# 	-Wconversion -Wshadow -Wpointer-arith -Wcast-qual \
+# 	-Wcast-align -Wwrite-strings -Wnested-externs \
+# 	-fshort-enums -fno-common -Dinline= -g -O2
 # CFLAGS=-Wall -Wextra -g -fdiagnostics-color=always -ffast-math -pg -fprofile-arcs -ftest-coverage
 # CFLAGS=-Wall -Wextra -g -pg
-# CFLAGS=-O2 -ffast-math
+CFLAGS=-O2 -ffast-math
 LFLAGS=-llapacke -lm -lgsl -lcblas -pg
 # LFLAGS=-llapacke -lm -lgsl -lcblas -pg -lgcov
 ERRORLOG=logs/compiler_error.log
