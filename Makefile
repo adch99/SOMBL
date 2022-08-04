@@ -1,5 +1,5 @@
 CC=gcc
-# CFLAGS=-Wall -Wextra -g -fdiagnostics-color=always -ffast-math -pg -fopenmp
+CFLAGS=-Wall -Wextra -g -fdiagnostics-color=always -ffast-math -fopenmp -pg -O2
 # CFLAGS=-Wall -Wextra -g -fdiagnostics-color=always \
 # 	-ffast-math -pg -pedantic -W \
 # 	-Wmissing-prototypes -Wstrict-prototypes \
@@ -9,7 +9,7 @@ CC=gcc
 # CFLAGS=-Wall -Wextra -g -fdiagnostics-color=always \
 #	-ffast-math -pg -fprofile-arcs -ftest-coverage -fopenmp
 # CFLAGS=-Wall -Wextra -g -pg  -fopenmp
-CFLAGS=-O2 -ffast-math -fopenmp
+# CFLAGS=-O2 -ffast-math -fopenmp
 LFLAGS=-llapacke -lm -lgsl -lcblas -pg
 # LFLAGS=-llapacke -lm -lgsl -lcblas -pg -lgcov
 ERRORLOG=logs/compiler_error.log

@@ -214,7 +214,7 @@ int run(struct SystemParams * params, int create_neighbours,
     // Create hamiltonian
     CDTYPE * ham = calloc(num_states*num_states,sizeof(CDTYPE));
     
-    if(params->nospin)
+    if(params->nospin == 1)
         hamiltonian_nospin(ham, params->len, params->width,
                 params->disorder_strength, params->hop_strength,
                 params->neighbours);
