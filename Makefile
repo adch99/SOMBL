@@ -1,4 +1,4 @@
-CC=gcc
+CC=scorep gcc
 CFLAGS=-Wall -Wextra -g -fdiagnostics-color=always -ffast-math -fopenmp -pg -O2
 # CFLAGS=-Wall -Wextra -g -fdiagnostics-color=always \
 # 	-ffast-math -pg -pedantic -W \

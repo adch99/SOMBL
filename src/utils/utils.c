@@ -322,8 +322,8 @@ int utils_fit_exponential(DTYPE * x, DTYPE * y, int length, DTYPE * exponent,
     // We use 1 for the middle 80% of the data
     // We use a linearly decaying rate for the ends.
 
-    int start_of_mid = ceil(0.1 * length);
-    int end_of_mid = length - ceil(0.1 * length);
+    int start_of_mid = ceil(0.25 * length);
+    int end_of_mid = length - ceil(0.25 * length);
     DTYPE * weights = malloc(length * sizeof(DTYPE));
     DTYPE slope = 1.0 / (DTYPE) start_of_mid;
     for(i = start_of_mid; i < end_of_mid; i++)
@@ -530,6 +530,6 @@ DTYPE utils_pbc_chord_length(int index1, int length1, int index2, int length2)
 
     DTYPE angle1 = 2.0 * M_PI * ((DTYPE) index1 / (DTYPE) length1);
     DTYPE angle2 = 2.0 * M_PI * ((DTYPE) index2 / (DTYPE) length2);
-    
+
     return 0;   
 }
