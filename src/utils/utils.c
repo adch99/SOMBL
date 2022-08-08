@@ -531,5 +531,7 @@ DTYPE utils_pbc_chord_length(int index1, int length1, int index2, int length2)
     DTYPE angle1 = 2.0 * M_PI * ((DTYPE) index1 / (DTYPE) length1);
     DTYPE angle2 = 2.0 * M_PI * ((DTYPE) index2 / (DTYPE) length2);
 
+    
+
     return 0;   
 }

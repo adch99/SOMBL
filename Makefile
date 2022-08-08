@@ -1,5 +1,8 @@
-CC=scorep gcc
-CFLAGS=-Wall -Wextra -g -fdiagnostics-color=always -ffast-math -fopenmp -pg -O2
+# TAU_MAKEFILE=Makefile.tau
+# CC=tau_cc.sh
+CC=gcc
+# CFLAGS=-Wall -Wextra -g -fdiagnostics-color=always -ffast-math -fopenmp -pg -O2
+# CFLAGS=-Wall -Wextra -g -fdiagnostics-color=always -ffast-math -fopenmp -pg -O2 -tau_makefile=$(TAU_MAKEFILE)
 # CFLAGS=-Wall -Wextra -g -fdiagnostics-color=always \
 # 	-ffast-math -pg -pedantic -W \
 # 	-Wmissing-prototypes -Wstrict-prototypes \
@@ -9,7 +12,8 @@ CFLAGS=-Wall -Wextra -g -fdiagnostics-color=always -ffast-math -fopenmp -pg -O2
 # CFLAGS=-Wall -Wextra -g -fdiagnostics-color=always \
 #	-ffast-math -pg -fprofile-arcs -ftest-coverage -fopenmp
 # CFLAGS=-Wall -Wextra -g -pg  -fopenmp
-# CFLAGS=-O2 -ffast-math -fopenmp
+# CFLAGS=-O2 -ffast-math -fopenmp -I/home/aditya/Build/tau-2.31.1/x86_64/lib -I/home/aditya/Build/pdtoolkit-3.25/x86_64/lib 
+CFLAGS=-O2 -ffast-math -fopenmp 
 LFLAGS=-llapacke -lm -lgsl -lcblas -pg
 # LFLAGS=-llapacke -lm -lgsl -lcblas -pg -lgcov
 ERRORLOG=logs/compiler_error.log

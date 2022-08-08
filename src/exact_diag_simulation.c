@@ -169,9 +169,9 @@ struct OutStream set_up_datastream(struct SystemParams params)
     else
       strcpy(base, "data/mbl");
 
-    sprintf(basename, "%s_%dx%d_W%.4g_C%.4g_T%.4g_", base, params.len,
+    sprintf(basename, "%s_%dx%d_W%.4g_C%.4g_T%.4g_N%d_", base, params.len,
             params.width, params.disorder_strength, params.coupling_const,
-            params.hop_strength);
+            params.hop_strength, params.numRuns);
     sprintf(gfuncname, "%sgreenfuncsq.dat", basename);
     sprintf(dvsgfname, "%sdistvsgfsq.dat", basename);
 
