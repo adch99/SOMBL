@@ -36,10 +36,13 @@ int hamiltonian(CDTYPE * ham, int len, int width,
 
             if (site1 == site2)
             {
-                *(ham + index_up_up) = *(disorder + site1);
-                *(ham + index_dn_dn) = *(disorder + site1);
-                *(ham + index_up_dn) = 0;
-                *(ham + index_dn_up) = 0;
+                #pragma omp critical
+                {
+                    *(ham + index_up_up) = *(disorder + site1);
+                    *(ham + index_dn_dn) = *(disorder + site1);
+                    *(ham + index_up_dn) = 0;
+                    *(ham + index_dn_up) = 0;
+                }
             }
 
             else
@@ -49,38 +52,53 @@ int hamiltonian(CDTYPE * ham, int len, int width,
                 switch(loc)
                 {
                     case -1:
-                        *(ham + index_up_up) = 0;
-                        *(ham + index_dn_dn) = 0;
-                        *(ham + index_up_dn) = 0;
-                        *(ham + index_dn_up) = 0;
+                        #pragma omp critical
+                        {
+                            *(ham + index_up_up) = 0;
+                            *(ham + index_dn_dn) = 0;
+                            *(ham + index_up_dn) = 0;
+                            *(ham + index_dn_up) = 0;
+                        }
                         break;
 
                     case 0:
-                        *(ham + index_up_up) = -hop_strength;
-                        *(ham + index_dn_dn) = -hop_strength;
-                        *(ham + index_up_dn) = coupling_const;
-                        *(ham + index_dn_up) = -coupling_const;
+                        #pragma omp critical
+                        {
+                            *(ham + index_up_up) = -hop_strength;
+                            *(ham + index_dn_dn) = -hop_strength;
+                            *(ham + index_up_dn) = coupling_const;
+                            *(ham + index_dn_up) = -coupling_const;
+                        }
                         break; 
 
                     case 1:
-                        *(ham + index_up_up) = -hop_strength;
-                        *(ham + index_dn_dn) = -hop_strength;
-                        *(ham + index_up_dn) = -coupling_const;
-                        *(ham + index_dn_up) = coupling_const;
+                        #pragma omp critical
+                        {
+                            *(ham + index_up_up) = -hop_strength;
+                            *(ham + index_dn_dn) = -hop_strength;
+                            *(ham + index_up_dn) = -coupling_const;
+                            *(ham + index_dn_up) = coupling_const;
+                        }
                         break; 
 
                     case 2:
-                        *(ham + index_up_up) = -hop_strength;
-                        *(ham + index_dn_dn) = -hop_strength;
-                        *(ham + index_up_dn) = -I*coupling_const;
-                        *(ham + index_dn_up) = -I*coupling_const;
+                        #pragma omp critical
+                        {
+                            *(ham + index_up_up) = -hop_strength;
+                            *(ham + index_dn_dn) = -hop_strength;
+                            *(ham + index_up_dn) = -I*coupling_const;
+                            *(ham + index_dn_up) = -I*coupling_const;
+                        }
                         break; 
 
                     case 3:
-                        *(ham + index_up_up) = -hop_strength;
-                        *(ham + index_dn_dn) = -hop_strength;
-                        *(ham + index_up_dn) = I*coupling_const;
-                        *(ham + index_dn_up) = -I*coupling_const;
+                        #pragma omp critical
+                        {
+                            *(ham + index_up_up) = -hop_strength;
+                            *(ham + index_dn_dn) = -hop_strength;
+                            *(ham + index_up_dn) = I*coupling_const;
+                            *(ham + index_dn_up) = -I*coupling_const;
+                        }
                         break; 
                 }
             }

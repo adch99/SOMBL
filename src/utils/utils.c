@@ -284,7 +284,7 @@ DTYPE utils_compute_gfsq_elem(int i, int j, CDTYPE * eigenvectors, int size)
 {
     DTYPE sum = 0.0;
     int k;
-    #pragma omp parallel for reduction (+:sum) schedule(static)
+    #pragma omp parallel for reduction (+:sum) schedule(auto)
     for(k = 0; k < size; k++)
     {
         int index1, index2;
@@ -530,6 +530,8 @@ DTYPE utils_pbc_chord_length(int index1, int length1, int index2, int length2)
 
     DTYPE angle1 = 2.0 * M_PI * ((DTYPE) index1 / (DTYPE) length1);
     DTYPE angle2 = 2.0 * M_PI * ((DTYPE) index2 / (DTYPE) length2);
+
+
 
     return 0;   
 }
