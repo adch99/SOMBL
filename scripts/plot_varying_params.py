@@ -7,7 +7,7 @@ params = {
     "coupling_const":   0.0,
     "hop_strength":     1.0,
     "disorder_vals":    np.linspace(5, 20, 11),
-    "size":             10,
+    "size":             40,
     "num_runs":         100,
     "nospin":           True
 }
