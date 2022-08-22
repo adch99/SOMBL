@@ -1,37 +1,33 @@
 CC=gcc
-# CFLAGS=-Wall -Wextra -g -fdiagnostics-color=always -ffast-math -fopenmp -pg -O2
-# TAU_MAKEFILE=Makefile.tau
-# CC=tau_cc.sh
-# CFLAGS=-Wall -Wextra -g -fdiagnostics-color=always \
-# 	-ffast-math -pg -pedantic -W \
-# 	-Wmissing-prototypes -Wstrict-prototypes \
-# 	-Wconversion -Wshadow -Wpointer-arith -Wcast-qual \
-# 	-Wcast-align -Wwrite-strings -Wnested-externs \
-# 	-fshort-enums -fno-common -Dinline= -g -O2 -fopenmp
-# CFLAGS=-Wall -Wextra -g -pg  -fopenmp
-CFLAGS=-O2 -ffast-math -fopenmp
-LFLAGS=-llapacke -lm -lgsl -lblas
-# LFLAGS=-llapacke -lm -lgsl -lcblas -pg -lgcov
+CFLAGS=-Wall -Wextra -g -fdiagnostics-color=always -ffast-math -fopenmp
+# CFLAGS=-O2 -ffast-math -fopenmp
+LFLAGS=-llapacke -lm -lgsl -lcblas
 ERRORLOG=logs/compiler_error.log
 
-default: exactdiag
+_DEPS = utils/utils.c ham_gen/ham_gen.c params/params.c
+DEPS = $(patsubst %,src/%,$(_DEPS))
 
-exactdiag: hamgen utils
-	$(CC) $(CFLAGS) src/exact_diag_simulation.c -o build/exact_diag_simulation build/ham_gen/ham_gen.o build/utils/utils.o $(LFLAGS)| tee $(ERRORLOG)
+OBJ = $(patsubst %.c,build/%.o,$(_DEPS))
 
-exactdiag1d: hamgen utils
-	$(CC) $(CFLAGS) src/1d_exact_diag_simulation.c -o build/1d_exact_diag_simulation build/ham_gen/ham_gen.o build/utils/utils.o $(LFLAGS)| tee $(ERRORLOG)
+TESTS = $(wildcard tests/*.c)
 
-hamgen: utils
-	$(CC) $(CFLAGS) src/ham_gen/ham_gen.c -o build/ham_gen/ham_gen.o -c
+default: exact_diag_simulation calculate_dist_vs_gfuncsq
 
-utils: 
-	$(CC) $(CFLAGS) src/utils/utils.c -o build/utils/utils.o -c
+build/%.o: src/%.c
+	$(CC) -c -o $@ $^ $(CFLAGS)
 
-tests: utils hamgen
-	$(CC) $(CFLAGS) tests/test_utils.c -o build/tests/test_utils build/utils/utils.o $(LFLAGS)
-	$(CC) $(CFLAGS) tests/test_ham_gen.c -o build/tests/test_ham_gen build/utils/utils.o build/ham_gen/ham_gen.o $(LFLAGS)
-	$(CC) $(CFLAGS) tests/check_matrix.c -o build/tests/check_matrix build/utils/utils.o build/ham_gen/ham_gen.o $(LFLAGS)
+exact_diag_simulation: $(OBJ)
+	$(CC) -o build/$@ src/$@.c $^ $(CFLAGS) $(LFLAGS)
+
+calculate_dist_vs_gfuncsq: $(OBJ)
+	$(CC) -o build/$@ src/$@.c $^ $(CFLAGS) $(LFLAGS)
+
+build/tests/%: tests/%.c $(OBJ)
+	$(CC) -o $@ $^ $(CFLAGS) $(LFLAGS)
+
+tests: $(patsubst tests/%.c,build/tests/%,$(TESTS))
+
 clean:
 	rm -rf build/*/*.o build/exact_diag_simulation
+	find data -size 0 -print -delete
 

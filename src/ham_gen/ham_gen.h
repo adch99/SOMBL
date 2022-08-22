@@ -3,8 +3,6 @@
 
 #include "../constants.h"
 
-#define NEIGHS 4
-
 int hamiltonian(CDTYPE * ham, int len, int width,
                 DTYPE coupling_const, DTYPE disorder_strength,
                 DTYPE hop_strength, int (* neighbours)[NEIGHS]);
