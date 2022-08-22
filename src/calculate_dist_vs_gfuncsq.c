@@ -28,7 +28,7 @@ static struct argp_option options[] = {
   {"disorder", 'w', "DISORDER", 0, "Strength of the disorder",               0},
   {"hopping",  't', "HOPPING",  0, "Strength of the hopping",                0},
   {"runs",     'n', "NUMRUNS",  0, "Number of runs in the disorder average", 0},
-  {"spinless", 'p', 0,          0, "Use a spinless model hamiltonian.",      0},
+  {"nospin",   'p', 0,          0, "Use a spinless model hamiltonian.",      0},
   { 0 }
 };
 // Our argp parser.
@@ -37,8 +37,10 @@ static struct argp argp = { options, params_parse_opt, args_doc, doc, 0, 0, 0};
 
 int setup(int argc, char ** argv, struct SystemParams * params,
         struct OutStream * outfiles);
-
-
+int get_gfuncsq_data(DTYPE * matrix, struct OutStream outfiles,
+                    struct SystemParams params);
+int output_function_data(DTYPE * dists, DTYPE * gfuncsq,
+                        struct OutStream outfiles, int data_len);
 
 
 int main(int argc, char ** argv)
@@ -58,9 +60,23 @@ int main(int argc, char ** argv)
 
 
     // Get the gfuncsq matrix from the data file
+    DTYPE * matrix = malloc(params.num_states*params.num_states*sizeof(DTYPE));
+    get_gfuncsq_data(matrix, outfiles, params);
+    // utils_print_matrix(matrix, params.num_states, params.num_states, 'R', 'F');
     // Bin the gfunsq matrix and create a function of
     // distance G^2(|r_i - r_j|)
+    DTYPE * dists;
+    DTYPE * gfuncsq;
+    int data_len;
+    // Let's bin the data into bins of width 1.
+    int bins = ceil((DTYPE) params.len / 2.0);
+    data_len = utils_construct_data_vs_dist(matrix, params.num_states, params.len,
+                                        bins, &dists, &gfuncsq);
+    output_function_data(dists, gfuncsq, outfiles, data_len);
 
+    free(matrix);
+    free(dists);
+    free(gfuncsq);
     return 0;
 }
 
@@ -89,52 +105,52 @@ int setup(int argc, char ** argv, struct SystemParams * params,
     return 0;
 }
 
-int get_gfuncsq_data()
+int get_gfuncsq_data(DTYPE * matrix, struct OutStream outfiles,
+                    struct SystemParams params)
 {
+    FILE * datafile = fopen(outfiles.gfuncsq, "r");
+
+    if(datafile == NULL)
+    {
+        printf("Cannot open file %s!\n", outfiles.gfuncsq);
+        return(-1);
+    }
+
+    int i, j, index;
+    DTYPE elem;
+    for(i = 0; i < params.num_states; i++)
+    {
+        for(j = 0; j < params.num_states; j++)
+        {
+            index = RTC(i, j, params.num_states);
+            fscanf(datafile, "%lf", &elem);
+            *(matrix + index) = elem;
+        }
+    }
+    fclose(datafile);
     return 0;
 }
 
-DTYPE post_process(struct SystemParams params, struct OutStream outfiles,
-                DTYPE * gfunc)
+int output_function_data(DTYPE * dists, DTYPE * gfuncsq,
+                        struct OutStream outfiles, int data_len)
 {
-    int i;
-    int num_states = params.num_states;
-
-
-    // Construct gfunc vs distance datapoints
-    DTYPE * dists;
-    DTYPE * gfuncsq_vals;
-    int data_len;
-    int bins = 10;
-    DTYPE exponent, mantissa, residuals;
-    // exponent = mantissa = residuals = 0;
-    data_len = utils_construct_data_vs_dist(gfunc, num_states, params.len,
-                                        bins, &dists, &gfuncsq_vals);
-
-
     // Write the values to a file
     FILE * ofile = fopen(outfiles.dist_vs_gfuncsq, "w");
+    if (ofile == NULL)
+    {
+        printf("Cannot open file %s!", outfiles.dist_vs_gfuncsq);
+        return(-1);
+    }
+    int i;
     for(i = 0; i < data_len; i++)
     {
-        if(isnan(*(dists + i)) || isnan(*(gfuncsq_vals + i)))
+        if(isnan(*(dists + i)) || isnan(*(gfuncsq + i)))
             printf("NaN detected in postprocess.");
 
-        fprintf(ofile, "%e %e\n", *(dists + i), *(gfuncsq_vals + i));
-        printf("%e %e\n", *(dists + i), *(gfuncsq_vals + i));
+        fprintf(ofile, "%e %e\n", *(dists + i), *(gfuncsq + i));
+        printf("%e %e\n", *(dists + i), *(gfuncsq + i));
 
     }
     fclose(ofile);
-
-    // Fit exponential to the data
-    utils_fit_exponential(dists, gfuncsq_vals, data_len,
-                        &exponent, &mantissa, &residuals);
-    
-    printf("Residuals: %e\n", residuals);
-    printf("Exponent: %e\tMantissa: %e\n", exponent, mantissa);
-    // Get localization length from exponent
-    DTYPE loclen = -2 / exponent;
-
-    free(dists);
-    free(gfuncsq_vals);
-    return(loclen);
+    return 0;
 }

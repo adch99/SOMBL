@@ -427,7 +427,13 @@ int utils_construct_data_vs_dist(DTYPE * matrix, int size, int length,
     BIT_SET(spin2down, 0);
 
     DTYPE lowest = 0;
-    DTYPE highest = length / sqrt(2);
+
+    // For our purposes, we will ignore the
+    // range outside length/2. Change the
+    // line below to include the entire range
+    // DTYPE highest = length / sqrt(2);
+    DTYPE highest = (DTYPE) length / 2.0;
+
     DTYPE bin_width = (highest - lowest) / (DTYPE) bins;
     int * counts = calloc(bins, sizeof(int));
     *dists = calloc(bins, sizeof(DTYPE));
@@ -543,6 +549,8 @@ int utils_bin_data(DTYPE index, DTYPE value, int bins, int * counts,
         The index determines which bin the data
         point goes into. The value is added to
         the sum corresponding to that bin.
+        If the index value is outside the range
+        [lowest, highest] then it is ignored.
         At the end, this will be averaged out. 
     */
 

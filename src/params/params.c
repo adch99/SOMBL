@@ -1,6 +1,7 @@
 #include <argp.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include "params.h"
 #include "../constants.h"
 
@@ -43,8 +44,8 @@ struct OutStream params_set_up_datastream(struct SystemParams params)
     struct OutStream outfiles;
     char base[16];
     char basename[64];
-    FILE * gfuncsq_file;
-    FILE * dist_vs_gfuncsq_file;
+    // int gfuncsq_check;
+    // int dist_vs_gfuncsq_check;
 
     if (params.nospin)
       strcpy(base, "data/mbl_nospin");
@@ -57,22 +58,22 @@ struct OutStream params_set_up_datastream(struct SystemParams params)
     sprintf(outfiles.gfuncsq, "%sgreenfuncsq.dat", basename);
     sprintf(outfiles.dist_vs_gfuncsq, "%sdistvsgfsq.dat", basename);
 
-    gfuncsq_file = fopen(outfiles.gfuncsq, "w");
-    dist_vs_gfuncsq_file = fopen(outfiles.dist_vs_gfuncsq, "w");
+    // gfuncsq_check = access(outfiles.gfuncsq, W_OK);
+    // dist_vs_gfuncsq_check = access(outfiles.dist_vs_gfuncsq, W_OK);
     
-    if (gfuncsq_file == NULL)
-    {
-        printf("Failed to open %s", outfiles.gfuncsq);
-        exit(1);
-    }
-    if (dist_vs_gfuncsq_file == NULL)
-    {
-        printf("Failed to open %s", outfiles.dist_vs_gfuncsq);
-        exit(1);
-    }
+    // if (gfuncsq_check != 0)
+    // {
+    //     printf("Cannot open %s!\n", outfiles.gfuncsq);
+    //     exit(1);
+    // }
+    // if (dist_vs_gfuncsq_check != 0)
+    // {
+    //     printf("Cannot open %s!\n", outfiles.dist_vs_gfuncsq);
+    //     exit(1);
+    // }
 
-    fclose(dist_vs_gfuncsq_file);
-    fclose(gfuncsq_file);
+    // fclose(dist_vs_gfuncsq_file);
+    // fclose(gfuncsq_file);
 
     return(outfiles);
 }

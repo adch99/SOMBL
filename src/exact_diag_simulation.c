@@ -44,7 +44,7 @@ static struct argp_option options[] = {
   {"disorder", 'w', "DISORDER", 0, "Strength of the disorder",               0},
   {"hopping",  't', "HOPPING",  0, "Strength of the hopping",                0},
   {"runs",     'n', "NUMRUNS",  0, "Number of runs in the disorder average", 0},
-  {"spinless", 'p', 0,          0, "Use a spinless model hamiltonian.",      0},
+  {"nospin",   'p', 0,          0, "Use a spinless model hamiltonian.",      0},
   { 0 }
 };
 // Our argp parser.
@@ -175,6 +175,11 @@ int output_gfuncsq_matrix(int runs_done, DTYPE * gfuncsq,
     int i, j;
     DTYPE elem;
     FILE * ofile = fopen(outfiles.gfuncsq, "w");
+    if (ofile == NULL)
+    {
+        printf("Cannot open file %s!\n", outfiles.gfuncsq);
+        return(-1);
+    }
     // Divide the gfunc matrix to get disorder avged Green's function
     for(i = 0; i < params.num_states; i++)
     {
