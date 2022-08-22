@@ -6,5 +6,6 @@
 #define DTYPE double
 #define CDTYPE complex double
 
+#define NEIGHS 4
 
 #endif

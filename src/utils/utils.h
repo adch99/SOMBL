@@ -16,6 +16,8 @@ int utils_print_matrix_complex_F(CDTYPE * matrix, int m, int n);
 int utils_print_matrix_real_C(DTYPE * matrix, int m, int n);
 int utils_print_matrix(void * matrix, int m, int n,
                     char type, char ordering);
+int utils_save_matrix(void * matrix, int m, int n,
+                    char type, char ordering, FILE * ofile);
 int utils_get_eigh(CDTYPE * matrix, int size, DTYPE * eigvals);
 int utils_fit_exponential(DTYPE * x, DTYPE * y, int length, DTYPE * exponent,
                         DTYPE * mantissa, DTYPE * residuals);
