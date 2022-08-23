@@ -431,7 +431,7 @@ int utils_construct_data_vs_dist(DTYPE * matrix, int size, int length,
     // For our purposes, we will ignore the
     // range outside length/2. Change the
     // line below to include the entire range
-    // DTYPE highest = length / sqrt(2);
+    // DTYPE highest = floor(length / sqrt(2));
     DTYPE highest = (DTYPE) length / 2.0;
 
     DTYPE bin_width = (highest - lowest) / (DTYPE) bins;
