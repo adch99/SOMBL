@@ -1,4 +1,6 @@
+#!/usr/bin/env python3
 import argparse
+import json
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -7,6 +9,18 @@ def main():
     data = getData(params)
     fit_vals = fitData(data, params)
     plotData(fit_vals, data, params)
+    exp, mant, resid, cutoff = fit_vals
+    # print(f"xi:\t{-2/exp:e}")
+    # print(f"residpp:\t{resid:e}")
+    # print(f"cutoff:\t{cutoff}")
+    output = {
+        "xi": -2 / exp,
+        "residpp": resid,
+        "cutoff": cutoff
+    }
+    print(json.dumps(output))
+    if not params.silent:
+        plt.show()
 
 def getParams():
     desc = """
@@ -26,6 +40,8 @@ def getParams():
     parser.add_argument("-n", "--runs", help="Number of runs in the disorder average",
                         type=int, default=100)
     parser.add_argument("-p", "--nospin", help="Use a spinless model hamiltonian.",
+                        action="store_true")
+    parser.add_argument("--silent", help="Do not show the plot interactively.",
                         action="store_true")
     params = parser.parse_args()
 
@@ -49,16 +65,18 @@ def getFilename(params):
 def fitData(data, params):
     poly = np.polynomial.polynomial.Polynomial
     dists, gfuncsq = data
+    num_points = dists.shape[0]
     diff = -1000
     residuals = 10000
     cutoff = -1
-    while diff < 0:
+    while diff < 0 and (num_points - cutoff) >= 4: 
+        # We need at least 3 points, hence the second condition
         cutoff += 1
         last_residuals = residuals
         x = dists[cutoff:]
         y = np.log(gfuncsq[cutoff:])
         series, extras = poly.fit(x, y, deg=1, full=True)
-        residuals = extras[0] / (dists.shape[0] - cutoff)
+        residuals = extras[0][0] / (num_points - cutoff)
         diff = residuals - last_residuals
    
     c0, c1 = series.convert().coef
@@ -71,11 +89,12 @@ def plotData(fit_vals, data, params):
     dists, gfuncsq = data
     x = np.linspace(dists[cutoff], dists[-1], 100)
     y = mant * np.exp(exp*x)
-    fig, axes = plt.subplots()
+    fig, axes = plt.subplots(figsize=(12, 8))
     if cutoff > 0:
         axes.scatter(dists[:cutoff], gfuncsq[:cutoff], label="Excluded")
     axes.scatter(dists[cutoff:], gfuncsq[cutoff:], label="Main Data")
     axes.plot(x, y)
+    axes.set_yscale("log")
     axes.set_xlabel(r"$r$")
     axes.set_ylabel(r"$G_R^2(r)$")
     axes.set_title(f"Exponential Fit of y = {mant:.3e}*exp({exp:.3e}x)")
@@ -88,4 +107,3 @@ def plotData(fit_vals, data, params):
 
 if __name__ == "__main__":
     main()
-    plt.show()
