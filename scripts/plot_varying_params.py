@@ -1,7 +1,5 @@
-#!/usr/bin/env python3
 import subprocess
 import time
-import json
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -21,77 +19,34 @@ def getFilename(params):
     basename = "mbl_nospin" if params["nospin"] else "mbl"
     basename += f"_{params['size']}x{params['size']}"
     basename += f"_W{W_min}to{W_max}"
-    basename += f"_T{params['hop_strength']}"
-    basename += f"_C{params['coupling_const']}"
-    basename += f"_N{params['num_runs']}"
+    basename += f"_t{params['hop_strength']}"
+    basename += f"_c{params['coupling_const']}"
+    basename += f"_n{params['num_runs']}"
     basename += "_Xi_vs_W"
     return basename
 
 
-def runExactDiag(params):
-    print("Starting exact diagonalizations")
-    for i, disorder_strength in enumerate(params['disorder_vals']):
-        args = ["build/exact_diag_simulation",
-                "-s", f"{params['size']}",
-                "-c", f"{params['coupling_const']}",
-                "-t", f"{params['hop_strength']}",
-                "-w", f"{disorder_strength}",
-                "-n", f"{params['num_runs']}"]
-        if params["nospin"]:
-            args.append("-p")
+def getData(params):
 
-        print(f"DIAG: W = {disorder_strength:.2f} Started...", end="", flush=True)
-        start_time = time.time()
-        result = subprocess.run(args, capture_output=True, text=True)
-        result.check_returncode()
-        time_taken = time.time() - start_time
-        print(f"Done in {time_taken:.1f}s")
-
-
-def runFuncCalc(params):
-    print("Starting calculation of G(r)")
-    for i, disorder_strength in enumerate(params['disorder_vals']):
-        args = ["build/calculate_dist_vs_gfuncsq",
-                "-s", f"{params['size']}",
-                "-c", f"{params['coupling_const']}",
-                "-t", f"{params['hop_strength']}",
-                "-w", f"{disorder_strength}",
-                "-n", f"{params['num_runs']}"]
-        if params["nospin"]:
-            args.append("-p")
-
-        print(f"FUNC: W = {disorder_strength:.2e} Started...", end="", flush=True)
-        start_time = time.time()
-        result = subprocess.run(args, capture_output=True, text=True)
-        result.check_returncode()
-        time_taken = time.time() - start_time
-        print(f"Done in {time_taken:.1f}s")
-
-
-def runLocLens(params):
     loc_lens = np.zeros(params['disorder_vals'].shape)
-    print(f"{'W':5} {'Xi':11} {'Time':5} {'Residpp':11} {'Cutoff':5}")
+    print(f"{'W':5} {'Xi':11} {'Time':5}")
 
     for i, disorder_strength in enumerate(params['disorder_vals']):
-        args = ["scripts/calculate_loc_lens.py",
+        args = ["./build/exact_diag_simulation",
                 "-s", f"{params['size']}",
                 "-c", f"{params['coupling_const']}",
                 "-t", f"{params['hop_strength']}",
                 "-w", f"{disorder_strength}",
                 "-n", f"{params['num_runs']}",
-                "--silent"]
-
-        if params["nospin"]:
-            args.append("-p")
-
+                "-p"]
         start_time = time.time()
         result = subprocess.run(args, capture_output=True, text=True)
         result.check_returncode()
         time_taken = time.time() - start_time
-        data = json.loads(result.stdout)
-        loc_lens[i] = data["xi"]
-        print(f"{disorder_strength:-5} {loc_lens[i]:-.5e} {time_taken:-.3f} {data['residpp']:-5e} {data['cutoff']}")
-    return params["disorder_vals"], loc_lens
+        loc_lens[i] = float((result.stdout.split("\n")[-2]).split(":")[1])
+        print(f"{disorder_strength:-5} {loc_lens[i]:-.5e} {time_taken:-.3f}")
+
+    return params['disorder_vals'], loc_lens
 
 def outputData(data, outfilename):
     np.savetxt("data/" + outfilename + ".dat", np.array(data).T)
@@ -110,11 +65,7 @@ def plotData(disorder_vals, loc_lens, name=None):
     fig.savefig("plots/" + name + ".png")
 
 def main(params):
-    # runExactDiag(params)
-    # print("")
-    # runFuncCalc(params)
-    # print("")
-    data = runLocLens(params)
+    data = getData(params)
     plotData(*data, name=getFilename(params))
 
 if __name__ == "__main__":
