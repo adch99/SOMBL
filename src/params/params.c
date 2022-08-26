@@ -25,7 +25,14 @@ error_t params_parse_opt(int key, char *arg, struct argp_state *state)
             params->disorder_strength = atof(arg);
             break;
         case 't':
-            params->hop_strength = atof(arg);
+            params->hop_strength_upup = atof(arg);
+            params->hop_strength_dndn = atof(arg);
+            break;
+        case 'u':
+            params->hop_strength_upup = atof(arg);
+            break;
+        case 'd':
+            params->hop_strength_dndn = atof(arg);
             break;
         case 'n':
             params->numRuns = atoi(arg);
@@ -52,11 +59,15 @@ struct OutStream params_set_up_datastream(struct SystemParams params)
     else
       strcpy(base, "data/mbl");
 
-    sprintf(basename, "%s_%dx%d_W%.4g_C%.4g_T%.4g_N%d_", base, params.len,
+    sprintf(basename, "%s_%dx%d_W%.4g_C%.4g_TU%.4g_TD%.4g_N%d_", base, params.len,
             params.width, params.disorder_strength, params.coupling_const,
-            params.hop_strength, params.numRuns);
+            params.hop_strength_upup, params.hop_strength_dndn, params.numRuns);
     sprintf(outfiles.gfuncsq, "%sgreenfuncsq.dat", basename);
-    sprintf(outfiles.dist_vs_gfuncsq, "%sdistvsgfsq.dat", basename);
+    sprintf(outfiles.dist_vs_gfuncsq_spin[0], "%s_upup_distvsgfsq.dat", basename);
+    sprintf(outfiles.dist_vs_gfuncsq_spin[1], "%s_updn_distvsgfsq.dat", basename);
+    sprintf(outfiles.dist_vs_gfuncsq_spin[2], "%s_dnup_distvsgfsq.dat", basename);
+    sprintf(outfiles.dist_vs_gfuncsq_spin[3], "%s_dndn_distvsgfsq.dat", basename);
+
 
     // gfuncsq_check = access(outfiles.gfuncsq, W_OK);
     // dist_vs_gfuncsq_check = access(outfiles.dist_vs_gfuncsq, W_OK);

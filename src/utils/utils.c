@@ -9,7 +9,6 @@
 #include "utils.h"
 #include "../constants.h"
  
-
 /*
     Calculates the localization length from the so-called
     "Lyapunov exponent" which is computed from the given
@@ -97,8 +96,8 @@ int utils_get_eigvalsh(CDTYPE * matrix, int size, DTYPE * eigvals)
         eigenvalues that are to be calculated (WORK, LWORK).
     */
     // printf("Entered utils_get_eigvalsh\n");
-    int info = LAPACKE_zheev(LAPACK_COL_MAJOR, 'N', 'U', size,
-                            matrix, size, eigvals);
+    int info = LAPACKE_zheev(LAPACK_COL_MAJOR, 'N', 'U', (unsigned long int) size,
+                            matrix, (unsigned long int) size, eigvals);
     if (info != 0)
     {
         printf("LAPACKE_zheev error! Code: %d", info);
@@ -301,13 +300,13 @@ int utils_get_green_func_lim(CDTYPE * eigenvectors, int size, DTYPE * green_func
     //     num_threads = omp_get_num_threads();
     // }
     
-    #pragma omp parallel for collapse(2)
+    // #pragma omp parallel for collapse(2)
     for(i = 0; i < size; i++)
     {
         for(j = 0; j <= i; j++)
         {
             DTYPE sum = utils_compute_gfsq_elem(i, j, eigenvectors, size);
-            #pragma omp critical
+            // #pragma omp critical
             {
                 *(green_func + i*size + j) += sum;
                 if(i != j)
@@ -436,8 +435,16 @@ int utils_construct_data_vs_dist(DTYPE * matrix, int size, int length,
 
     DTYPE bin_width = (highest - lowest) / (DTYPE) bins;
     int * counts = calloc(bins, sizeof(int));
-    *dists = calloc(bins, sizeof(DTYPE));
-    *func = calloc(bins, sizeof(DTYPE));
+    if(nospin == 1)
+    {
+        *dists = calloc(bins, sizeof(DTYPE));
+        *func = calloc(bins, sizeof(DTYPE));
+    }
+    else
+    {
+        *dists = calloc(bins, sizeof(DTYPE));
+        *func = calloc(4*bins, sizeof(DTYPE));
+    }
 
     // printf("bin_width = %e\n", bin_width);
 
@@ -481,7 +488,7 @@ int utils_construct_data_vs_dist(DTYPE * matrix, int size, int length,
             {
                 value = *(matrix + RTC(i, j, size));
                 utils_bin_data(len, value, bins, counts,
-                                lowest, bin_width, *func);
+                                lowest, bin_width, *func + bins*spins);
             }
             else
             {

@@ -43,6 +43,8 @@ static struct argp_option options[] = {
   {"coupling", 'c', "COUPLING", 0, "Spin-orbit coupling constant",           0},
   {"disorder", 'w', "DISORDER", 0, "Strength of the disorder",               0},
   {"hopping",  't', "HOPPING",  0, "Strength of the hopping",                0},
+  {"hopup",    'u', "HOPUP",    0, "Strength of the hopping for up spins",   0},
+  {"hopdn",    'd', "HOPDN",    0, "Strength of the hopping for down spins", 0},
   {"runs",     'n', "NUMRUNS",  0, "Number of runs in the disorder average", 0},
   {"nospin",   'p', 0,          0, "Use a spinless model hamiltonian.",      0},
   { 0 }
@@ -62,7 +64,8 @@ int main(int argc, char ** argv)
     params.len = params.width = 20;
     params.coupling_const = 0;
     params.disorder_strength = 10;
-    params.hop_strength = 1;
+    params.hop_strength_upup = 1;
+    params.hop_strength_dndn = 1;
     params.numRuns = 100;
     params.nospin = 0;
 
@@ -73,9 +76,10 @@ int main(int argc, char ** argv)
     printf("Exact Diagonalization\n");
     printf("---------------------\n");
     printf("len: %d\t nospin: %d\t coupling: %.2e\n"
-        "disorder: %.2e\t hopping: %.2e\n",
+        "disorder: %.2e\t hop_up: %.2e\t hop_dn: %.2e\n",
         params.len, params.nospin, params.coupling_const,
-        params.disorder_strength, params.hop_strength);
+        params.disorder_strength, params.hop_strength_upup,
+        params.hop_strength_dndn);
 
     if(params.nospin)
         params.num_states = params.len*params.width;
@@ -140,12 +144,12 @@ int run(struct SystemParams * params, int create_neighbours,
     // fflush(stdout);
     if(params->nospin == 1)
         hamiltonian_nospin(ham, params->len, params->width,
-                params->disorder_strength, params->hop_strength,
+                params->disorder_strength, params->hop_strength_upup,
                 params->neighbours);
     else
         hamiltonian(ham, params->len, params->width, params->coupling_const,
-                params->disorder_strength, params->hop_strength,
-                params->neighbours);
+                params->disorder_strength, params->hop_strength_upup,
+                params->hop_strength_dndn, params->neighbours);
 
 
     // Calculate eigenvectors
@@ -199,52 +203,4 @@ int output_gfuncsq_matrix(int runs_done, DTYPE * gfuncsq,
 
     fclose(ofile);
     return 0;
-}
-
-/*
-
-*/
-DTYPE post_process(struct SystemParams params, struct OutStream outfiles,
-                DTYPE * gfunc)
-{
-    int i;
-    int num_states = params.num_states;
-
-
-    // Construct gfunc vs distance datapoints
-    DTYPE * dists;
-    DTYPE * gfuncsq_vals;
-    int data_len;
-    int bins = 10;
-    DTYPE exponent, mantissa, residuals;
-    // exponent = mantissa = residuals = 0;
-    data_len = utils_construct_data_vs_dist(gfunc, num_states, params.len,
-                                        bins, &dists, &gfuncsq_vals);
-
-
-    // Write the values to a file
-    FILE * ofile = fopen(outfiles.dist_vs_gfuncsq, "w");
-    for(i = 0; i < data_len; i++)
-    {
-        if(isnan(*(dists + i)) || isnan(*(gfuncsq_vals + i)))
-            printf("NaN detected in postprocess.");
-
-        fprintf(ofile, "%e %e\n", *(dists + i), *(gfuncsq_vals + i));
-        printf("%e %e\n", *(dists + i), *(gfuncsq_vals + i));
-
-    }
-    fclose(ofile);
-
-    // Fit exponential to the data
-    utils_fit_exponential(dists, gfuncsq_vals, data_len,
-                        &exponent, &mantissa, &residuals);
-    
-    printf("Residuals: %e\n", residuals);
-    printf("Exponent: %e\tMantissa: %e\n", exponent, mantissa);
-    // Get localization length from exponent
-    DTYPE loclen = -2 / exponent;
-
-    free(dists);
-    free(gfuncsq_vals);
-    return(loclen);
 }

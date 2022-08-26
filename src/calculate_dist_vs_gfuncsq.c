@@ -27,6 +27,8 @@ static struct argp_option options[] = {
   {"coupling", 'c', "COUPLING", 0, "Spin-orbit coupling constant",           0},
   {"disorder", 'w', "DISORDER", 0, "Strength of the disorder",               0},
   {"hopping",  't', "HOPPING",  0, "Strength of the hopping",                0},
+  {"hopup",    'u', "HOPUP",    0, "Strength of the hopping for up spins",   0},
+  {"hopdn",    'd', "HOPDN",    0, "Strength of the hopping for down spins", 0},
   {"runs",     'n', "NUMRUNS",  0, "Number of runs in the disorder average", 0},
   {"nospin",   'p', 0,          0, "Use a spinless model hamiltonian.",      0},
   { 0 }
@@ -40,7 +42,7 @@ int setup(int argc, char ** argv, struct SystemParams * params,
 int get_gfuncsq_data(DTYPE * matrix, struct OutStream outfiles,
                     struct SystemParams params);
 int output_function_data(DTYPE * dists, DTYPE * gfuncsq,
-                        struct OutStream outfiles, int data_len);
+                        char * filename, int data_len);
 
 
 int main(int argc, char ** argv)
@@ -54,9 +56,10 @@ int main(int argc, char ** argv)
     printf("Calculate G^2(r)\n");
     printf("----------------\n");
     printf("len: %d\t nospin: %d\t coupling: %.2e\n"
-        "disorder: %.2e\t hopping: %.2e\n",
+        "disorder: %.2e\t hop_up: %.2e\t hop_dn: %.2e\n",
         params.len, params.nospin, params.coupling_const,
-        params.disorder_strength, params.hop_strength);
+        params.disorder_strength, params.hop_strength_upup,
+        params.hop_strength_dndn);
 
 
     // Get the gfuncsq matrix from the data file
@@ -72,8 +75,16 @@ int main(int argc, char ** argv)
     int bins = ceil((DTYPE) params.len / 2.0);
     data_len = utils_construct_data_vs_dist(matrix, params.num_states, params.len,
                                         bins, &dists, &gfuncsq);
-    output_function_data(dists, gfuncsq, outfiles, data_len);
 
+    if(params.nospin == 1)
+        output_function_data(dists, gfuncsq, outfiles.dist_vs_gfuncsq, data_len);
+    else
+    {
+        output_function_data(dists, gfuncsq, outfiles.dist_vs_gfuncsq_spin[0], data_len);
+        output_function_data(dists, gfuncsq, outfiles.dist_vs_gfuncsq_spin[1], data_len);
+        output_function_data(dists, gfuncsq, outfiles.dist_vs_gfuncsq_spin[2], data_len);
+        output_function_data(dists, gfuncsq, outfiles.dist_vs_gfuncsq_spin[3], data_len);
+    }    
     free(matrix);
     free(dists);
     free(gfuncsq);
@@ -87,7 +98,8 @@ int setup(int argc, char ** argv, struct SystemParams * params,
     params->len = params->width = 20;
     params->coupling_const = 0;
     params->disorder_strength = 10;
-    params->hop_strength = 1;
+    params->hop_strength_upup = 1;
+    params->hop_strength_dndn = 1;
     params->numRuns = 100;
     params->nospin = 0;
 
@@ -132,13 +144,13 @@ int get_gfuncsq_data(DTYPE * matrix, struct OutStream outfiles,
 }
 
 int output_function_data(DTYPE * dists, DTYPE * gfuncsq,
-                        struct OutStream outfiles, int data_len)
+                        char * filename, int data_len)
 {
     // Write the values to a file
-    FILE * ofile = fopen(outfiles.dist_vs_gfuncsq, "w");
+    FILE * ofile = fopen(filename, "w");
     if (ofile == NULL)
     {
-        printf("Cannot open file %s!", outfiles.dist_vs_gfuncsq);
+        printf("Cannot open file %s!", filename);
         return(-1);
     }
     int i;

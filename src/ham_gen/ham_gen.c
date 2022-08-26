@@ -10,7 +10,8 @@ for a 2d spin lattice
 
 int hamiltonian(CDTYPE * ham, int len, int width,
                 DTYPE coupling_const, DTYPE disorder_strength,
-                DTYPE hop_strength, int (*neighbours)[NEIGHS])
+                DTYPE hop_strength_upup, DTYPE hop_strength_dndn,
+                int (*neighbours)[NEIGHS])
 {
     int num_sites = len*width;
     // Produce disorder
@@ -22,10 +23,10 @@ int hamiltonian(CDTYPE * ham, int len, int width,
     // Produce matrix
     int site1, site2, index_up_up, index_dn_dn, index_up_dn, index_dn_up;
 
-    #pragma omp parallel for
+    // #pragma omp parallel for
     for(site1 = 0; site1 < num_sites; site1++)
     {
-        #pragma omp parallel for
+        // #pragma omp parallel for
         for(site2 = 0; site2 < num_sites; site2++)
         {
             // RTC is row major to column major
@@ -36,7 +37,7 @@ int hamiltonian(CDTYPE * ham, int len, int width,
 
             if (site1 == site2)
             {
-                #pragma omp critical
+                // #pragma omp critical
                 {
                     *(ham + index_up_up) = *(disorder + site1);
                     *(ham + index_dn_dn) = *(disorder + site1);
@@ -52,7 +53,7 @@ int hamiltonian(CDTYPE * ham, int len, int width,
                 switch(loc)
                 {
                     case -1:
-                        #pragma omp critical
+                        // #pragma omp critical
                         {
                             *(ham + index_up_up) = 0;
                             *(ham + index_dn_dn) = 0;
@@ -62,40 +63,40 @@ int hamiltonian(CDTYPE * ham, int len, int width,
                         break;
 
                     case 0:
-                        #pragma omp critical
+                        // #pragma omp critical
                         {
-                            *(ham + index_up_up) = -hop_strength;
-                            *(ham + index_dn_dn) = -hop_strength;
+                            *(ham + index_up_up) = -hop_strength_upup;
+                            *(ham + index_dn_dn) = -hop_strength_dndn;
                             *(ham + index_up_dn) = coupling_const;
                             *(ham + index_dn_up) = -coupling_const;
                         }
                         break; 
 
                     case 1:
-                        #pragma omp critical
+                        // #pragma omp critical
                         {
-                            *(ham + index_up_up) = -hop_strength;
-                            *(ham + index_dn_dn) = -hop_strength;
+                            *(ham + index_up_up) = -hop_strength_upup;
+                            *(ham + index_dn_dn) = -hop_strength_dndn;
                             *(ham + index_up_dn) = -coupling_const;
                             *(ham + index_dn_up) = coupling_const;
                         }
                         break; 
 
                     case 2:
-                        #pragma omp critical
+                        // #pragma omp critical
                         {
-                            *(ham + index_up_up) = -hop_strength;
-                            *(ham + index_dn_dn) = -hop_strength;
+                            *(ham + index_up_up) = -hop_strength_upup;
+                            *(ham + index_dn_dn) = -hop_strength_dndn;
                             *(ham + index_up_dn) = -I*coupling_const;
                             *(ham + index_dn_up) = -I*coupling_const;
                         }
                         break; 
 
                     case 3:
-                        #pragma omp critical
+                        // #pragma omp critical
                         {
-                            *(ham + index_up_up) = -hop_strength;
-                            *(ham + index_dn_dn) = -hop_strength;
+                            *(ham + index_up_up) = -hop_strength_upup;
+                            *(ham + index_dn_dn) = -hop_strength_dndn;
                             *(ham + index_up_dn) = I*coupling_const;
                             *(ham + index_dn_up) = -I*coupling_const;
                         }
@@ -119,7 +120,7 @@ int get_neighbour_lists(int (*neighbours)[NEIGHS], int len, int width)
 
     int index;
 
-    #pragma omp parallel for
+    // #pragma omp parallel for
     for(index = 0; index < len*width; index++)
     {
         get_neighbours(index, len, width, *(neighbours + index));
@@ -185,7 +186,7 @@ int check_neighbour(int index, int * nlist)
     // If yes, then return the index.
 
     int i, loc = -1;
-    #pragma omp parallel for
+    // #pragma omp parallel for
     for(i = 0; i < NEIGHS; i++)
     {
         // We expect only one value of

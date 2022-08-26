@@ -10,7 +10,8 @@ struct SystemParams {
     int width;
     DTYPE coupling_const;
     DTYPE disorder_strength;
-    DTYPE hop_strength;
+    DTYPE hop_strength_upup;
+    DTYPE hop_strength_dndn;
     int (*neighbours)[NEIGHS];
     int numRuns; // Technically not a system parameter but it's convenient
     // to have it here.
@@ -22,6 +23,7 @@ struct SystemParams {
 struct OutStream {
     char gfuncsq[80];
     char dist_vs_gfuncsq[80];
+    char dist_vs_gfuncsq_spin[4][90];
 };
 
 error_t params_parse_opt(int key, char *arg, struct argp_state *state);
