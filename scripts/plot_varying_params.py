@@ -6,14 +6,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 params = {
-    "coupling_const":   0.0,
-    "hop_strength":     1.0,
-    "hopup":            1.0,
+    "coupling_const":   0.1,
+    # "hop_strength":     1.0,
+    "hopup":            1.5,
     "hopdn":            1.0,
     "disorder_vals":    np.linspace(5, 20, 11),
-    "size":             40,
+    "size":             20,
     "num_runs":         100,
-    "nospin":           True
+    "nospin":           False
 }
 
 
@@ -60,7 +60,9 @@ def runFuncCalc(params):
         args = ["build/calculate_dist_vs_gfuncsq",
                 "-s", f"{params['size']}",
                 "-c", f"{params['coupling_const']}",
-                "-t", f"{params['hop_strength']}",
+                # "-t", f"{params['hop_strength']}",
+                "-u", str(params["hopup"]),
+                "-d", str(params["hopdn"]),
                 "-w", f"{disorder_strength}",
                 "-n", f"{params['num_runs']}"]
         if params["nospin"]:
@@ -83,7 +85,9 @@ def runLocLens(params):
         args = ["scripts/calculate_loc_lens.py",
                 "-s", f"{params['size']}",
                 "-c", f"{params['coupling_const']}",
-                "-t", f"{params['hop_strength']}",
+                # "-t", f"{params['hop_strength']}",
+                "-u", str(params["hopup"]),
+                "-d", str(params["hopdn"]),
                 "-w", f"{disorder_strength}",
                 "-n", f"{params['num_runs']}",
                 "--silent"]
@@ -93,7 +97,13 @@ def runLocLens(params):
 
         start_time = time.time()
         result = subprocess.run(args, capture_output=True, text=True)
-        result.check_returncode()
+        try:
+            result.check_returncode()
+        except subprocess.CalledProcessError:
+            print("Call to scripts/calculate_loc_lens.py failed!")
+            print("params:", params)
+            print("stderr:", result.stderr)
+            exit(1)
         time_taken = time.time() - start_time
         data = json.loads(result.stdout)
         loc_lens[i] = data["xi"]
@@ -123,10 +133,10 @@ def plotData(disorder_vals, loc_lens, name=None):
 
 
 def main(params):
-    # runExactDiag(params)
-    # print("")
-    # runFuncCalc(params)
-    # print("")
+    runExactDiag(params)
+    print("")
+    runFuncCalc(params)
+    print("")
     data = runLocLens(params)
     plotData(*data, name=getFilename(params))
 

@@ -41,7 +41,7 @@ def getParams():
                         type=float, default=1.0)
     parser.add_argument("-u", "--hopup", help="Strength of the hopping of up spins",
                         type=float, default=1.0)
-    parser.add_argument("-t", "--hopdn", help="Strength of the hopping of down spins",
+    parser.add_argument("-d", "--hopdn", help="Strength of the hopping of down spins",
                         type=float, default=1.0)
     parser.add_argument("-n", "--runs", help="Number of runs in the disorder average",
                         type=int, default=100)
