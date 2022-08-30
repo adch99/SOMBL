@@ -7,19 +7,27 @@ import matplotlib.pyplot as plt
 
 def main():
     params = getParams()
-    data = getData(params)
-    fit_vals = fitData(data, params)
-    plotData(fit_vals, data, params)
-    exp, mant, resid, cutoff = fit_vals
-    # print(f"xi:\t{-2/exp:e}")
-    # print(f"residpp:\t{resid:e}")
-    # print(f"cutoff:\t{cutoff}")
-    output = {
-        "xi": -2 / exp,
-        "residpp": resid,
-        "cutoff": cutoff
-    }
-    print(json.dumps(output))
+    if params.nospin:
+        spins = [None,]
+    else:
+        spins = ["upup", "updn", "dnup", "dndn"]
+    
+    for spin in spins:
+        data = getData(params, spin=spin)
+        fit_vals = fitData(data, params)
+        plotData(fit_vals, data, params, spin=spin)
+        exp, mant, resid, cutoff = fit_vals
+        # print(f"xi:\t{-2/exp:e}")
+        # print(f"residpp:\t{resid:e}")
+        # print(f"cutoff:\t{cutoff}")
+        output = {
+            "xi": -2 / exp,
+            "residpp": resid,
+            "cutoff": cutoff,
+            "spin": spin
+        }
+        print(json.dumps(output))
+
     if not params.silent:
         plt.show()
 
@@ -53,13 +61,16 @@ def getParams():
     return params
 
 
-def getData(params):
-    filename = "data/" + getFilename(params) + ".dat"
+def getData(params, spin=None):
+    filename = "data/" + getFilename(params, spin=spin) + ".dat"
     dists, gfuncsq = np.loadtxt(filename).T
     return dists, gfuncsq
 
 
-def getFilename(params):
+def getFilename(params, spin=None):
+    allowedSpins = [None, "upup", "updn", "dnup", "dndn"]
+    if spin not in allowedSpins:
+        raise TypeError(f"spin must be one of {allowedSpins}")
     basename = "mbl_nospin" if params.nospin else "mbl"
     basename += f"_{params.size}x{params.size}"
     basename += f"_W{params.disorder:.4g}"
@@ -68,6 +79,8 @@ def getFilename(params):
     basename += f"_TU{params.hopup:.4g}"
     basename += f"_TD{params.hopdn:.4g}"
     basename += f"_N{params.runs}"
+    if spin is not None:
+        basename += f"_{spin}"
     basename += "_distvsgfsq"
     return basename
 
@@ -95,7 +108,7 @@ def fitData(data, params):
     return exponent, mantissa, residuals, cutoff
 
 
-def plotData(fit_vals, data, params):
+def plotData(fit_vals, data, params, spin=None):
     exp, mant, resid, cutoff = fit_vals
     dists, gfuncsq = data
     x = np.linspace(dists[cutoff], dists[-1], 100)
@@ -111,7 +124,7 @@ def plotData(fit_vals, data, params):
     axes.set_title(f"Exponential Fit of y = {mant:.3e}*exp({exp:.3e}x)")
     axes.legend()
 
-    filename = "plots/" + getFilename(params)
+    filename = "plots/" + getFilename(params, spin=spin)
     fig.savefig(filename + ".pdf")
     fig.savefig(filename + ".png")
 

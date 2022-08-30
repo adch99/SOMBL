@@ -66,14 +66,20 @@ int params_setup(int argc, char ** argv, struct SystemParams * params,
         params->num_states = 2*params->len*params->width;
 
     // Set up the data files for the system params.
-    *outfiles = params_set_up_datastream(*params);
+    params_set_up_datastream(*params, outfiles);
+
+    printf("Filenames:\n");
+    printf("gfuncsq: %s\n", outfiles->gfuncsq);
+    printf("dist_vs_gfuncsq: %s\n", outfiles->dist_vs_gfuncsq);
+    int i;
+    for(i = 0; i < 4; i++)
+        printf("dist_vs_gfuncsq_spin[%d]: %s\n", i, outfiles->dist_vs_gfuncsq_spin[i]);
 
     return 0;
 }
 
-struct OutStream params_set_up_datastream(struct SystemParams params)
+int params_set_up_datastream(struct SystemParams params, struct OutStream * outfiles)
 {
-    struct OutStream outfiles;
     char base[16];
     char basename[64];
     // int gfuncsq_check;
@@ -84,14 +90,14 @@ struct OutStream params_set_up_datastream(struct SystemParams params)
     else
       strcpy(base, "data/mbl");
 
-    sprintf(basename, "%s_%dx%d_W%.4g_C%.4g_TU%.4g_TD%.4g_N%d_", base, params.len,
+    sprintf(basename, "%s_%dx%d_W%.4g_C%.4g_TU%.4g_TD%.4g_N%d", base, params.len,
             params.width, params.disorder_strength, params.coupling_const,
             params.hop_strength_upup, params.hop_strength_dndn, params.numRuns);
-    sprintf(outfiles.gfuncsq, "%sgreenfuncsq.dat", basename);
-    sprintf(outfiles.dist_vs_gfuncsq_spin[0], "%s_upup_distvsgfsq.dat", basename);
-    sprintf(outfiles.dist_vs_gfuncsq_spin[1], "%s_updn_distvsgfsq.dat", basename);
-    sprintf(outfiles.dist_vs_gfuncsq_spin[2], "%s_dnup_distvsgfsq.dat", basename);
-    sprintf(outfiles.dist_vs_gfuncsq_spin[3], "%s_dndn_distvsgfsq.dat", basename);
+    sprintf(outfiles->gfuncsq, "%s_greenfuncsq.dat", basename);
+    sprintf(outfiles->dist_vs_gfuncsq_spin[0], "%s_upup_distvsgfsq.dat", basename);
+    sprintf(outfiles->dist_vs_gfuncsq_spin[1], "%s_updn_distvsgfsq.dat", basename);
+    sprintf(outfiles->dist_vs_gfuncsq_spin[2], "%s_dnup_distvsgfsq.dat", basename);
+    sprintf(outfiles->dist_vs_gfuncsq_spin[3], "%s_dndn_distvsgfsq.dat", basename);
 
 
     // gfuncsq_check = access(outfiles.gfuncsq, W_OK);

@@ -431,18 +431,20 @@ int utils_construct_data_vs_dist(DTYPE * matrix, int size, int length,
     // range outside length/2. Change the
     // line below to include the entire range
     // DTYPE highest = floor(length / sqrt(2));
-    DTYPE highest = (DTYPE) length / 2.0;
-
+    // DTYPE highest = (DTYPE) length / 2.0;
+    DTYPE highest = (DTYPE) length * sqrt(2.0) / M_PI;
+    int * counts;
     DTYPE bin_width = (highest - lowest) / (DTYPE) bins;
-    int * counts = calloc(bins, sizeof(int));
     if(nospin == 1)
     {
+        counts = calloc(bins, sizeof(int));
         *dists = calloc(bins, sizeof(DTYPE));
         *func = calloc(bins, sizeof(DTYPE));
     }
     else
     {
         *dists = calloc(bins, sizeof(DTYPE));
+        counts = calloc(4*bins, sizeof(int));
         *func = calloc(4*bins, sizeof(DTYPE));
     }
 
@@ -475,48 +477,50 @@ int utils_construct_data_vs_dist(DTYPE * matrix, int size, int length,
  
             dx = abs(site1x - site2x);
             dy = abs(site1y - site2y);
-            // printf("i = %d\tj = %d\n", i, j);
-            // printf("x1 = %d\ty1 = %d\tx2 = %d\ty2 = %d\n", site1x, site1y, site2x, site2y);
-            // printf("dx = %d\tdy = %d\n", dx, dy);
             dx = INTMIN(abs(length/2-dx), dx);
             dy = INTMIN(abs(length/2-dy), dy);
-            len = sqrt((DTYPE) (dx*dx + dy*dy));
+            // len = sqrt((DTYPE) (dx*dx + dy*dy));
+            len = sqrt(utils_pbc_chord_length_sq(dx, length, dy, length));
             // printf("dx = %d\tdy = %d\tlen = %e\n", dx, dy, len);
             spins = spin_index1*spin1down + spin_index2*spin2down;
 
             if(i == j)
             {
                 value = *(matrix + RTC(i, j, size));
-                utils_bin_data(len, value, bins, counts,
+                utils_bin_data(len, value, bins, counts + bins*spins,
                                 lowest, bin_width, *func + bins*spins);
             }
             else
             {
                 value = *(matrix + RTC(i, j, size));
-                utils_bin_data(len, value, bins, counts,
-                                lowest, bin_width, *func);
+                utils_bin_data(len, value, bins, counts + bins*spins,
+                                lowest, bin_width, *func + bins*spins);
                 value = *(matrix + RTC(j, i, size));
-                utils_bin_data(len, value, bins, counts,
-                                lowest, bin_width, *func);
+                utils_bin_data(len, value, bins, counts + bins*spins,
+                                lowest, bin_width, *func + bins*spins);
             }
         }
     }
 
     // Calculate the averages
-    for(i = 0; i < bins; i++)
+    unsigned int spins;
+    for(spins = 0; spins < 4; spins++)
     {
-        if(isnan(*(*func + i)))
+        for(i = 0; i < bins; i++)
         {
-            printf("NaN detected at site i = %d\n", i);
-        }
+            if(isnan(*(*func + spins*bins + i)))
+            {
+                printf("NaN detected at site i = %d\n", i);
+            }
 
-        if(*(counts + i) == 0)
-        {
-            *(*func + i) = DBL_MIN;
-            // printf("bin i=%d has counts=%d\n", i, *(counts + i));
+            if(*(counts + bins*spins + i) == 0)
+            {
+                *(*func + bins*spins + i) = DBL_MIN;
+                // printf("bin i=%d has counts=%d\n", i, *(counts + i));
+            }
+            else
+                *(*func + bins*spins + i) /= (DTYPE) *(counts + bins*spins + i);
         }
-        else
-            *(*func + i) /= (DTYPE) *(counts + i);
     }
 
     return(bins);
@@ -651,17 +655,18 @@ DTYPE utils_get_charge_imbalance(DTYPE * gfuncsq, int * occupied_set_up,
 }
 
 
-// DTYPE utils_pbc_chord_length(int index1, int length1, int index2, int length2)
-// {
-//     DTYPE radius1 = (DTYPE) length1 / (2.0 * M_PI);
-//     DTYPE radius2 = (DTYPE) length2 / (2.0 * M_PI);
+DTYPE utils_pbc_chord_length_sq(int index1, int length1, int index2, int length2)
+{
+    DTYPE radius1 = (DTYPE) length1 / (2.0 * M_PI);
+    DTYPE radius2 = (DTYPE) length2 / (2.0 * M_PI);
 
-//     DTYPE angle1 = 2.0 * M_PI * ((DTYPE) index1 / (DTYPE) length1);
-//     DTYPE angle2 = 2.0 * M_PI * ((DTYPE) index2 / (DTYPE) length2);
+    DTYPE angle1 = 2.0 * M_PI * ((DTYPE) index1 / (DTYPE) length1);
+    DTYPE angle2 = 2.0 * M_PI * ((DTYPE) index2 / (DTYPE) length2);
 
-//     DTYPE term1 = 2 * sin(angle1/2.0);
-//     // DTYPE term2 = radius1*radius1 + radius2*radius2 * cos(?)
+    DTYPE chord1 = 2 * radius1 * sin(angle1 / 2.0);
+    DTYPE chord2 = 2 * radius2 * sin(angle2 / 2.0);
 
-//     return 0;   
-// }
+    DTYPE chordsq = chord1*chord1 + chord2*chord2;
+    return chordsq;   
+}
 

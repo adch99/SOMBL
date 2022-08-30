@@ -33,7 +33,8 @@ int utils_bin_data(DTYPE index, DTYPE value, int bins, int * counts,
 DTYPE utils_get_charge_imbalance(DTYPE * gfuncsq, int * occupied_set_up,
                         int set_length_up, int * occupied_set_dn,
                         int set_length_dn, int num_states);
-
+DTYPE utils_pbc_chord_length_sq(int index1, int length1,
+                                int index2, int length2);
 
 // Bitwise manipulations
 // From SO community wiki post

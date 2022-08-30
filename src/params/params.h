@@ -29,5 +29,6 @@ struct OutStream {
 error_t params_parse_opt(int key, char *arg, struct argp_state *state);
 int params_setup(int argc, char ** argv, struct SystemParams * params,
         struct OutStream * outfiles, struct argp * argp);
-struct OutStream params_set_up_datastream(struct SystemParams params);
+int params_set_up_datastream(struct SystemParams params,
+                            struct OutStream * outfiles);
 #endif

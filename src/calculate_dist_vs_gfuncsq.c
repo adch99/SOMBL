@@ -68,18 +68,21 @@ int main(int argc, char ** argv)
     DTYPE * gfuncsq;
     int data_len;
     // Let's bin the data into bins of width 1.
-    int bins = ceil((DTYPE) params.len / 2.0);
+    int bins = floor(params.len * sqrt(2) / M_PI);
     data_len = utils_construct_data_vs_dist(matrix, params.num_states, params.len,
                                         bins, &dists, &gfuncsq);
 
     if(params.nospin == 1)
-        output_function_data(dists, gfuncsq, outfiles.dist_vs_gfuncsq, data_len);
+        io_output_function_data(dists, gfuncsq, outfiles.dist_vs_gfuncsq, data_len);
     else
     {
-        output_function_data(dists, gfuncsq, outfiles.dist_vs_gfuncsq_spin[0], data_len);
-        output_function_data(dists, gfuncsq, outfiles.dist_vs_gfuncsq_spin[1], data_len);
-        output_function_data(dists, gfuncsq, outfiles.dist_vs_gfuncsq_spin[2], data_len);
-        output_function_data(dists, gfuncsq, outfiles.dist_vs_gfuncsq_spin[3], data_len);
+        int i;
+        for(i = 0; i < 4; i++)
+        {
+            char * fname = outfiles.dist_vs_gfuncsq_spin[i];
+            printf("Outputting to %s\n", fname);
+            io_output_function_data(dists, gfuncsq + i*bins, fname, data_len);
+        }
     }    
     free(matrix);
     free(dists);
@@ -87,28 +90,3 @@ int main(int argc, char ** argv)
     return 0;
 }
 
-
-
-int output_function_data(DTYPE * dists, DTYPE * gfuncsq,
-                        char * filename, int data_len)
-{
-    // Write the values to a file
-    FILE * ofile = fopen(filename, "w");
-    if (ofile == NULL)
-    {
-        printf("Cannot open file %s!", filename);
-        return(-1);
-    }
-    int i;
-    for(i = 0; i < data_len; i++)
-    {
-        if(isnan(*(dists + i)) || isnan(*(gfuncsq + i)))
-            printf("NaN detected in postprocess.");
-
-        fprintf(ofile, "%e %e\n", *(dists + i), *(gfuncsq + i));
-        printf("%e %e\n", *(dists + i), *(gfuncsq + i));
-
-    }
-    fclose(ofile);
-    return 0;
-}
