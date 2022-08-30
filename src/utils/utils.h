@@ -30,6 +30,10 @@ int utils_construct_data_vs_dist(DTYPE * matrix, int size, int length,
                             int bins, DTYPE ** dists, DTYPE ** func);
 int utils_bin_data(DTYPE index, DTYPE value, int bins, int * counts,
                 DTYPE lowest, DTYPE bin_width, DTYPE * value_hist);
+DTYPE utils_get_charge_imbalance(DTYPE * gfuncsq, int * occupied_set_up,
+                        int set_length_up, int * occupied_set_dn,
+                        int set_length_dn, int num_states);
+
 
 // Bitwise manipulations
 // From SO community wiki post

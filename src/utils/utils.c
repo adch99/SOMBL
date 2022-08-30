@@ -581,14 +581,87 @@ int utils_bin_data(DTYPE index, DTYPE value, int bins, int * counts,
     return(0);
 }
 
-
-DTYPE utils_pbc_chord_length(int index1, int length1, int index2, int length2)
+/*
+    Given the green function matrix for long times, calculates
+    the long time imbalance between the initially occupied sites
+    and the initially empty sites. The `occupied_set` array must
+    be sorted according to numerical value and contains the lattice
+    index of the occupied sites.
+*/
+DTYPE utils_get_charge_imbalance(DTYPE * gfuncsq, int * occupied_set_up,
+                        int set_length_up, int * occupied_set_dn,
+                        int set_length_dn, int num_states)
 {
-    DTYPE radius1 = (DTYPE) length1 / (2.0 * M_PI);
-    DTYPE radius2 = (DTYPE) length2 / (2.0 * M_PI);
+    int i, j, ctr_up, ctr_dn;
+    int site_final, site_initial;
+    int spin_final, spin_initial;
+    DTYPE imbalance;
+    int sign, index1, index2;
+    DTYPE elem;
 
-    DTYPE angle1 = 2.0 * M_PI * ((DTYPE) index1 / (DTYPE) length1);
-    DTYPE angle2 = 2.0 * M_PI * ((DTYPE) index2 / (DTYPE) length2);
+    imbalance = 0;
+    ctr_up = 0;
+    ctr_dn = 0;
 
-    return 0;   
+    for(i = 0; i < num_states; i++)
+    {
+        site_final = i / 2;
+        spin_final = i % 2;
+
+        // Check if site in A (occupied set)
+        int next_occ_up = *(occupied_set_up + ctr_up);
+        int next_occ_dn = *(occupied_set_dn + ctr_dn);
+
+        if(site_final == next_occ_up)
+        {
+            sign = 1;
+            ctr_up += 1;
+        }
+        else if (site_final == next_occ_dn)
+        {
+            sign = 1;
+            ctr_dn += 1;
+        }
+        else
+            sign = -1;
+        
+        for(j = 0; j < set_length_up; j++)
+        {
+            site_initial = *(occupied_set_up + j);
+            spin_initial = 0;
+            index1 = 2*site_final + spin_final;
+            index2 = 2*site_initial + spin_initial;
+            elem = *(gfuncsq + RTC(index1, index2, num_states));
+            printf("(%d,%d):%d:%e\n", index1, index2, sign, elem);
+            imbalance += sign * elem; 
+        }
+
+        for(j = 0; j < set_length_dn; j++)
+        {
+            site_initial = *(occupied_set_dn + j);
+            spin_initial = 1;
+            index1 = 2*site_final + spin_final;
+            index2 = 2*site_initial + spin_initial;
+            elem = *(gfuncsq + RTC(index1, index2, num_states));
+            printf("(%d,%d):%d:%e\n", index1, index2, sign, elem);
+            imbalance += sign * elem; 
+        }
+    }
+    return imbalance / (DTYPE) (set_length_up + set_length_dn);
 }
+
+
+// DTYPE utils_pbc_chord_length(int index1, int length1, int index2, int length2)
+// {
+//     DTYPE radius1 = (DTYPE) length1 / (2.0 * M_PI);
+//     DTYPE radius2 = (DTYPE) length2 / (2.0 * M_PI);
+
+//     DTYPE angle1 = 2.0 * M_PI * ((DTYPE) index1 / (DTYPE) length1);
+//     DTYPE angle2 = 2.0 * M_PI * ((DTYPE) index2 / (DTYPE) length2);
+
+//     DTYPE term1 = 2 * sin(angle1/2.0);
+//     // DTYPE term2 = radius1*radius1 + radius2*radius2 * cos(?)
+
+//     return 0;   
+// }
+
