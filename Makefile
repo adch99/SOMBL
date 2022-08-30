@@ -1,7 +1,12 @@
 CC=gcc
-# CFLAGS=-Wall -Wextra -g -fdiagnostics-color=always -fopenmp -ffast-math -I../openblas/include#-fsanitize=address,undefined
-CFLAGS=-O3 -ffast-math -fopenmp -I../openblas/include 
-LFLAGS=-llapacke -lm -lgsl -L../openblas/lib -Wl,-rpath,../openblas/lib -lopenblas -lpthread
+# BLASDIR=../openblas
+BLASDIR=../../Build/openblas
+IDIRS=-I$(BLASDIR)/include
+LBLAS=-L$(BLASDIR)/lib -Wl,-rpath,$(BLASDIR)/lib -lopenblas -lpthread
+# LBLAS=-lcblas -lblas
+CFLAGS=-Wall -Wextra -g -fdiagnostics-color=always -ffast-math $(IDIRS)
+# CFLAGS=-O3 -ffast-math -fopenmp $(IDIRS) 
+LFLAGS=-llapacke -lm $(LBLAS)
 ERRORLOG=logs/compiler_error.log
 
 _DEPS = utils/utils.c ham_gen/ham_gen.c params/params.c io/io.c

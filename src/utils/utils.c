@@ -2,10 +2,11 @@
 #include <time.h>
 #include <stdio.h>
 #include <math.h>
+#include <float.h>
 #include <complex.h>
 #include <lapacke.h>
-#include <gsl/gsl_fit.h>
-#include <omp.h>
+// #include <gsl/gsl_fit.h>
+// #include <omp.h>
 #include "utils.h"
 #include "../constants.h"
  
@@ -327,7 +328,7 @@ DTYPE utils_compute_gfsq_elem(int i, int j, CDTYPE * eigenvectors, int size)
 {
     DTYPE sum = 0.0;
     int k;
-    #pragma omp parallel for reduction (+:sum) schedule(auto)
+    // #pragma omp parallel for reduction (+:sum) schedule(auto)
     for(k = 0; k < size; k++)
     {
         int index1, index2;
@@ -346,64 +347,64 @@ DTYPE utils_compute_gfsq_elem(int i, int j, CDTYPE * eigenvectors, int size)
 }
 
 
-int utils_fit_exponential(DTYPE * x, DTYPE * y, int length, DTYPE * exponent,
-                        DTYPE * mantissa, DTYPE * residuals)
-{
-    DTYPE * logdata = malloc(length*sizeof(DTYPE));
-    DTYPE diff;
-    int i;
+// int utils_fit_exponential(DTYPE * x, DTYPE * y, int length, DTYPE * exponent,
+//                         DTYPE * mantissa, DTYPE * residuals)
+// {
+//     DTYPE * logdata = malloc(length*sizeof(DTYPE));
+//     DTYPE diff;
+//     int i;
     
-    // Take log of the data
-    for(i = 0; i < length; i++)
-    {
-        *(logdata + i) = log(*(y + i));
-        if(isnan(*(logdata + i)))
-            printf("NaN detected in log output.\n");
-    }
+//     // Take log of the data
+//     for(i = 0; i < length; i++)
+//     {
+//         *(logdata + i) = log(*(y + i));
+//         if(isnan(*(logdata + i)))
+//             printf("NaN detected in log output.\n");
+//     }
 
-    // Construct a weight function for the fitting
-    // We use 1 for the middle 80% of the data
-    // We use a linearly decaying rate for the ends.
+//     // Construct a weight function for the fitting
+//     // We use 1 for the middle 80% of the data
+//     // We use a linearly decaying rate for the ends.
 
-    int start_of_mid = (int) ceil(0.25 * length);
-    int end_of_mid = length - (int) ceil(0.25 * length);
-    DTYPE * weights = malloc(length * sizeof(DTYPE));
-    DTYPE slope = 1.0 / (DTYPE) start_of_mid;
-    for(i = start_of_mid; i < end_of_mid; i++)
-        *(weights + i) = 1;
+//     int start_of_mid = (int) ceil(0.25 * length);
+//     int end_of_mid = length - (int) ceil(0.25 * length);
+//     DTYPE * weights = malloc(length * sizeof(DTYPE));
+//     DTYPE slope = 1.0 / (DTYPE) start_of_mid;
+//     for(i = start_of_mid; i < end_of_mid; i++)
+//         *(weights + i) = 1;
     
-    for(i = 0; i < start_of_mid; i++)
-        *(weights + i) = slope * i;
+//     for(i = 0; i < start_of_mid; i++)
+//         *(weights + i) = slope * i;
 
-    for(i = end_of_mid; i < length; i++)
-        *(weights + i) = 1 - slope * (i - end_of_mid);
+//     for(i = end_of_mid; i < length; i++)
+//         *(weights + i) = 1 - slope * (i - end_of_mid);
 
-    // Fit line to data using GSL.
-    DTYPE c0, c1, cov00, cov01, cov11, sumsq;
-    gsl_fit_wlinear(x, 1, weights, 1, logdata, 1, length,
-                &c0, &c1, &cov00, &cov01, &cov11, &sumsq);
+//     // Fit line to data using GSL.
+//     DTYPE c0, c1, cov00, cov01, cov11, sumsq;
+//     gsl_fit_wlinear(x, 1, weights, 1, logdata, 1, length,
+//                 &c0, &c1, &cov00, &cov01, &cov11, &sumsq);
 
-    if(isnan(c0) || isnan(c1))
-        printf("gsl returned NaN.\n");  
+//     if(isnan(c0) || isnan(c1))
+//         printf("gsl returned NaN.\n");  
     
-    *mantissa = exp(c0);
-    *exponent = c1;
+//     *mantissa = exp(c0);
+//     *exponent = c1;
 
-    if(isnan(*mantissa) || isnan(*exponent))
-        printf("mantissa or exponent are NaN.\n");  
+//     if(isnan(*mantissa) || isnan(*exponent))
+//         printf("mantissa or exponent are NaN.\n");  
 
 
-    // Calculate residuals
-    *residuals = 0;
-    for(i = 0; i < length; i++)
-    {   
-        diff = (*mantissa) * exp((*exponent) * i);
-        *residuals += *(weights + i)  * diff*diff/length;
-    }
+//     // Calculate residuals
+//     *residuals = 0;
+//     for(i = 0; i < length; i++)
+//     {   
+//         diff = (*mantissa) * exp((*exponent) * i);
+//         *residuals += *(weights + i)  * diff*diff/length;
+//     }
 
-    free(logdata);
-    return 0;
-}
+//     free(logdata);
+//     return 0;
+// }
 
 
 /*

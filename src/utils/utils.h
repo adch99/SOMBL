@@ -19,8 +19,8 @@ int utils_print_matrix(void * matrix, int m, int n,
 int utils_save_matrix(void * matrix, int m, int n,
                     char type, char ordering, FILE * ofile);
 int utils_get_eigh(CDTYPE * matrix, int size, DTYPE * eigvals);
-int utils_fit_exponential(DTYPE * x, DTYPE * y, int length, DTYPE * exponent,
-                        DTYPE * mantissa, DTYPE * residuals);
+// int utils_fit_exponential(DTYPE * x, DTYPE * y, int length, DTYPE * exponent,
+//                         DTYPE * mantissa, DTYPE * residuals);
 int utils_get_green_func_lim(CDTYPE * eigenvectors, int size,
                         DTYPE * green_func);
 DTYPE utils_compute_gfsq_elem(int i, int j, CDTYPE * eigenvectors, int size);
