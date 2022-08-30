@@ -6,12 +6,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 params = {
-    "coupling_const":   0.1,
+    "coupling_const":     0,
     # "hop_strength":     1.0,
     "hopup":            1.5,
     "hopdn":            1.0,
     "disorder_vals":    np.linspace(5, 20, 11),
-    "size":             20,
+    "size":             40,
     "num_runs":         100,
     "nospin":           False
 }

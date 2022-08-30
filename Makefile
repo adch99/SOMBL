@@ -1,7 +1,7 @@
 CC=gcc
-CFLAGS=-Wall -Wextra -g -fdiagnostics-color=always -fopenmp -ffast-math #-fsanitize=address,undefined
-# CFLAGS=-O2 -ffast-math -fopenmp
-LFLAGS=-llapacke -lm -lgsl -lcblas -lblas
+# CFLAGS=-Wall -Wextra -g -fdiagnostics-color=always -fopenmp -ffast-math -I../openblas/include#-fsanitize=address,undefined
+CFLAGS=-O3 -ffast-math -fopenmp -I../openblas/include 
+LFLAGS=-llapacke -lm -lgsl -L../openblas/lib -Wl,-rpath,../openblas/lib -lopenblas -lpthread
 ERRORLOG=logs/compiler_error.log
 
 _DEPS = utils/utils.c ham_gen/ham_gen.c params/params.c io/io.c
