@@ -134,11 +134,11 @@ def plotData(disorder_vals, loc_lens, name=None):
 
 def main(params):
     runExactDiag(params)
-    print("")
-    runFuncCalc(params)
-    print("")
-    data = runLocLens(params)
-    plotData(*data, name=getFilename(params))
+    # print("")
+    # runFuncCalc(params)
+    # print("")
+    # data = runLocLens(params)
+    # plotData(*data, name=getFilename(params))
 
 
 if __name__ == "__main__":

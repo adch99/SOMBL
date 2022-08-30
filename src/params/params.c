@@ -5,7 +5,6 @@
 #include "params.h"
 #include "../constants.h"
 
-
 /* Parse a single option. */
 error_t params_parse_opt(int key, char *arg, struct argp_state *state)
 {
@@ -43,6 +42,32 @@ error_t params_parse_opt(int key, char *arg, struct argp_state *state)
         default:
             return ARGP_ERR_UNKNOWN;
         }
+    return 0;
+}
+
+int params_setup(int argc, char ** argv, struct SystemParams * params,
+        struct OutStream * outfiles, struct argp * argp)
+{
+    /* Default Values of Parameters */
+    params->len = params->width = 20;
+    params->coupling_const = 0;
+    params->disorder_strength = 10;
+    params->hop_strength_upup = 1;
+    params->hop_strength_dndn = 1;
+    params->numRuns = 100;
+    params->nospin = 0;
+
+    /* Parse our arguments; every option seen by parse_opt will
+        be reflected in params. */
+    argp_parse(argp, argc, argv, 0, 0, params);
+    if(params->nospin)
+        params->num_states = params->len*params->width;
+    else
+        params->num_states = 2*params->len*params->width;
+
+    // Set up the data files for the system params.
+    *outfiles = params_set_up_datastream(*params);
+
     return 0;
 }
 

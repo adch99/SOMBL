@@ -4,7 +4,7 @@ CFLAGS=-Wall -Wextra -g -fdiagnostics-color=always -fopenmp -ffast-math #-fsanit
 LFLAGS=-llapacke -lm -lgsl -lcblas -lblas
 ERRORLOG=logs/compiler_error.log
 
-_DEPS = utils/utils.c ham_gen/ham_gen.c params/params.c
+_DEPS = utils/utils.c ham_gen/ham_gen.c params/params.c io/io.c
 DEPS = $(patsubst %,src/%,$(_DEPS))
 
 OBJ = $(patsubst %.c,build/%.o,$(_DEPS))
@@ -20,6 +20,9 @@ exact_diag_simulation: $(OBJ)
 	$(CC) -o build/$@ src/$@.c $^ $(CFLAGS) $(LFLAGS)
 
 calculate_dist_vs_gfuncsq: $(OBJ)
+	$(CC) -o build/$@ src/$@.c $^ $(CFLAGS) $(LFLAGS)
+
+calculate_imbalance: $(OBJ)
 	$(CC) -o build/$@ src/$@.c $^ $(CFLAGS) $(LFLAGS)
 
 build/tests/%: tests/%.c $(OBJ)
