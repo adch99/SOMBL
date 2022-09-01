@@ -21,9 +21,9 @@ struct SystemParams {
 
 
 struct OutStream {
-    char gfuncsq[90];
-    char dist_vs_gfuncsq[90];
-    char dist_vs_gfuncsq_spin[4][100];
+    char * gfuncsq;
+    char * dist_vs_gfuncsq;
+    char * dist_vs_gfuncsq_spin[4];
 };
 
 error_t params_parse_opt(int key, char *arg, struct argp_state *state);
@@ -31,4 +31,6 @@ int params_setup(int argc, char ** argv, struct SystemParams * params,
         struct OutStream * outfiles, struct argp * argp);
 int params_set_up_datastream(struct SystemParams params,
                             struct OutStream * outfiles);
+int params_cleanup(struct SystemParams * params, struct OutStream * outfiles);
+
 #endif

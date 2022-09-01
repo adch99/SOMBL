@@ -27,7 +27,7 @@ int hamiltonian(CDTYPE * ham, int len, int width,
     for(site1 = 0; site1 < num_sites; site1++)
     {
         // #pragma omp parallel for
-        for(site2 = 0; site2 < num_sites; site2++)
+        for(site2 = 0; site2 <= site1; site2++)
         {
             // RTC is row major to column major
             index_up_up = RTC(2*site1, 2*site2, 2*num_sites); 
@@ -110,13 +110,14 @@ int hamiltonian(CDTYPE * ham, int len, int width,
     return(0);
 }
 
+/*
+    Creates a neighbour list for each index
+    of a 2D lattice of len x width.
+    Order of neighbours: x-1, x+1, y-1, y+1
+*/
 int get_neighbour_lists(int (*neighbours)[NEIGHS], int len, int width)
 {
-    /*
-        Creates a neighbour list for each index
-        of a 2D lattice of len x width.
-        Order of neighbours: x-1, x+1, y-1, y+1
-    */
+
 
     int index;
 
@@ -129,6 +130,11 @@ int get_neighbour_lists(int (*neighbours)[NEIGHS], int len, int width)
     return(0);
 }
 
+/*
+    Given a lattice index (= i + len*j) and an array,
+    writes the lattice neighbours of the site in the
+    array. Order of neighbours: [x-1, x+1, y-1, y+1]
+*/
 int get_neighbours(int index, int len, int width, int * nlist)
 {
     /*
@@ -180,10 +186,12 @@ int get_neighbours(int index, int len, int width, int * nlist)
     return(0);
 }
 
+// Check if index is in the nlist.
+// If yes, then return the index.
+// 0->x-1, 1->x+1, 2->y-1, 3->y+1
+// -1->Not neighbour
 int check_neighbour(int index, int * nlist)
 {
-    // Check if index is in the nlist.
-    // If yes, then return the index.
 
     int i, loc = -1;
     // #pragma omp parallel for

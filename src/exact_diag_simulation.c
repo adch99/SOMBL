@@ -103,6 +103,7 @@ int main(int argc, char ** argv)
     // printf("Disorder Averaged Loc Len: %e\n", avg_loc_len);
 
     free(params.neighbours);
+    params_cleanup(&params, &outfiles);
     free(gfunc);
     return(0);
 }
@@ -129,8 +130,8 @@ int run(struct SystemParams * params, int create_neighbours,
     // Create hamiltonian
     CDTYPE * ham = calloc(num_states*num_states,sizeof(CDTYPE));
     
-    // printf("Creating Ham...");
-    // fflush(stdout);
+    printf("Creating Ham...");
+    fflush(stdout);
     if(params->nospin == 1)
         hamiltonian_nospin(ham, params->len, params->width,
                 params->disorder_strength, params->hop_strength_upup,
@@ -142,14 +143,14 @@ int run(struct SystemParams * params, int create_neighbours,
 
 
     // Calculate eigenvectors
-    // printf("Eigh...");
-    // fflush(stdout);
+    printf("Eigh...");
+    fflush(stdout);
     DTYPE * eigvals = calloc(num_states, sizeof(DTYPE));
     utils_get_eigh(ham, num_states, eigvals);
 
     // Calculate and add green's function long time limit squared
-    // printf("Gfunc...");
-    // fflush(stdout);
+    printf("Gfunc...");
+    fflush(stdout);
     utils_get_green_func_lim(ham, num_states, gfunc);
 
     free(eigvals);

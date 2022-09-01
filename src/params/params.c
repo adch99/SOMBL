@@ -81,7 +81,8 @@ int params_setup(int argc, char ** argv, struct SystemParams * params,
 int params_set_up_datastream(struct SystemParams params, struct OutStream * outfiles)
 {
     char base[16];
-    char basename[64];
+    char basename[80];
+    int baselen, i;
     // int gfuncsq_check;
     // int dist_vs_gfuncsq_check;
 
@@ -93,7 +94,15 @@ int params_set_up_datastream(struct SystemParams params, struct OutStream * outf
     sprintf(basename, "%s_%dx%d_W%.4g_C%.4g_TU%.4g_TD%.4g_N%d", base, params.len,
             params.width, params.disorder_strength, params.coupling_const,
             params.hop_strength_upup, params.hop_strength_dndn, params.numRuns);
+
+    baselen = strlen(basename);
+    outfiles->gfuncsq = malloc((baselen+32)*sizeof(char));
+    outfiles->dist_vs_gfuncsq = malloc((baselen+32)*sizeof(char));
+    for(i = 0; i < 4; i++)
+        outfiles->dist_vs_gfuncsq_spin[i] = malloc((baselen+32)*sizeof(char));
+
     sprintf(outfiles->gfuncsq, "%s_greenfuncsq.dat", basename);
+    sprintf(outfiles->dist_vs_gfuncsq, "%s_distvsgfsq.dat", basename);
     sprintf(outfiles->dist_vs_gfuncsq_spin[0], "%s_upup_distvsgfsq.dat", basename);
     sprintf(outfiles->dist_vs_gfuncsq_spin[1], "%s_updn_distvsgfsq.dat", basename);
     sprintf(outfiles->dist_vs_gfuncsq_spin[2], "%s_dnup_distvsgfsq.dat", basename);
@@ -117,5 +126,17 @@ int params_set_up_datastream(struct SystemParams params, struct OutStream * outf
     // fclose(dist_vs_gfuncsq_file);
     // fclose(gfuncsq_file);
 
-    return(outfiles);
+    return(0);
+}
+
+int params_cleanup(struct SystemParams * params, struct OutStream * outfiles)
+{
+    int i;
+
+    free(outfiles->gfuncsq);
+    free(outfiles->dist_vs_gfuncsq);
+    for(i = 0; i < 4; i++)
+        free(outfiles->dist_vs_gfuncsq_spin[i]);
+
+    return 0;
 }

@@ -15,6 +15,7 @@ int test_uniform_dist();
 int test_get_eigh();
 int test_fit_exponential();
 int test_get_green_func_lim();
+int test_get_matrix_index();
 
 int main(int argc, char ** argv)
 {
@@ -24,8 +25,9 @@ int main(int argc, char ** argv)
     tester(test_get_eigvalsh, "test_get_eigvalsh");
     tester(test_uniform_dist, "test_uniform_dist");
     tester(test_get_eigh, "test_get_eigh");
-    tester(test_fit_exponential, "test_fit_exponential");
+    // tester(test_fit_exponential, "test_fit_exponential");
     tester(test_get_green_func_lim, "test_get_green_func_lim");
+    tester(test_get_matrix_index, "test_get_matrix_index");
     return(0);
 }
 
@@ -261,33 +263,79 @@ int test_get_green_func_lim()
     return(success);
 }
 
-int test_fit_exponential()
+int test_get_matrix_index()
 {
     int success = 1;
-    DTYPE exponent = -1.23;
-    DTYPE mantissa = 113.56;
-    DTYPE x[10], y[10];
-    DTYPE noise[10];
-    DTYPE est_exp, est_mant, residuals;
-    int i;
-    utils_uniform_dist(-1e-4, 1e-4, 10, noise, 1);
-    for(i = 0; i < 10; i++)
-    {
-        x[i] = 0.25 * (DTYPE) i;
-        y[i] = mantissa * exp(x[i] * exponent) + noise[i];
-        // printf("(%.3e, %.3e)\n", x[i], y[i]);
-    }
+    int x, y, lattice_index, index, length, value;
+    unsigned int spin;
 
-    utils_fit_exponential(x, y, 10, &est_exp, &est_mant, &residuals);
-    // printf("Estimates: %e * exp(%e x)\n", est_mant, est_exp);;
-    // printf("Residuals per datapoint: %e\n", residuals/10);
+    length = 10;
+    x = 3;
+    y = 4;
+    spin = 1;
+    lattice_index = x + length*y;
+    index = 2*lattice_index + spin;
+    value = utils_get_matrix_index(x, y, spin, length, 0);
+    success = success && (value == index);
 
-    DTYPE errp_exp = fabs((est_exp - exponent) / exponent);
-    DTYPE errp_mant = fabs((est_mant - mantissa) / mantissa);
+    length = 15;
+    x = 23;
+    y = 15;
+    spin = 0;
+    lattice_index = 8 + length*0;
+    index = 2*lattice_index + spin;
+    value = utils_get_matrix_index(x, y, spin, length, 0);
+    success = success && (value == index);
 
-    if(errp_exp > 1e-2 || errp_mant > 1e-2)
-        success = 0;
+    length = 21;
+    x = -1;
+    y = 11;
+    spin = 1;
+    lattice_index = 20 + length*11;
+    index = 2*lattice_index + spin;
+    value = utils_get_matrix_index(x, y, spin, length, 0);
+    success = success && (value == index);
 
+    length = 32;
+    x = -3;
+    y = 32;
+    spin = 1;
+    lattice_index = 29 + length*0;
+    index = 2*lattice_index + spin;
+    value = utils_get_matrix_index(x, y, spin, length, 0);
+    success = success && (value == index);
 
     return(success);
 }
+
+
+// int test_fit_exponential()
+// {
+//     int success = 1;
+//     DTYPE exponent = -1.23;
+//     DTYPE mantissa = 113.56;
+//     DTYPE x[10], y[10];
+//     DTYPE noise[10];
+//     DTYPE est_exp, est_mant, residuals;
+//     int i;
+//     utils_uniform_dist(-1e-4, 1e-4, 10, noise, 1);
+//     for(i = 0; i < 10; i++)
+//     {
+//         x[i] = 0.25 * (DTYPE) i;
+//         y[i] = mantissa * exp(x[i] * exponent) + noise[i];
+//         // printf("(%.3e, %.3e)\n", x[i], y[i]);
+//     }
+
+//     utils_fit_exponential(x, y, 10, &est_exp, &est_mant, &residuals);
+//     // printf("Estimates: %e * exp(%e x)\n", est_mant, est_exp);;
+//     // printf("Residuals per datapoint: %e\n", residuals/10);
+
+//     DTYPE errp_exp = fabs((est_exp - exponent) / exponent);
+//     DTYPE errp_mant = fabs((est_mant - mantissa) / mantissa);
+
+//     if(errp_exp > 1e-2 || errp_mant > 1e-2)
+//         success = 0;
+
+
+//     return(success);
+// }

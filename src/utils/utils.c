@@ -505,7 +505,13 @@ int utils_construct_data_vs_dist(DTYPE * matrix, int size, int length,
 
     // Calculate the averages
     unsigned int spins;
-    for(spins = 0; spins < 4; spins++)
+    unsigned int total_spins;
+    if(nospin == 1)
+        total_spins = 1;
+    else
+        total_spins = 4;
+
+    for(spins = 0; spins < total_spins; spins++)
     {
         for(i = 0; i < bins; i++)
         {
@@ -552,6 +558,34 @@ int utils_get_lattice_index(int index, int length, int nospin,
 
     return(0);
 }
+
+/*
+    Given the lattice position (x, y) and spin,
+    returns the index in the gfunc/ham matrix.
+*/
+int utils_get_matrix_index(int x, int y, unsigned int spin,
+                        int length, int nospin)
+{
+    int pbc_x, pbc_y;
+    if(x < 0)
+        pbc_x = length - (abs(x) % length);
+    else
+        pbc_x = x % length;
+    
+    if(y < 0)
+        pbc_y = length - (abs(y) % length);
+    else
+        pbc_y = y % length;
+
+    int lattice_index = pbc_x + length*pbc_y;
+    int index;
+    if(nospin == 1)
+        index = lattice_index;
+    else
+        index = 2*lattice_index + spin;
+    return(index);
+}
+
 
 int utils_bin_data(DTYPE index, DTYPE value, int bins, int * counts,
                 DTYPE lowest, DTYPE bin_width, DTYPE * value_hist)

@@ -83,7 +83,8 @@ int main(int argc, char ** argv)
             printf("Outputting to %s\n", fname);
             io_output_function_data(dists, gfuncsq + i*bins, fname, data_len);
         }
-    }    
+    }
+    params_cleanup(&params, &outfiles);
     free(matrix);
     free(dists);
     free(gfuncsq);
