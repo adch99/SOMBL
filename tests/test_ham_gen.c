@@ -9,6 +9,11 @@
 // Helper Function
 int tester(int (*test_func)(), char * name);
 
+// Smaller functions
+int test_ham_lattice_site(int index, CDTYPE * ham, int length, DTYPE hopup,
+                        DTYPE hopdn, DTYPE disorder, DTYPE coupling);
+
+// Functions to test
 int test_hamiltonian(); 
 int test_hamiltonian_nospin();
 int test_get_neighbour_list();
@@ -18,7 +23,7 @@ int main(int argc, char ** argv)
     (void) argc;
     (void) argv;
     srandom(17);
-    // tester(test_hamiltonian, "test_hamiltonian");
+    tester(test_hamiltonian, "test_hamiltonian");
     tester(test_hamiltonian_nospin, "test_hamiltonian_nospin");
     tester(test_get_neighbour_list, "test_get_neighbour_list");
     return 0;
@@ -53,8 +58,161 @@ int test_hermitian(CDTYPE * matrix, int size)
     return(success);
 }
 
+int test_ham_lattice_site(int index, CDTYPE * ham, int length, DTYPE hopup,
+                        DTYPE hopdn, DTYPE disorder, DTYPE coupling)
+{
+    int success = 1;
+    int num_states = 2 * length * length;
+    int x, y, cond, nb_index;
+    unsigned int spin;
+    CDTYPE value, expected, hopping;
+    utils_get_lattice_index(index, length, 0, &x, &y, &spin);
+
+    CDTYPE spin_orbit_exp[4][2] = {{-1, 1}, {1, -1}, {I, I}, {-I, -I}};
+
+    if(spin == 0)
+        hopping = hopup;
+    else if(spin == 1)
+        hopping = hopdn;
+    else
+    {
+        printf("Error: spin is not 0 or 1! spin = %d\n", spin);
+        success = 0;
+    }
+
+    // Check if disorder strength is in range
+    value = *(ham + RTC(index, index, num_states));
+    cond = ((cabs(value) <= disorder/2) && (cabs(value) >= -disorder/2));
+    if(cond == 0)
+        printf("Error at (%d, %d) diagonal\n", index, index);
+    success = success && cond; 
+
+    // (x-1, y) same spin
+    expected = -hopping;
+    nb_index = utils_get_matrix_index(x-1, y, spin, length, 0);
+    value = *(ham + RTC(nb_index, index, num_states));
+    cond = (cabs(value - expected) < TOL);
+    if(cond == 0)
+    {
+        printf("Error in ham:\n");
+        printf("i = %d = (%d, %d, %d)\n", nb_index, x-1, y, spin);
+        printf("j = %d = (%d, %d, %d)\n", index, x, y, spin);
+        printf("value = %.3e + i%.3e\nexpected = %.3e + i%.3e\n\n", creal(value), cimag(value),
+                creal(expected), cimag(expected));
+    }
+    success = success && cond;
+
+    //(x-1, y) opp spin
+    expected = coupling * spin_orbit_exp[0][1-spin];
+    nb_index = utils_get_matrix_index(x-1, y, 1-spin, length, 0);
+    value = *(ham + RTC(nb_index, index, num_states));
+    cond = (cabs(value - expected) < TOL);
+    if(cond == 0)
+    {
+        printf("Error in ham:\n");
+        printf("i = %d = (%d, %d, %d)\n", nb_index, x-1, y, 1-spin);
+        printf("j = %d = (%d, %d, %d)\n", index, x, y, spin);
+        printf("value = %.3e + i%.3e\nexpected = %.3e + i%.3e\n\n", creal(value), cimag(value),
+                creal(expected), cimag(expected));
+    }
+    success = success && cond;
+
+    //(x+1, y) same spin
+    expected = -hopping;
+    nb_index = utils_get_matrix_index(x+1, y, spin, length, 0);
+    value = *(ham + RTC(nb_index, index, num_states));
+    cond = (cabs(value - expected) < TOL);
+    if(cond == 0)
+    {
+        printf("Error in ham:\n");
+        printf("i = %d = (%d, %d, %d)\n", nb_index, x+1, y, spin);
+        printf("j = %d = (%d, %d, %d)\n", index, x, y, spin);
+        printf("value = %.3e + i%.3e\nexpected = %.3e + i%.3e\n\n", creal(value), cimag(value),
+                creal(expected), cimag(expected));
+    }
+    success = success && cond;
+
+    //(x+1, y) opp spin
+    expected = coupling * spin_orbit_exp[1][1-spin];
+    nb_index = utils_get_matrix_index(x+1, y, 1-spin, length, 0);
+    value = *(ham + RTC(nb_index, index, num_states));
+    cond = (cabs(value - expected) < TOL);
+    if(cond == 0)
+    {
+        printf("Error in ham:\n");
+        printf("i = %d = (%d, %d, %d)\n", nb_index, x+1, y, 1-spin);
+        printf("j = %d = (%d, %d, %d)\n", index, x, y, spin);
+        printf("value = %.3e + i%.3e\nexpected = %.3e + i%.3e\n\n", creal(value), cimag(value),
+                creal(expected), cimag(expected));
+    }
+    success = success && cond;
+
+    //(x, y-1) same spin
+    expected = -hopping;
+    nb_index = utils_get_matrix_index(x, y-1, spin, length, 0);
+    value = *(ham + RTC(nb_index, index, num_states));
+    cond = (cabs(value - expected) < TOL);
+    if(cond == 0)
+    {
+        printf("Error in ham:\n");
+        printf("i = %d = (%d, %d, %d)\n", nb_index, x, y-1, spin);
+        printf("j = %d = (%d, %d, %d)\n", index, x, y, spin);
+        printf("value = %.3e + i%.3e\nexpected = %.3e + i%.3e\n\n", creal(value), cimag(value),
+                creal(expected), cimag(expected));
+    }
+    success = success && cond;
+
+    //(x, y-1) opp spin
+    expected = coupling * spin_orbit_exp[2][1-spin];
+    nb_index = utils_get_matrix_index(x, y-1, 1-spin, length, 0);
+    value = *(ham + RTC(nb_index, index, num_states));
+    cond = (cabs(value - expected) < TOL);
+    if(cond == 0)
+    {
+        printf("Error in ham:\n");
+        printf("i = %d = (%d, %d, %d)\n", nb_index, x, y-1, 1-spin);
+        printf("j = %d = (%d, %d, %d)\n", index, x, y, spin);
+        printf("value = %.3e + i%.3e\nexpected = %.3e + i%.3e\n\n", creal(value), cimag(value),
+                creal(expected), cimag(expected));
+    }
+    success = success && cond;
+
+    //(x, y+1) same spin
+    expected = -hopping;
+    nb_index = utils_get_matrix_index(x, y+1, spin, length, 0);
+    value = *(ham + RTC(nb_index, index, num_states));
+    cond = (cabs(value - expected) < TOL);
+    if(cond == 0)
+    {
+        printf("Error in ham:\n");
+        printf("i = %d = (%d, %d, %d)\n", nb_index, x, y+1, spin);
+        printf("j = %d = (%d, %d, %d)\n", index, x, y, spin);
+        printf("value = %.3e + i%.3e\nexpected = %.3e + i%.3e\n\n", creal(value), cimag(value),
+                creal(expected), cimag(expected));
+    }
+    success = success && cond;
+
+    //(x, y+1) opp spin
+    expected = coupling * spin_orbit_exp[3][1-spin];
+    nb_index = utils_get_matrix_index(x, y+1, 1-spin, length, 0);
+    value = *(ham + RTC(nb_index, index, num_states));
+    cond = (cabs(value - expected) < TOL);
+    if(cond == 0)
+    {
+        printf("Error in ham:\n");
+        printf("i = %d = (%d, %d, %d)\n", nb_index, x, y+1, 1-spin);
+        printf("j = %d = (%d, %d, %d)\n", index, x, y, spin);
+        printf("value = %.3e + i%.3e\nexpected = %.3e + i%.3e\n\n", creal(value), cimag(value),
+                creal(expected), cimag(expected));
+    }
+    success = success && cond;
+
+    return(success);
+}
+
 int test_hamiltonian()
 {
+    int success = 1;
     int length, width;
     length = width = 3;
     int num_sites = length*width;
@@ -62,31 +220,41 @@ int test_hamiltonian()
     CDTYPE * ham = calloc(num_states*num_states, sizeof(CDTYPE));
     int (*neighbour)[NEIGHS] = malloc((num_sites * NEIGHS) * sizeof(int));
     get_neighbour_lists(neighbour, length, width);
-    hamiltonian(ham, length, width, 0, 15.0, 1.0, neighbour);
+    hamiltonian(ham, length, width, 0.1, 15.0, 1.0, 1.5, neighbour);
 
-    printf("H (with spin):\n");
-    utils_print_matrix_complex_F(ham, num_states, num_states);
+    // printf("H (with spin):\n");
+    // utils_print_matrix_complex_F(ham, num_states, num_states);
 
-    printf("\nneighbours:\n");
-    int i, j;
-    for(i = 0; i < num_sites; i++)
-    {
-        printf("%d: ", i);
-        for(j = 0; j < NEIGHS; j++)
-        {
-            printf("%d ", *(*(neighbour + i) + j));
-        }
-        printf("\n");
-    }
-
-    DTYPE * eigvals = malloc(num_states*sizeof(DTYPE));
-    utils_get_eigvalsh(ham, num_states, eigvals);
-    printf("\nEigvals:\n");
+    int i, result;
     for(i = 0; i < num_states; i++)
     {
-        printf("%-.2g ", *(eigvals + i));
+        result = test_ham_lattice_site(i, ham, length, 1.0, 1.5, 15.0, 0.1);
+        success = (success && result);
     }
-    return 0;
+
+    // printf("\nneighbours:\n");
+    // int i, j;
+    // for(i = 0; i < num_sites; i++)
+    // {
+    //     printf("%d: ", i);
+    //     for(j = 0; j < NEIGHS; j++)
+    //     {
+    //         printf("%d ", *(*(neighbour + i) + j));
+    //     }
+    //     printf("\n");
+    // }
+
+    // DTYPE * eigvals = malloc(num_states*sizeof(DTYPE));
+    // utils_get_eigvalsh(ham, num_states, eigvals);
+    // printf("\nEigvals:\n");
+    // for(i = 0; i < num_states; i++)
+    // {
+    //     printf("%-.2g ", *(eigvals + i));
+    // }
+
+    free(ham);
+    free(neighbour);
+    return(success);
 }
 
 int test_hamiltonian_nospin()
@@ -116,7 +284,7 @@ int test_hamiltonian_nospin()
             site1 = i;
             site2 = *(*(neighbour + i) + j);
             index = RTC(site1, site2, num_states);
-            if (*(ham + index) != -1.0)
+            if (cabs(*(ham + index) - (-1.0)) > TOL)
             {
                 printf("Problem at site (%d,%d) index=%d", site1, site2, index);
                 success = 0;
@@ -156,7 +324,7 @@ int test_hamiltonian_nospin()
             }
             else if(check_neighbour(j, *(neighbour + i)) >= 0)
             {
-                if(value != -1+0*I)
+                if(cabs(value - (-1+0*I)) > TOL)
                 {
                     printf("Problem at (%d,%d) index=%d!\n", i, j, index);
                     printf("H(i,j) = %e+%ej =/= -1\n", creal(value), cimag(value));
@@ -165,7 +333,7 @@ int test_hamiltonian_nospin()
             }
             else
             {
-                if(value != 0+0*I)
+                if(cabs(value - (0+0*I)) > TOL)
                 {
                     printf("Problem at (%d,%d) index=%d\n!", i, j, index);
                     printf("H(i,j) = %e+%ej =/= 0\n", creal(value), cimag(value));
@@ -183,6 +351,9 @@ int test_hamiltonian_nospin()
     //     printf("%-.4g ", *(eigvals + i));
     // }
     // printf("\n");
+    free(ham);
+    free(neighbour);
+    free(eigvals);
     return success;
 }
 
@@ -217,5 +388,6 @@ int test_get_neighbour_list()
         }
     }
 
+    free(neighbours);
     return(success);
 }

@@ -6,13 +6,16 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 params = {
-    "coupling_const":   0.0,
-    "hop_strength":     1.0,
+    "coupling_const":     0,
+    # "hop_strength":     1.0,
+    "hopup":            1.5,
+    "hopdn":            1.0,
     "disorder_vals":    np.linspace(5, 20, 11),
     "size":             40,
     "num_runs":         100,
-    "nospin":           True
+    "nospin":           False
 }
+
 
 def getFilename(params):
     W_min = params['disorder_vals'][0]
@@ -34,13 +37,16 @@ def runExactDiag(params):
         args = ["build/exact_diag_simulation",
                 "-s", f"{params['size']}",
                 "-c", f"{params['coupling_const']}",
-                "-t", f"{params['hop_strength']}",
+                # "-t", f"{params['hop_strength']}",
+                "-u", str(params["hopup"]),
+                "-d", str(params["hopdn"]),
                 "-w", f"{disorder_strength}",
                 "-n", f"{params['num_runs']}"]
         if params["nospin"]:
             args.append("-p")
 
-        print(f"DIAG: W = {disorder_strength:.2f} Started...", end="", flush=True)
+        print(f"DIAG: W = {disorder_strength:.2f} Started...",
+            end="", flush=True)
         start_time = time.time()
         result = subprocess.run(args, capture_output=True, text=True)
         result.check_returncode()
@@ -54,13 +60,16 @@ def runFuncCalc(params):
         args = ["build/calculate_dist_vs_gfuncsq",
                 "-s", f"{params['size']}",
                 "-c", f"{params['coupling_const']}",
-                "-t", f"{params['hop_strength']}",
+                # "-t", f"{params['hop_strength']}",
+                "-u", str(params["hopup"]),
+                "-d", str(params["hopdn"]),
                 "-w", f"{disorder_strength}",
                 "-n", f"{params['num_runs']}"]
         if params["nospin"]:
             args.append("-p")
 
-        print(f"FUNC: W = {disorder_strength:.2e} Started...", end="", flush=True)
+        print(f"FUNC: W = {disorder_strength:.2e} Started...",
+            end="", flush=True)
         start_time = time.time()
         result = subprocess.run(args, capture_output=True, text=True)
         result.check_returncode()
@@ -76,7 +85,9 @@ def runLocLens(params):
         args = ["scripts/calculate_loc_lens.py",
                 "-s", f"{params['size']}",
                 "-c", f"{params['coupling_const']}",
-                "-t", f"{params['hop_strength']}",
+                # "-t", f"{params['hop_strength']}",
+                "-u", str(params["hopup"]),
+                "-d", str(params["hopdn"]),
                 "-w", f"{disorder_strength}",
                 "-n", f"{params['num_runs']}",
                 "--silent"]
@@ -86,16 +97,27 @@ def runLocLens(params):
 
         start_time = time.time()
         result = subprocess.run(args, capture_output=True, text=True)
-        result.check_returncode()
+        try:
+            result.check_returncode()
+        except subprocess.CalledProcessError:
+            print("Call to scripts/calculate_loc_lens.py failed!")
+            print("params:", params)
+            print("stderr:", result.stderr)
+            exit(1)
         time_taken = time.time() - start_time
         data = json.loads(result.stdout)
         loc_lens[i] = data["xi"]
-        print(f"{disorder_strength:-5} {loc_lens[i]:-.5e} {time_taken:-.3f} {data['residpp']:-5e} {data['cutoff']}")
+        output_string = f"{disorder_strength:-5} {loc_lens[i]:-.5e}"
+        output_string += f" {time_taken:-.3f} {data['residpp']:-5e}"
+        output_string += f" {data['cutoff']}"
+        print(output_string)
     return params["disorder_vals"], loc_lens
+
 
 def outputData(data, outfilename):
     np.savetxt("data/" + outfilename + ".dat", np.array(data).T)
-    
+
+
 def plotData(disorder_vals, loc_lens, name=None):
     fig, ax = plt.subplots()
     ax.plot(disorder_vals, loc_lens, marker=".")
@@ -109,13 +131,15 @@ def plotData(disorder_vals, loc_lens, name=None):
     fig.savefig("plots/" + name + ".pdf")
     fig.savefig("plots/" + name + ".png")
 
+
 def main(params):
-    # runExactDiag(params)
+    runExactDiag(params)
     # print("")
     # runFuncCalc(params)
     # print("")
-    data = runLocLens(params)
-    plotData(*data, name=getFilename(params))
+    # data = runLocLens(params)
+    # plotData(*data, name=getFilename(params))
+
 
 if __name__ == "__main__":
     main(params)

@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <argp.h>
-#include <math.h>
 #include "constants.h"
 #include "params/params.h"
 #include "utils/utils.h"
@@ -9,17 +8,17 @@
 
 /* Constant Declarations */
 const char *argp_program_version =
-  "calculate_dist_vs_gfuncsq 1.0";
+  "calculate_imbalance 1.0";
 const char *argp_program_bug_address =
   "<aditya.chincholi@students.iiserpune.ac.in>";
 // Program documentation.
 static char doc[] =
-  "calculate_dist_vs_gfuncsq -- converts the green function " 
-  "squared matrix from data file to a function of the "
-  "distances between lattice sites";
+  "Calculate imbalance -- calculates the imbalance "
+  "based on initial conditions and green function "
+  "squared data from input files";
 // A description of the arguments we accept.
 static char args_doc[] = "-s <size> -c <coupling_const>"
-                        "-w <disorder_strength>"
+                        " -w <disorder_strength>"
                         " -t <hop_strength> -n <num_runs>"
                         " [-p]";
 // The options we understand.
@@ -37,9 +36,6 @@ static struct argp_option options[] = {
 // Our argp parser.
 static struct argp argp = { options, params_parse_opt, args_doc, doc, 0, 0, 0};
 
-int output_function_data(DTYPE * dists, DTYPE * gfuncsq,
-                        char * filename, int data_len);
-
 
 int main(int argc, char ** argv)
 {
@@ -49,8 +45,8 @@ int main(int argc, char ** argv)
 
     params_setup(argc, argv, &params, &outfiles, &argp);
 
-    printf("Calculate G^2(r)\n");
-    printf("----------------\n");
+    printf("Calculate Imbalance\n");
+    printf("-------------------\n");
     printf("len: %d\t nospin: %d\t coupling: %.2e\n"
         "disorder: %.2e\t hop_up: %.2e\t hop_dn: %.2e\n",
         params.len, params.nospin, params.coupling_const,
@@ -58,36 +54,34 @@ int main(int argc, char ** argv)
         params.hop_strength_dndn);
 
 
-    // Get the gfuncsq matrix from the data file
-    DTYPE * matrix = malloc(params.num_states*params.num_states*sizeof(DTYPE));
-    io_get_gfuncsq_from_file(matrix, outfiles, params);
-    // utils_print_matrix(matrix, params.num_states, params.num_states, 'R', 'F');
-    // Bin the gfunsq matrix and create a function of
-    // distance G^2(|r_i - r_j|)
-    DTYPE * dists;
-    DTYPE * gfuncsq;
-    int data_len;
-    // Let's bin the data into bins of width 1.
-    int bins = floor(params.len * sqrt(2) / M_PI);
-    data_len = utils_construct_data_vs_dist(matrix, params.num_states, params.len,
-                                        bins, &dists, &gfuncsq);
+    int * occupied_set_up, * occupied_set_dn;
+    int set_length_up, set_length_dn;
+    DTYPE * gfuncsq = malloc(params.num_states*params.num_states * sizeof(DTYPE));
+    DTYPE charge_imb;
 
-    if(params.nospin == 1)
-        io_output_function_data(dists, gfuncsq, outfiles.dist_vs_gfuncsq, data_len);
-    else
-    {
-        int i;
-        for(i = 0; i < 4; i++)
-        {
-            char * fname = outfiles.dist_vs_gfuncsq_spin[i];
-            printf("Outputting to %s\n", fname);
-            io_output_function_data(dists, gfuncsq + i*bins, fname, data_len);
-        }
-    }
-    params_cleanup(&params, &outfiles);
-    free(matrix);
-    free(dists);
-    free(gfuncsq);
+    io_get_initial_condition(&occupied_set_up, &set_length_up,
+                        &occupied_set_dn, &set_length_dn,
+                        "data/alt_up_empty_L3.dat");
+
+    int i;
+    printf("Up spins: %d\n", set_length_up);
+    for(i = 0; i < set_length_up; i++)
+        printf("%d ", *(occupied_set_up + i));
+    printf("\n");
+
+    printf("Dn spins: %d\n", set_length_dn);
+    for(i = 0; i < set_length_dn; i++)
+        printf("%d ", *(occupied_set_dn + i));
+    printf("\n");
+
+    io_get_gfuncsq_from_file(gfuncsq, outfiles, params);
+
+    charge_imb = utils_get_charge_imbalance(gfuncsq, occupied_set_up,
+                        set_length_up, occupied_set_dn, set_length_dn,
+                        params.num_states);
+
+    printf("Charge Imbalance: %e\n", charge_imb);
+    free(occupied_set_up);
+    free(occupied_set_dn);
     return 0;
 }
-

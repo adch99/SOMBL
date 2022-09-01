@@ -5,7 +5,8 @@
 
 int hamiltonian(CDTYPE * ham, int len, int width,
                 DTYPE coupling_const, DTYPE disorder_strength,
-                DTYPE hop_strength, int (* neighbours)[NEIGHS]);
+                DTYPE hop_strength_upup, DTYPE hop_strength_dndn,
+                int (*neighbours)[NEIGHS]);
 int hamiltonian_nospin(CDTYPE * ham, int len, int width,
                 DTYPE disorder_strength, DTYPE hop_strength,
                 int (*neighbours)[NEIGHS]);

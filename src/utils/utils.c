@@ -2,14 +2,14 @@
 #include <time.h>
 #include <stdio.h>
 #include <math.h>
+#include <float.h>
 #include <complex.h>
 #include <lapacke.h>
-#include <gsl/gsl_fit.h>
-#include <omp.h>
+// #include <gsl/gsl_fit.h>
+// #include <omp.h>
 #include "utils.h"
 #include "../constants.h"
  
-
 /*
     Calculates the localization length from the so-called
     "Lyapunov exponent" which is computed from the given
@@ -97,8 +97,8 @@ int utils_get_eigvalsh(CDTYPE * matrix, int size, DTYPE * eigvals)
         eigenvalues that are to be calculated (WORK, LWORK).
     */
     // printf("Entered utils_get_eigvalsh\n");
-    int info = LAPACKE_zheev(LAPACK_COL_MAJOR, 'N', 'U', size,
-                            matrix, size, eigvals);
+    int info = LAPACKE_zheev(LAPACK_COL_MAJOR, 'N', 'U', (unsigned long int) size,
+                            matrix, (unsigned long int) size, eigvals);
     if (info != 0)
     {
         printf("LAPACKE_zheev error! Code: %d", info);
@@ -301,13 +301,13 @@ int utils_get_green_func_lim(CDTYPE * eigenvectors, int size, DTYPE * green_func
     //     num_threads = omp_get_num_threads();
     // }
     
-    #pragma omp parallel for collapse(2)
+    // #pragma omp parallel for collapse(2)
     for(i = 0; i < size; i++)
     {
         for(j = 0; j <= i; j++)
         {
             DTYPE sum = utils_compute_gfsq_elem(i, j, eigenvectors, size);
-            #pragma omp critical
+            // #pragma omp critical
             {
                 *(green_func + i*size + j) += sum;
                 if(i != j)
@@ -328,7 +328,7 @@ DTYPE utils_compute_gfsq_elem(int i, int j, CDTYPE * eigenvectors, int size)
 {
     DTYPE sum = 0.0;
     int k;
-    #pragma omp parallel for reduction (+:sum) schedule(auto)
+    // #pragma omp parallel for reduction (+:sum) schedule(auto)
     for(k = 0; k < size; k++)
     {
         int index1, index2;
@@ -347,64 +347,64 @@ DTYPE utils_compute_gfsq_elem(int i, int j, CDTYPE * eigenvectors, int size)
 }
 
 
-int utils_fit_exponential(DTYPE * x, DTYPE * y, int length, DTYPE * exponent,
-                        DTYPE * mantissa, DTYPE * residuals)
-{
-    DTYPE * logdata = malloc(length*sizeof(DTYPE));
-    DTYPE diff;
-    int i;
+// int utils_fit_exponential(DTYPE * x, DTYPE * y, int length, DTYPE * exponent,
+//                         DTYPE * mantissa, DTYPE * residuals)
+// {
+//     DTYPE * logdata = malloc(length*sizeof(DTYPE));
+//     DTYPE diff;
+//     int i;
     
-    // Take log of the data
-    for(i = 0; i < length; i++)
-    {
-        *(logdata + i) = log(*(y + i));
-        if(isnan(*(logdata + i)))
-            printf("NaN detected in log output.\n");
-    }
+//     // Take log of the data
+//     for(i = 0; i < length; i++)
+//     {
+//         *(logdata + i) = log(*(y + i));
+//         if(isnan(*(logdata + i)))
+//             printf("NaN detected in log output.\n");
+//     }
 
-    // Construct a weight function for the fitting
-    // We use 1 for the middle 80% of the data
-    // We use a linearly decaying rate for the ends.
+//     // Construct a weight function for the fitting
+//     // We use 1 for the middle 80% of the data
+//     // We use a linearly decaying rate for the ends.
 
-    int start_of_mid = (int) ceil(0.25 * length);
-    int end_of_mid = length - (int) ceil(0.25 * length);
-    DTYPE * weights = malloc(length * sizeof(DTYPE));
-    DTYPE slope = 1.0 / (DTYPE) start_of_mid;
-    for(i = start_of_mid; i < end_of_mid; i++)
-        *(weights + i) = 1;
+//     int start_of_mid = (int) ceil(0.25 * length);
+//     int end_of_mid = length - (int) ceil(0.25 * length);
+//     DTYPE * weights = malloc(length * sizeof(DTYPE));
+//     DTYPE slope = 1.0 / (DTYPE) start_of_mid;
+//     for(i = start_of_mid; i < end_of_mid; i++)
+//         *(weights + i) = 1;
     
-    for(i = 0; i < start_of_mid; i++)
-        *(weights + i) = slope * i;
+//     for(i = 0; i < start_of_mid; i++)
+//         *(weights + i) = slope * i;
 
-    for(i = end_of_mid; i < length; i++)
-        *(weights + i) = 1 - slope * (i - end_of_mid);
+//     for(i = end_of_mid; i < length; i++)
+//         *(weights + i) = 1 - slope * (i - end_of_mid);
 
-    // Fit line to data using GSL.
-    DTYPE c0, c1, cov00, cov01, cov11, sumsq;
-    gsl_fit_wlinear(x, 1, weights, 1, logdata, 1, length,
-                &c0, &c1, &cov00, &cov01, &cov11, &sumsq);
+//     // Fit line to data using GSL.
+//     DTYPE c0, c1, cov00, cov01, cov11, sumsq;
+//     gsl_fit_wlinear(x, 1, weights, 1, logdata, 1, length,
+//                 &c0, &c1, &cov00, &cov01, &cov11, &sumsq);
 
-    if(isnan(c0) || isnan(c1))
-        printf("gsl returned NaN.\n");  
+//     if(isnan(c0) || isnan(c1))
+//         printf("gsl returned NaN.\n");  
     
-    *mantissa = exp(c0);
-    *exponent = c1;
+//     *mantissa = exp(c0);
+//     *exponent = c1;
 
-    if(isnan(*mantissa) || isnan(*exponent))
-        printf("mantissa or exponent are NaN.\n");  
+//     if(isnan(*mantissa) || isnan(*exponent))
+//         printf("mantissa or exponent are NaN.\n");  
 
 
-    // Calculate residuals
-    *residuals = 0;
-    for(i = 0; i < length; i++)
-    {   
-        diff = (*mantissa) * exp((*exponent) * i);
-        *residuals += *(weights + i)  * diff*diff/length;
-    }
+//     // Calculate residuals
+//     *residuals = 0;
+//     for(i = 0; i < length; i++)
+//     {   
+//         diff = (*mantissa) * exp((*exponent) * i);
+//         *residuals += *(weights + i)  * diff*diff/length;
+//     }
 
-    free(logdata);
-    return 0;
-}
+//     free(logdata);
+//     return 0;
+// }
 
 
 /*
@@ -432,12 +432,22 @@ int utils_construct_data_vs_dist(DTYPE * matrix, int size, int length,
     // range outside length/2. Change the
     // line below to include the entire range
     // DTYPE highest = floor(length / sqrt(2));
-    DTYPE highest = (DTYPE) length / 2.0;
-
+    // DTYPE highest = (DTYPE) length / 2.0;
+    DTYPE highest = (DTYPE) length * sqrt(2.0) / M_PI;
+    int * counts;
     DTYPE bin_width = (highest - lowest) / (DTYPE) bins;
-    int * counts = calloc(bins, sizeof(int));
-    *dists = calloc(bins, sizeof(DTYPE));
-    *func = calloc(bins, sizeof(DTYPE));
+    if(nospin == 1)
+    {
+        counts = calloc(bins, sizeof(int));
+        *dists = calloc(bins, sizeof(DTYPE));
+        *func = calloc(bins, sizeof(DTYPE));
+    }
+    else
+    {
+        *dists = calloc(bins, sizeof(DTYPE));
+        counts = calloc(4*bins, sizeof(int));
+        *func = calloc(4*bins, sizeof(DTYPE));
+    }
 
     // printf("bin_width = %e\n", bin_width);
 
@@ -468,48 +478,56 @@ int utils_construct_data_vs_dist(DTYPE * matrix, int size, int length,
  
             dx = abs(site1x - site2x);
             dy = abs(site1y - site2y);
-            // printf("i = %d\tj = %d\n", i, j);
-            // printf("x1 = %d\ty1 = %d\tx2 = %d\ty2 = %d\n", site1x, site1y, site2x, site2y);
-            // printf("dx = %d\tdy = %d\n", dx, dy);
             dx = INTMIN(abs(length/2-dx), dx);
             dy = INTMIN(abs(length/2-dy), dy);
-            len = sqrt((DTYPE) (dx*dx + dy*dy));
+            // len = sqrt((DTYPE) (dx*dx + dy*dy));
+            len = sqrt(utils_pbc_chord_length_sq(dx, length, dy, length));
             // printf("dx = %d\tdy = %d\tlen = %e\n", dx, dy, len);
             spins = spin_index1*spin1down + spin_index2*spin2down;
 
             if(i == j)
             {
                 value = *(matrix + RTC(i, j, size));
-                utils_bin_data(len, value, bins, counts,
-                                lowest, bin_width, *func);
+                utils_bin_data(len, value, bins, counts + bins*spins,
+                                lowest, bin_width, *func + bins*spins);
             }
             else
             {
                 value = *(matrix + RTC(i, j, size));
-                utils_bin_data(len, value, bins, counts,
-                                lowest, bin_width, *func);
+                utils_bin_data(len, value, bins, counts + bins*spins,
+                                lowest, bin_width, *func + bins*spins);
                 value = *(matrix + RTC(j, i, size));
-                utils_bin_data(len, value, bins, counts,
-                                lowest, bin_width, *func);
+                utils_bin_data(len, value, bins, counts + bins*spins,
+                                lowest, bin_width, *func + bins*spins);
             }
         }
     }
 
     // Calculate the averages
-    for(i = 0; i < bins; i++)
-    {
-        if(isnan(*(*func + i)))
-        {
-            printf("NaN detected at site i = %d\n", i);
-        }
+    unsigned int spins;
+    unsigned int total_spins;
+    if(nospin == 1)
+        total_spins = 1;
+    else
+        total_spins = 4;
 
-        if(*(counts + i) == 0)
+    for(spins = 0; spins < total_spins; spins++)
+    {
+        for(i = 0; i < bins; i++)
         {
-            *(*func + i) = DBL_MIN;
-            // printf("bin i=%d has counts=%d\n", i, *(counts + i));
+            if(isnan(*(*func + spins*bins + i)))
+            {
+                printf("NaN detected at site i = %d\n", i);
+            }
+
+            if(*(counts + bins*spins + i) == 0)
+            {
+                *(*func + bins*spins + i) = DBL_MIN;
+                // printf("bin i=%d has counts=%d\n", i, *(counts + i));
+            }
+            else
+                *(*func + bins*spins + i) /= (DTYPE) *(counts + bins*spins + i);
         }
-        else
-            *(*func + i) /= (DTYPE) *(counts + i);
     }
 
     return(bins);
@@ -540,6 +558,34 @@ int utils_get_lattice_index(int index, int length, int nospin,
 
     return(0);
 }
+
+/*
+    Given the lattice position (x, y) and spin,
+    returns the index in the gfunc/ham matrix.
+*/
+int utils_get_matrix_index(int x, int y, unsigned int spin,
+                        int length, int nospin)
+{
+    int pbc_x, pbc_y;
+    if(x < 0)
+        pbc_x = length - (abs(x) % length);
+    else
+        pbc_x = x % length;
+    
+    if(y < 0)
+        pbc_y = length - (abs(y) % length);
+    else
+        pbc_y = y % length;
+
+    int lattice_index = pbc_x + length*pbc_y;
+    int index;
+    if(nospin == 1)
+        index = lattice_index;
+    else
+        index = 2*lattice_index + spin;
+    return(index);
+}
+
 
 int utils_bin_data(DTYPE index, DTYPE value, int bins, int * counts,
                 DTYPE lowest, DTYPE bin_width, DTYPE * value_hist)
@@ -574,8 +620,77 @@ int utils_bin_data(DTYPE index, DTYPE value, int bins, int * counts,
     return(0);
 }
 
+/*
+    Given the green function matrix for long times, calculates
+    the long time imbalance between the initially occupied sites
+    and the initially empty sites. The `occupied_set` array must
+    be sorted according to numerical value and contains the lattice
+    index of the occupied sites.
+*/
+DTYPE utils_get_charge_imbalance(DTYPE * gfuncsq, int * occupied_set_up,
+                        int set_length_up, int * occupied_set_dn,
+                        int set_length_dn, int num_states)
+{
+    int i, j, ctr_up, ctr_dn;
+    int site_final, site_initial;
+    int spin_final, spin_initial;
+    DTYPE imbalance;
+    int sign, index1, index2;
+    DTYPE elem;
 
-DTYPE utils_pbc_chord_length(int index1, int length1, int index2, int length2)
+    imbalance = 0;
+    ctr_up = 0;
+    ctr_dn = 0;
+
+    for(i = 0; i < num_states; i++)
+    {
+        site_final = i / 2;
+        spin_final = i % 2;
+
+        // Check if site in A (occupied set)
+        int next_occ_up = *(occupied_set_up + ctr_up);
+        int next_occ_dn = *(occupied_set_dn + ctr_dn);
+
+        if(site_final == next_occ_up)
+        {
+            sign = 1;
+            ctr_up += 1;
+        }
+        else if (site_final == next_occ_dn)
+        {
+            sign = 1;
+            ctr_dn += 1;
+        }
+        else
+            sign = -1;
+        
+        for(j = 0; j < set_length_up; j++)
+        {
+            site_initial = *(occupied_set_up + j);
+            spin_initial = 0;
+            index1 = 2*site_final + spin_final;
+            index2 = 2*site_initial + spin_initial;
+            elem = *(gfuncsq + RTC(index1, index2, num_states));
+            printf("(%d,%d):%d:%e\n", index1, index2, sign, elem);
+            imbalance += sign * elem; 
+        }
+
+        for(j = 0; j < set_length_dn; j++)
+        {
+            site_initial = *(occupied_set_dn + j);
+            spin_initial = 1;
+            index1 = 2*site_final + spin_final;
+            index2 = 2*site_initial + spin_initial;
+            elem = *(gfuncsq + RTC(index1, index2, num_states));
+            printf("(%d,%d):%d:%e\n", index1, index2, sign, elem);
+            imbalance += sign * elem; 
+        }
+    }
+    return imbalance / (DTYPE) (set_length_up + set_length_dn);
+}
+
+
+DTYPE utils_pbc_chord_length_sq(int index1, int length1, int index2, int length2)
 {
     DTYPE radius1 = (DTYPE) length1 / (2.0 * M_PI);
     DTYPE radius2 = (DTYPE) length2 / (2.0 * M_PI);
@@ -583,5 +698,10 @@ DTYPE utils_pbc_chord_length(int index1, int length1, int index2, int length2)
     DTYPE angle1 = 2.0 * M_PI * ((DTYPE) index1 / (DTYPE) length1);
     DTYPE angle2 = 2.0 * M_PI * ((DTYPE) index2 / (DTYPE) length2);
 
-    return 0;   
+    DTYPE chord1 = 2 * radius1 * sin(angle1 / 2.0);
+    DTYPE chord2 = 2 * radius2 * sin(angle2 / 2.0);
+
+    DTYPE chordsq = chord1*chord1 + chord2*chord2;
+    return chordsq;   
 }
+
