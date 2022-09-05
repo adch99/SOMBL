@@ -21,13 +21,13 @@ int main(int argc, char ** argv)
 {
     (void) argc;
     (void) argv;
-    tester(test_loc_len, "test_loc_len");
-    tester(test_get_eigvalsh, "test_get_eigvalsh");
-    tester(test_uniform_dist, "test_uniform_dist");
+    // tester(test_loc_len, "test_loc_len");
+    // tester(test_get_eigvalsh, "test_get_eigvalsh");
+    // tester(test_uniform_dist, "test_uniform_dist");
     tester(test_get_eigh, "test_get_eigh");
     // tester(test_fit_exponential, "test_fit_exponential");
-    tester(test_get_green_func_lim, "test_get_green_func_lim");
-    tester(test_get_matrix_index, "test_get_matrix_index");
+    // tester(test_get_green_func_lim, "test_get_green_func_lim");
+    // tester(test_get_matrix_index, "test_get_matrix_index");
     return(0);
 }
 
@@ -138,7 +138,7 @@ int test_uniform_dist()
         // printf("%lf ", *(array + i));
     
     // printf("\n");
-
+    free(array);
     return(success);
 }
 
@@ -211,7 +211,7 @@ int test_get_eigh()
                 printf("\n");
             }
             printf("\nOutput:\n");
-            utils_print_matrix_complex_F(colMajorMat, 4, 4);
+            utils_print_matrix(colMajorMat, 4, 4, 'C', 'F');
         }
 
         return(success);
@@ -259,7 +259,7 @@ int test_get_green_func_lim()
         printf("Expected:\n");
         utils_print_matrix(exp_gfunc, 4, 4, 'R', 'C');
     }
-
+    free(gfunc);
     return(success);
 }
 

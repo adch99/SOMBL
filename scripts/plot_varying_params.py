@@ -8,12 +8,12 @@ import matplotlib.pyplot as plt
 params = {
     "coupling_const":     0,
     # "hop_strength":     1.0,
-    "hopup":            1.5,
+    "hopup":            1.0,
     "hopdn":            1.0,
     "disorder_vals":    np.linspace(5, 20, 11),
-    "size":             40,
-    "num_runs":         100,
-    "nospin":           False
+    "size":             20,
+    "num_runs":         10,
+    "nospin":           True
 }
 
 
@@ -24,7 +24,9 @@ def getFilename(params):
     basename = "mbl_nospin" if params["nospin"] else "mbl"
     basename += f"_{params['size']}x{params['size']}"
     basename += f"_W{W_min}to{W_max}"
-    basename += f"_T{params['hop_strength']}"
+    # basename += f"_T{params['hop_strength']}"
+    basename += f"_TU{params['hopup']}"
+    basename += f"_TD{params['hopdn']}"
     basename += f"_C{params['coupling_const']}"
     basename += f"_N{params['num_runs']}"
     basename += "_Xi_vs_W"
@@ -49,7 +51,14 @@ def runExactDiag(params):
             end="", flush=True)
         start_time = time.time()
         result = subprocess.run(args, capture_output=True, text=True)
-        result.check_returncode()
+        try:
+            result.check_returncode()
+        except subprocess.CalledProcessError:
+            print("Call to build/exact_diag_simulation failed!")
+            print("params:", params)
+            print("stderr:", result.stderr)
+            print("stdout:", result.stdout)
+            exit(1)
         time_taken = time.time() - start_time
         print(f"Done in {time_taken:.1f}s")
 
@@ -134,11 +143,11 @@ def plotData(disorder_vals, loc_lens, name=None):
 
 def main(params):
     runExactDiag(params)
-    # print("")
-    # runFuncCalc(params)
-    # print("")
-    # data = runLocLens(params)
-    # plotData(*data, name=getFilename(params))
+    print("")
+    runFuncCalc(params)
+    print("")
+    data = runLocLens(params)
+    plotData(*data, name=getFilename(params))
 
 
 if __name__ == "__main__":

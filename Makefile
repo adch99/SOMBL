@@ -1,9 +1,9 @@
 CC=gcc
 # BLASDIR=../openblas
-BLASDIR=../../Build/openblas
-IDIRS=-I$(BLASDIR)/include
-LBLAS=-L$(BLASDIR)/lib -Wl,-rpath,$(BLASDIR)/lib -lopenblas -lpthread
-# LBLAS=-lcblas -lblas
+# BLASDIR=../../Build/openblas
+# IDIRS=-I$(BLASDIR)/include
+# LBLAS=-L$(BLASDIR)/lib -Wl,-rpath,$(BLASDIR)/lib -lopenblas -lpthread
+LBLAS=-lcblas -lblas
 CFLAGS=-Wall -Wextra -g -fdiagnostics-color=always -ffast-math $(IDIRS)
 # CFLAGS=-O3 -ffast-math -fopenmp $(IDIRS) 
 LFLAGS=-llapacke -lm $(LBLAS)
@@ -16,7 +16,9 @@ OBJ = $(patsubst %.c,build/%.o,$(_DEPS))
 
 TESTS = $(wildcard tests/*.c)
 
-default: exact_diag_simulation calculate_dist_vs_gfuncsq
+default: exact_diag_simulation
+
+all: exact_diag_simulation calculate_dist_vs_gfuncsq calculate_imbalance tests
 
 build/%.o: src/%.c
 	$(CC) -c -o $@ $^ $(CFLAGS)

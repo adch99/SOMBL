@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <complex.h>
 #include "../src/utils/utils.h"
 #include "../src/ham_gen/ham_gen.h"
 #include "../src/constants.h"
@@ -12,6 +13,7 @@ int tester(int (*test_func)(), char * name);
 // Smaller functions
 int test_ham_lattice_site(int index, CDTYPE * ham, int length, DTYPE hopup,
                         DTYPE hopdn, DTYPE disorder, DTYPE coupling);
+int test_ceq(CDTYPE a, CDTYPE b, DTYPE tol);
 
 // Functions to test
 int test_hamiltonian(); 
@@ -38,6 +40,13 @@ int tester(int (*test_func)(), char * name)
         printf("Test Failed:\t%s\n", name);
 
     return(0);
+}
+
+int test_ceq(CDTYPE a, CDTYPE b, DTYPE tol)
+{
+    DTYPE diff_real = fabs(creal(a) - creal(b));
+    DTYPE diff_imag = fabs(cimag(a) - cimag(b));
+    return((diff_real < tol) && (diff_imag < tol));
 }
 
 int test_hermitian(CDTYPE * matrix, int size)
@@ -223,14 +232,14 @@ int test_hamiltonian()
     hamiltonian(ham, length, width, 0.1, 15.0, 1.0, 1.5, neighbour);
 
     // printf("H (with spin):\n");
-    // utils_print_matrix_complex_F(ham, num_states, num_states);
+    // utils_print_matrix(ham, num_states, num_states, 'C', 'F');
 
-    int i, result;
-    for(i = 0; i < num_states; i++)
-    {
-        result = test_ham_lattice_site(i, ham, length, 1.0, 1.5, 15.0, 0.1);
-        success = (success && result);
-    }
+    // int i, result;
+    // for(i = 0; i < num_states; i++)
+    // {
+    //     result = test_ham_lattice_site(i, ham, length, 1.0, 1.5, 15.0, 0.1);
+    //     success = (success && result);
+    // }
 
     // printf("\nneighbours:\n");
     // int i, j;
@@ -284,27 +293,13 @@ int test_hamiltonian_nospin()
             site1 = i;
             site2 = *(*(neighbour + i) + j);
             index = RTC(site1, site2, num_states);
-            if (cabs(*(ham + index) - (-1.0)) > TOL)
+            if (test_ceq(*(ham + index), -1+0*I, TOL) == 0)
             {
-                printf("Problem at site (%d,%d) index=%d", site1, site2, index);
+                printf("Problem at site (%d,%d) index=%d\n", site1, site2, index);
                 success = 0;
             }
         }
     }
-
-    // printf("H (spinless):\n");
-    // utils_print_matrix_complex_F(ham, num_states, num_states);
-
-    // printf("\nneighbours:\n");
-    // for(i = 0; i < num_sites; i++)
-    // {
-    //     printf("%d: ", i);
-    //     for(j = 0; j < NEIGHS; j++)
-    //     {
-    //         printf("%d ", *(*(neighbour + i) + j));
-    //     }
-    //     printf("\n");
-    // }
 
     for(i=0;i<num_states;i++)
     {
@@ -315,16 +310,17 @@ int test_hamiltonian_nospin()
 
             if(i == j)
             {
-                if(value == 0+0*I)
+                if(test_ceq(value, 0+0*I, TOL) == 1)
                 {
                     printf("Problem at (%d,%d) index=%d!\n", i, j, index);
+                    printf("Result: %d\n", test_ceq(value, 0+0*I, TOL));
                     printf("H(i,j) = %e+%ej\n", creal(value), cimag(value));
                     success = 0;
                 }
             }
             else if(check_neighbour(j, *(neighbour + i)) >= 0)
             {
-                if(cabs(value - (-1+0*I)) > TOL)
+                if(test_ceq(value, -1+0*I, TOL) == 0)
                 {
                     printf("Problem at (%d,%d) index=%d!\n", i, j, index);
                     printf("H(i,j) = %e+%ej =/= -1\n", creal(value), cimag(value));
@@ -333,7 +329,7 @@ int test_hamiltonian_nospin()
             }
             else
             {
-                if(cabs(value - (0+0*I)) > TOL)
+                if(test_ceq(value, 0+0*I, TOL) == 0)
                 {
                     printf("Problem at (%d,%d) index=%d\n!", i, j, index);
                     printf("H(i,j) = %e+%ej =/= 0\n", creal(value), cimag(value));
@@ -389,5 +385,11 @@ int test_get_neighbour_list()
     }
 
     free(neighbours);
+    return(success);
+}
+
+int test_check_neighbour()
+{
+    int success = 1;
     return(success);
 }

@@ -12,8 +12,6 @@ int utils_get_eigvalsh(CDTYPE * matrix, int size, DTYPE * eigvals);
 int utils_row_to_col(int index1, int index2, int size);
 int utils_uniform_dist(double low, double high, int num_samples,
                         double * samples, int seed_with_time);
-int utils_print_matrix_complex_F(CDTYPE * matrix, int m, int n);
-int utils_print_matrix_real_C(DTYPE * matrix, int m, int n);
 int utils_print_matrix(void * matrix, int m, int n,
                     char type, char ordering);
 int utils_save_matrix(void * matrix, int m, int n,

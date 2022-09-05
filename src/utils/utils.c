@@ -9,7 +9,7 @@
 // #include <omp.h>
 #include "utils.h"
 #include "../constants.h"
- 
+
 /*
     Calculates the localization length from the so-called
     "Lyapunov exponent" which is computed from the given
@@ -97,8 +97,8 @@ int utils_get_eigvalsh(CDTYPE * matrix, int size, DTYPE * eigvals)
         eigenvalues that are to be calculated (WORK, LWORK).
     */
     // printf("Entered utils_get_eigvalsh\n");
-    int info = LAPACKE_zheev(LAPACK_COL_MAJOR, 'N', 'U', (unsigned long int) size,
-                            matrix, (unsigned long int) size, eigvals);
+    int info = LAPACKE_zheev(LAPACK_COL_MAJOR, 'N', 'U', size,
+                            matrix, size, eigvals);
     if (info != 0)
     {
         printf("LAPACKE_zheev error! Code: %d", info);
@@ -134,40 +134,6 @@ int utils_uniform_dist(double low, double high, int num_samples,
         randint = random();
         div = ((double) randint) / ((double) RAND_MAX);
         *(samples + i) = low + scale * div;
-    }
-    return 0;
-}
-
-// Prints a matrix stored in Column Major Form
-int utils_print_matrix_complex_F(CDTYPE * matrix, int m, int n)
-{
-    int i, j;
-    CDTYPE element;
-    for(i = 0; i < m; i++)
-    {
-        for(j = 0; j < n; j++)
-        {
-            element = *(matrix + RTC(i,j,m));
-            printf("%08.4lf+%08.4lfj\t", creal(element),
-                    cimag(element));
-        }
-        printf("\n");
-    }
-    return 0;
-}
-
-int utils_print_matrix_real_C(DTYPE * matrix, int m, int n)
-{
-    int i, j;
-    DTYPE element;
-    for(i = 0; i < m; i++)
-    {
-        for(j = 0; j < n; j++)
-        {
-            element = *(matrix + n*i + j);
-            printf("%08.4lf\t", element);
-        }
-        printf("\n");
     }
     return 0;
 }
@@ -271,14 +237,18 @@ int utils_save_matrix(void * matrix, int m, int n,
 */
 int utils_get_eigh(CDTYPE * matrix, int size, DTYPE * eigvals)
 {
+    printf("Running zheev...");
     int info = LAPACKE_zheev(LAPACK_COL_MAJOR, 'V', 'U', size,
                             matrix, size, eigvals);
+    
+
+    
     if (info != 0)
     {
         printf("LAPACKE_zheev error! Code: %d", info);
         return info; // Some error has occured.
     }
-    return 0;
+    return(0);
 }
 
 /*

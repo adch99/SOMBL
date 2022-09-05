@@ -60,7 +60,7 @@ int params_setup(int argc, char ** argv, struct SystemParams * params,
     /* Parse our arguments; every option seen by parse_opt will
         be reflected in params. */
     argp_parse(argp, argc, argv, 0, 0, params);
-    if(params->nospin)
+    if(params->nospin == 1)
         params->num_states = params->len*params->width;
     else
         params->num_states = 2*params->len*params->width;

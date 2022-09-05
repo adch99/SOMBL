@@ -72,10 +72,10 @@ int main(int argc, char ** argv)
         params.disorder_strength, params.hop_strength_upup,
         params.hop_strength_dndn);
 
-    if(params.nospin)
-        params.num_states = params.len*params.width;
-    else
-        params.num_states = 2*params.len*params.width;
+    // if(params.nospin == 1)
+    //     params.num_states = params.len*params.width;
+    // else
+    //     params.num_states = 2*params.len*params.width;
 
     int ctr;
     int create_neighbours = 1;
@@ -123,7 +123,7 @@ int run(struct SystemParams * params, int create_neighbours,
     // Create neighbour list if not present
     if (create_neighbours)
     {
-        params->neighbours = malloc((num_sites*NEIGHS)*sizeof(int)); 
+        params->neighbours = malloc((num_sites*NEIGHS)*sizeof(int));
         get_neighbour_lists(params->neighbours, params->len, params->width);
     }
 
