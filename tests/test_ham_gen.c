@@ -24,7 +24,7 @@ int main(int argc, char ** argv)
 {
     (void) argc;
     (void) argv;
-    srandom(17);
+    // srandom(17);
     tester(test_hamiltonian, "test_hamiltonian");
     tester(test_hamiltonian_nospin, "test_hamiltonian_nospin");
     tester(test_get_neighbour_list, "test_get_neighbour_list");

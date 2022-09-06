@@ -120,6 +120,8 @@ int utils_row_to_col(int index1, int index2, int size)
 /*
     Generates 'num_samples' numbers in the range [low, high]
     using a uniform distribution. Please ensure that you
+    give a reasonable number for low and high i.e.
+    low < high.
 */
 int utils_uniform_dist(double low, double high, int num_samples,
                      double * samples, int seed_with_time)
@@ -238,10 +240,9 @@ int utils_save_matrix(void * matrix, int m, int n,
 int utils_get_eigh(CDTYPE * matrix, int size, DTYPE * eigvals)
 {
     printf("Running zheev...");
+    fflush(stdout);
     int info = LAPACKE_zheev(LAPACK_COL_MAJOR, 'V', 'U', size,
                             matrix, size, eigvals);
-    
-
     
     if (info != 0)
     {

@@ -8,12 +8,13 @@ import matplotlib.pyplot as plt
 def main():
     params = getParams()
     if params.nospin:
-        spins = [None,]
+        spins = [None, ]
     else:
         spins = ["upup", "updn", "dnup", "dndn"]
-    
+
     for spin in spins:
         data = getData(params, spin=spin)
+        print("Data Check:", checkData(data))
         fit_vals = fitData(data, params)
         plotData(fit_vals, data, params, spin=spin)
         exp, mant, resid, cutoff = fit_vals
@@ -106,6 +107,24 @@ def fitData(data, params):
     exponent = c1
     mantissa = np.exp(c0)
     return exponent, mantissa, residuals, cutoff
+
+
+def checkData(data):
+    dists, gfuncsq = data
+    tol = 1e-6
+    probsum = 0
+    dr = dists[1] - dists[0]
+    for i in range(len(dists)):
+        r = dists[i]
+        probsum += r**2 * dr * gfuncsq[i]
+
+    diff = abs(probsum - 1)
+
+    if diff < tol:
+        return True
+    else:
+        print("probsum:", probsum)
+        return False
 
 
 def plotData(fit_vals, data, params, spin=None):

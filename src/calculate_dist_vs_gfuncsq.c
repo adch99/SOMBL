@@ -37,10 +37,6 @@ static struct argp_option options[] = {
 // Our argp parser.
 static struct argp argp = { options, params_parse_opt, args_doc, doc, 0, 0, 0};
 
-int output_function_data(DTYPE * dists, DTYPE * gfuncsq,
-                        char * filename, int data_len);
-
-
 int main(int argc, char ** argv)
 {
     // Get SystemParams from defaults or cmd line args
@@ -68,7 +64,8 @@ int main(int argc, char ** argv)
     DTYPE * gfuncsq;
     int data_len;
     // Let's bin the data into bins of width 1.
-    int bins = floor(params.len * sqrt(2) / M_PI);
+    // int bins = floor(params.len * sqrt(2) / M_PI);
+    int bins = 30;
     data_len = utils_construct_data_vs_dist(matrix, params.num_states, params.len,
                                         bins, &dists, &gfuncsq);
 
