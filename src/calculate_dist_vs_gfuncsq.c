@@ -9,14 +9,14 @@
 
 /* Constant Declarations */
 const char *argp_program_version =
-  "calculate_dist_vs_gfuncsq 1.0";
+    "calculate_dist_vs_gfuncsq 1.0";
 const char *argp_program_bug_address =
-  "<aditya.chincholi@students.iiserpune.ac.in>";
+    "<aditya.chincholi@students.iiserpune.ac.in>";
 // Program documentation.
 static char doc[] =
-  "calculate_dist_vs_gfuncsq -- converts the green function " 
-  "squared matrix from data file to a function of the "
-  "distances between lattice sites";
+    "calculate_dist_vs_gfuncsq -- converts the green function " 
+    "squared matrix from data file to a function of the "
+    "distances between lattice sites";
 // A description of the arguments we accept.
 static char args_doc[] = "-s <size> -c <coupling_const>"
                         "-w <disorder_strength>"
@@ -24,15 +24,15 @@ static char args_doc[] = "-s <size> -c <coupling_const>"
                         " [-p]";
 // The options we understand.
 static struct argp_option options[] = {
-  {"size",     's', "SIZE",     0, "Length and width of the lattice",        0},
-  {"coupling", 'c', "COUPLING", 0, "Spin-orbit coupling constant",           0},
-  {"disorder", 'w', "DISORDER", 0, "Strength of the disorder",               0},
-  {"hopping",  't', "HOPPING",  0, "Strength of the hopping",                0},
-  {"hopup",    'u', "HOPUP",    0, "Strength of the hopping for up spins",   0},
-  {"hopdn",    'd', "HOPDN",    0, "Strength of the hopping for down spins", 0},
-  {"runs",     'n', "NUMRUNS",  0, "Number of runs in the disorder average", 0},
-  {"nospin",   'p', 0,          0, "Use a spinless model hamiltonian.",      0},
-  { 0 }
+    {"size",     's', "SIZE",     0, "Length and width of the lattice",        0},
+    {"coupling", 'c', "COUPLING", 0, "Spin-orbit coupling constant",           0},
+    {"disorder", 'w', "DISORDER", 0, "Strength of the disorder",               0},
+    {"hopping",  't', "HOPPING",  0, "Strength of the hopping",                0},
+    {"hopup",    'u', "HOPUP",    0, "Strength of the hopping for up spins",   0},
+    {"hopdn",    'd', "HOPDN",    0, "Strength of the hopping for down spins", 0},
+    {"runs",     'n', "NUMRUNS",  0, "Number of runs in the disorder average", 0},
+    {"nospin",   'p', 0,          0, "Use a spinless model hamiltonian.",      0},
+    { 0 }
 };
 // Our argp parser.
 static struct argp argp = { options, params_parse_opt, args_doc, doc, 0, 0, 0};
@@ -65,7 +65,9 @@ int main(int argc, char ** argv)
     int data_len;
     // Let's bin the data into bins of width 1.
     // int bins = floor(params.len * sqrt(2) / M_PI);
-    int bins = 30;
+    int bins = floor((DTYPE) params.len / sqrt(2));
+    printf("Bins: %d\n", bins);
+    // int bins = 30;
     data_len = utils_construct_data_vs_dist(matrix, params.num_states, params.len,
                                         bins, &dists, &gfuncsq);
 

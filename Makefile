@@ -20,6 +20,8 @@ default: exact_diag_simulation
 
 all: exact_diag_simulation calculate_dist_vs_gfuncsq calculate_imbalance tests
 
+bins: exact_diag_simulation calculate_dist_vs_gfuncsq calculate_imbalance
+
 build/%.o: src/%.c
 	$(CC) -c -o $@ $^ $(CFLAGS)
 
@@ -30,6 +32,9 @@ calculate_dist_vs_gfuncsq: $(OBJ)
 	$(CC) -o build/$@ src/$@.c $^ $(CFLAGS) $(LFLAGS)
 
 calculate_imbalance: $(OBJ)
+	$(CC) -o build/$@ src/$@.c $^ $(CFLAGS) $(LFLAGS)
+
+output_hamiltonian: $(OBJ)
 	$(CC) -o build/$@ src/$@.c $^ $(CFLAGS) $(LFLAGS)
 
 build/tests/%: tests/%.c $(OBJ)

@@ -26,7 +26,7 @@ int main(int argc, char ** argv)
     tester(test_get_eigvalsh, "test_get_eigvalsh");
     tester(test_uniform_dist, "test_uniform_dist");
     tester(test_get_eigh, "test_get_eigh");
-    tester(test_get_green_func_lim, "test_get_green_func_lim");
+    // tester(test_get_green_func_lim, "test_get_green_func_lim");
     tester(test_get_matrix_index, "test_get_matrix_index");
     // tester(test_fit_exponential, "test_fit_exponential");
     return(0);
@@ -95,10 +95,19 @@ int test_loc_len()
 
 int test_get_eigvalsh()
 {
-    CDTYPE matrix[4][4] = {{0, 5, 0, 0}, {5, 0, 0, 0}, {0, 0, 0, -3*I}, {0, 0, 3*I, 0}};
+    CDTYPE matrix[4][4] = {{0, 5,  0,    0},
+                           {5, 0,  0,    0},
+                           {0, 0,  0, -3*I},
+                           {0, 0, 3*I,   0}};
     CDTYPE colMajorMat[16];
-    DTYPE eigvals[4];    
-    utils_preprocess_lapack(matrix[0], 4, colMajorMat);
+    DTYPE eigvals[4];
+    int i, j;
+    for(i = 0; i < 4; i++)
+    {
+        for(j = 0; j < 4; j++)
+            colMajorMat[RTC(i, j, 4)] = matrix[i][j];
+    }
+
     int info = utils_get_eigvalsh(colMajorMat, 4, eigvals);
     if (info != 0)
     {
@@ -143,7 +152,12 @@ int test_get_eigh()
                             {0, 0, 3*I, 0  }};
     CDTYPE colMajorMat[16];
     DTYPE eigvals[4];    
-    utils_preprocess_lapack(matrix[0], 4, colMajorMat);
+    for(i = 0; i < 4; i++)
+    {
+        for(j = 0; j < 4; j++)
+            colMajorMat[RTC(i, j, 4)] = matrix[i][j];
+    }
+    
     int info = utils_get_eigh(colMajorMat, 4, eigvals);
     if (info != 0)
     {
@@ -221,7 +235,7 @@ int test_get_green_func_lim()
                             {0.11660739068618453, 0.09264378557053818, 0.5704476737777641, 0.22030114996551375},
                             {0.09408008283728597, 0.25875798134893274, 0.22030114996551375, 0.4268607858482684}};
     DTYPE * gfunc = calloc(16, sizeof(DTYPE));
-    utils_get_green_func_lim(eigenvecs[0], 4, gfunc);
+    utils_get_green_func_lim(eigenvecs[0], 4, gfunc, NONDEGEN_EIGVALS);
 
     int i, j, index;
     DTYPE diff;

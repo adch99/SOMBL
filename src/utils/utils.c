@@ -5,8 +5,6 @@
 #include <float.h>
 #include <complex.h>
 #include <lapacke.h>
-// #include <gsl/gsl_fit.h>
-// #include <omp.h>
 #include "utils.h"
 #include "../constants.h"
 
@@ -21,7 +19,7 @@
     only the absolute values do. If eigenfunc_num is in
     [0,len-1], then we assume it means we are calculating it
     for that eigenfunction, otherwise, we assume the energy
-    given is not an eigenvalue.
+    given is not an eigenvalue. This works only for 1D systems.
 */
 DTYPE utils_loc_len(DTYPE energy, const DTYPE * eigenvals, DTYPE hop_strength,
                     int len, int eigenfunc_num)
@@ -55,28 +53,6 @@ DTYPE utils_loc_len(DTYPE energy, const DTYPE * eigenvals, DTYPE hop_strength,
 }
 
 /*
-    This function takes a sizexsize matrix and returns the
-    column major version of it with whatever other
-    preprocessing is needed to get it to work with LAPACK.
-    We assume a SQUARE MATRIX and that preprocd has already
-    been allocated a size^2 array of CDTYPE.
-*/
-int utils_preprocess_lapack(CDTYPE * matrix, int size, CDTYPE * preprocd)
-{
-    int i, j;
-
-    for(i = 0; i < size; i++)
-    {
-        for(j = 0; j < size; j++)
-        {
-            *(preprocd + i + size*j) = *(matrix + i*size + j);
-        }
-    }
-
-    return(0);
-}
-
-/*
     Returns the eigenvalues of the hermitian matrix given in
     the array of eigvals given. We assume the array has
     already been preprocessed for the used library
@@ -84,18 +60,8 @@ int utils_preprocess_lapack(CDTYPE * matrix, int size, CDTYPE * preprocd)
     diagonalize will be destroyed by this function.
 */
 int utils_get_eigvalsh(CDTYPE * matrix, int size, DTYPE * eigvals)
-{
-
-    // Convert first to column major
-    // double * colMajorMatrix = malloc(sizeof(complex double)*(size*size));
-    
-
+{    
     // Diagonalize with LAPACK
-    /*
-        If this isn't done by LAPACKE, then we need to call
-        zheev twice. First time to get the optimal number of
-        eigenvalues that are to be calculated (WORK, LWORK).
-    */
     // printf("Entered utils_get_eigvalsh\n");
     int info = LAPACKE_zheev(LAPACK_COL_MAJOR, 'N', 'U', size,
                             matrix, size, eigvals);
@@ -105,17 +71,33 @@ int utils_get_eigvalsh(CDTYPE * matrix, int size, DTYPE * eigvals)
         return info; // Some error has occured.
     }
     
-    // Extract and return eigenvalues
-
-
     return 0;
 }
 
-// index1 should be in [0, size-1]
-int utils_row_to_col(int index1, int index2, int size)
+/*
+    Returns the eigenvalues of the hermitian matrix given in
+    the array of eigvals given. We assume the array has
+    already been preprocessed for the used library
+    (currently LAPACK). NOTE: The matrix given to
+    diagonalize will be destroyed by this function.
+    Orthonormalized eigenvectors will be written into the
+    matrix.
+*/
+int utils_get_eigh(CDTYPE * matrix, int size, DTYPE * eigvals)
 {
-    return(index1 + index2*size);
+    // printf("Running zheev...");
+    // fflush(stdout);
+    int info = LAPACKE_zheev(LAPACK_COL_MAJOR, 'V', 'U', size,
+                            matrix, size, eigvals);
+    
+    if (info != 0)
+    {
+        printf("LAPACKE_zheev error! Code: %d", info);
+        return(info); // Some error has occured.
+    }
+    return(0);
 }
+
 
 /*
     Generates 'num_samples' numbers in the range [low, high]
@@ -229,30 +211,6 @@ int utils_save_matrix(void * matrix, int m, int n,
 
 
 /*
-    Returns the eigenvalues of the hermitian matrix given in
-    the array of eigvals given. We assume the array has
-    already been preprocessed for the used library
-    (currently LAPACK). NOTE: The matrix given to
-    diagonalize will be destroyed by this function.
-    Orthonormalized eigenvectors will be written into the
-    matrix.
-*/
-int utils_get_eigh(CDTYPE * matrix, int size, DTYPE * eigvals)
-{
-    printf("Running zheev...");
-    fflush(stdout);
-    int info = LAPACKE_zheev(LAPACK_COL_MAJOR, 'V', 'U', size,
-                            matrix, size, eigvals);
-    
-    if (info != 0)
-    {
-        printf("LAPACKE_zheev error! Code: %d", info);
-        return info; // Some error has occured.
-    }
-    return(0);
-}
-
-/*
     This function takes the eigenvectors, calculates the
     long time limit of the Green's function squared and ADDS
     it to given matrix. If you want only the Green's
@@ -261,7 +219,8 @@ int utils_get_eigh(CDTYPE * matrix, int size, DTYPE * eigvals)
     behaviour helps us calculate the disorder averaged
     Green's function in-place which saves memory. 
 */
-int utils_get_green_func_lim(CDTYPE * eigenvectors, int size, DTYPE * green_func)
+int utils_get_green_func_lim(CDTYPE * eigenvectors, int size,
+                            DTYPE * green_func, int degeneracy)
 {
 
     // Construct green function limit squared
@@ -277,7 +236,8 @@ int utils_get_green_func_lim(CDTYPE * eigenvectors, int size, DTYPE * green_func
     {
         for(j = 0; j <= i; j++)
         {
-            DTYPE sum = utils_compute_gfsq_elem(i, j, eigenvectors, size);
+            DTYPE sum = utils_compute_gfsq_elem(i, j, eigenvectors, size,
+                                                degeneracy);
             // #pragma omp critical
             {
                 *(green_func + i*size + j) += sum;
@@ -295,18 +255,19 @@ int utils_get_green_func_lim(CDTYPE * eigenvectors, int size, DTYPE * green_func
     Computes the (i,j)th element of the Green's function
     squared in the long time limit.
 */
-DTYPE utils_compute_gfsq_elem(int i, int j, CDTYPE * eigenvectors, int size)
+DTYPE utils_compute_gfsq_elem(int i, int j, CDTYPE * eigenvectors,
+                            int size, int degeneracy)
 {
     DTYPE sum = 0.0;
-    int k;
+    int k, l;
     // #pragma omp parallel for reduction (+:sum) schedule(auto)
     for(k = 0; k < size; k++)
     {
         int index1, index2;
         CDTYPE psi1, psi2;
         DTYPE mod1, mod2;
-        index1 = RTC(k, i, size);
-        index2 = RTC(k, j, size);
+        index1 = RTC(i, k, size);
+        index2 = RTC(j, k, size);
         psi1 = *(eigenvectors + index1);
         psi2 = *(eigenvectors + index2);
         mod1 = creal(psi1)*creal(psi1) + cimag(psi1)*cimag(psi1);
@@ -314,68 +275,28 @@ DTYPE utils_compute_gfsq_elem(int i, int j, CDTYPE * eigenvectors, int size)
         sum += mod1 * mod2;
     }
 
+    if(degeneracy == DEGEN_EIGVALS)
+    {
+        // We assume that the degeneracy occurs in
+        // pairs and that we have all the eigenvalues
+        // being degenerate (Kramer degeneracy).
+        for(k = 0; k < size; k += 2)
+        {
+            l = k + 1;
+            CDTYPE psi_k_i, psi_l_i;
+            CDTYPE psi_k_j, psi_l_j;
+            CDTYPE term;
+            psi_k_i = *(eigenvectors + RTC(i, k, size));
+            psi_l_i = *(eigenvectors + RTC(i, l, size));
+            psi_k_j = *(eigenvectors + RTC(j, k, size));
+            psi_l_j = *(eigenvectors + RTC(j, l, size));
+
+            term = psi_k_i * conj(psi_l_i) * conj(psi_k_j) * psi_l_j;
+            sum += term + conj(term);
+        }
+    }
     return(sum);
 }
-
-
-// int utils_fit_exponential(DTYPE * x, DTYPE * y, int length, DTYPE * exponent,
-//                         DTYPE * mantissa, DTYPE * residuals)
-// {
-//     DTYPE * logdata = malloc(length*sizeof(DTYPE));
-//     DTYPE diff;
-//     int i;
-    
-//     // Take log of the data
-//     for(i = 0; i < length; i++)
-//     {
-//         *(logdata + i) = log(*(y + i));
-//         if(isnan(*(logdata + i)))
-//             printf("NaN detected in log output.\n");
-//     }
-
-//     // Construct a weight function for the fitting
-//     // We use 1 for the middle 80% of the data
-//     // We use a linearly decaying rate for the ends.
-
-//     int start_of_mid = (int) ceil(0.25 * length);
-//     int end_of_mid = length - (int) ceil(0.25 * length);
-//     DTYPE * weights = malloc(length * sizeof(DTYPE));
-//     DTYPE slope = 1.0 / (DTYPE) start_of_mid;
-//     for(i = start_of_mid; i < end_of_mid; i++)
-//         *(weights + i) = 1;
-    
-//     for(i = 0; i < start_of_mid; i++)
-//         *(weights + i) = slope * i;
-
-//     for(i = end_of_mid; i < length; i++)
-//         *(weights + i) = 1 - slope * (i - end_of_mid);
-
-//     // Fit line to data using GSL.
-//     DTYPE c0, c1, cov00, cov01, cov11, sumsq;
-//     gsl_fit_wlinear(x, 1, weights, 1, logdata, 1, length,
-//                 &c0, &c1, &cov00, &cov01, &cov11, &sumsq);
-
-//     if(isnan(c0) || isnan(c1))
-//         printf("gsl returned NaN.\n");  
-    
-//     *mantissa = exp(c0);
-//     *exponent = c1;
-
-//     if(isnan(*mantissa) || isnan(*exponent))
-//         printf("mantissa or exponent are NaN.\n");  
-
-
-//     // Calculate residuals
-//     *residuals = 0;
-//     for(i = 0; i < length; i++)
-//     {   
-//         diff = (*mantissa) * exp((*exponent) * i);
-//         *residuals += *(weights + i)  * diff*diff/length;
-//     }
-
-//     free(logdata);
-//     return 0;
-// }
 
 
 /*
@@ -402,9 +323,9 @@ int utils_construct_data_vs_dist(DTYPE * matrix, int size, int length,
     // For our purposes, we will ignore the
     // range outside length/2. Change the
     // line below to include the entire range
-    // DTYPE highest = floor(length / sqrt(2));
+    DTYPE highest = floor((DTYPE) length / sqrt(2));
     // DTYPE highest = (DTYPE) length / 2.0;
-    DTYPE highest = (DTYPE) length * sqrt(2.0) / M_PI;
+    // DTYPE highest = (DTYPE) length * sqrt(2.0) / M_PI;
     int * counts;
     DTYPE bin_width = (highest - lowest) / (DTYPE) bins;
     if(nospin == 1)
@@ -451,8 +372,8 @@ int utils_construct_data_vs_dist(DTYPE * matrix, int size, int length,
             dy = abs(site1y - site2y);
             dx = INTMIN(abs(length/2-dx), dx);
             dy = INTMIN(abs(length/2-dy), dy);
-            // len = sqrt((DTYPE) (dx*dx + dy*dy));
-            len = sqrt(utils_pbc_chord_length_sq(dx, length, dy, length));
+            len = sqrt((DTYPE) (dx*dx + dy*dy));
+            // len = sqrt(utils_pbc_chord_length_sq(dx, length, dy, length));
             // printf("dx = %d\tdy = %d\tlen = %e\n", dx, dy, len);
             spins = spin_index1*spin1down + spin_index2*spin2down;
 
@@ -497,12 +418,18 @@ int utils_construct_data_vs_dist(DTYPE * matrix, int size, int length,
                 // printf("bin i=%d has counts=%d\n", i, *(counts + i));
             }
             else
+            {
                 *(*func + bins*spins + i) /= (DTYPE) *(counts + bins*spins + i);
+                DTYPE value = *(*func + bins*spins + i);
+                if(value < 0 && fabs(value) < 1e-15)
+                    *(*func + spins*bins + i) *= -1;
+            }
         }
     }
 
     return(bins);
 }
+
 
 /*
     Given the matrix index `index`, returns the (x,y)
@@ -557,20 +484,18 @@ int utils_get_matrix_index(int x, int y, unsigned int spin,
     return(index);
 }
 
-
+/*
+    Each data point is an index and a value.
+    The index determines which bin the data
+    point goes into. The value is added to
+    the sum corresponding to that bin.
+    If the index value is outside the range
+    [lowest, highest] then it is ignored.
+    At the end, this will be averaged out. 
+*/
 int utils_bin_data(DTYPE index, DTYPE value, int bins, int * counts,
                 DTYPE lowest, DTYPE bin_width, DTYPE * value_hist)
 {
-    /*
-        Each data point is an index and a value.
-        The index determines which bin the data
-        point goes into. The value is added to
-        the sum corresponding to that bin.
-        If the index value is outside the range
-        [lowest, highest] then it is ignored.
-        At the end, this will be averaged out. 
-    */
-
     if(isnan(value) || isnan(index))
     {
         printf("NaN value passed\nvalue = %e\nindex = %e\n", value, index);

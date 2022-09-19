@@ -87,6 +87,12 @@ int main(int argc, char ** argv)
     // Represents long time limit of the green's function squared.
     DTYPE * gfunc = calloc(params.num_states*params.num_states, sizeof(DTYPE));
 
+    if(gfunc == NULL)
+    {
+        printf("Could not allocate memory for gfunc! Exiting...\n");
+        return(1);
+    }
+
     printf("Starting Simulation for Exact Diagonalization...\n");
     for(ctr = 1; ctr <= params.numRuns; ctr++)
     {
@@ -96,7 +102,7 @@ int main(int argc, char ** argv)
         run(&params, create_neighbours, gfunc);
         create_neighbours = 0;
         output_gfuncsq_matrix(ctr, gfunc, params, outfiles);
-        printf("\tDone\n");
+        printf("Done\n");
     }
 
     // DTYPE avg_loc_len = post_process(params, outfiles, gfunc);
@@ -128,7 +134,13 @@ int run(struct SystemParams * params, int create_neighbours,
     }
 
     // Create hamiltonian
-    CDTYPE * ham = calloc(num_states*num_states,sizeof(CDTYPE));
+    CDTYPE * ham = calloc(num_states*num_states, sizeof(CDTYPE));
+
+    if(ham == NULL)
+    {
+        printf("Could not allocate memory for ham! Exiting...\n");
+        exit(1);
+    }
     
     printf("Creating Ham...");
     fflush(stdout);
@@ -151,7 +163,12 @@ int run(struct SystemParams * params, int create_neighbours,
     // Calculate and add green's function long time limit squared
     printf("Gfunc...");
     fflush(stdout);
-    utils_get_green_func_lim(ham, num_states, gfunc);
+    int degeneracy;
+    if((params->coupling_const < 1e-15) && (params->nospin == 0))
+        degeneracy = DEGEN_EIGVALS;
+    else
+        degeneracy = NONDEGEN_EIGVALS;
+    utils_get_green_func_lim(ham, num_states, gfunc, degeneracy);
 
     free(eigvals);
     free(ham);

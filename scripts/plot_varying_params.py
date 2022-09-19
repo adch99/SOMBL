@@ -11,9 +11,9 @@ params = {
     "hopup":            1.0,
     "hopdn":            1.0,
     "disorder_vals":    np.linspace(5, 20, 11),
-    "size":             20,
-    "num_runs":         10,
-    "nospin":           True
+    "size":             10,
+    "num_runs":         100,
+    "nospin":           False
 }
 
 
@@ -36,7 +36,7 @@ def getFilename(params):
 def runExactDiag(params):
     print("Starting exact diagonalizations")
     for i, disorder_strength in enumerate(params['disorder_vals']):
-        args = ["build/exact_diag_simulation",
+        args = ["./build/exact_diag_simulation",
                 "-s", f"{params['size']}",
                 "-c", f"{params['coupling_const']}",
                 # "-t", f"{params['hop_strength']}",
@@ -54,10 +54,12 @@ def runExactDiag(params):
         try:
             result.check_returncode()
         except subprocess.CalledProcessError:
-            print("Call to build/exact_diag_simulation failed!")
-            print("params:", params)
-            print("stderr:", result.stderr)
-            print("stdout:", result.stdout)
+            print("\nCall to build/exact_diag_simulation failed!")
+            print("PARAMS:", params)
+            print("CALL: ", " ".join(args))
+            print("STDERR:", result.stderr)
+            print("STDOUT:", result.stdout)
+            print("RETURNCODE:", result.returncode)
             exit(1)
         time_taken = time.time() - start_time
         print(f"Done in {time_taken:.1f}s")
@@ -66,7 +68,7 @@ def runExactDiag(params):
 def runFuncCalc(params):
     print("Starting calculation of G(r)")
     for i, disorder_strength in enumerate(params['disorder_vals']):
-        args = ["build/calculate_dist_vs_gfuncsq",
+        args = ["./build/calculate_dist_vs_gfuncsq",
                 "-s", f"{params['size']}",
                 "-c", f"{params['coupling_const']}",
                 # "-t", f"{params['hop_strength']}",
@@ -91,7 +93,7 @@ def runLocLens(params):
     print(f"{'W':5} {'Xi':11} {'Time':5} {'Residpp':11} {'Cutoff':5}")
 
     for i, disorder_strength in enumerate(params['disorder_vals']):
-        args = ["scripts/calculate_loc_lens.py",
+        args = ["./scripts/calculate_loc_lens.py",
                 "-s", f"{params['size']}",
                 "-c", f"{params['coupling_const']}",
                 # "-t", f"{params['hop_strength']}",
@@ -130,8 +132,8 @@ def outputData(data, outfilename):
 def plotData(disorder_vals, loc_lens, name=None):
     fig, ax = plt.subplots()
     ax.plot(disorder_vals, loc_lens, marker=".")
-    ax.set_ylim(0, 100)
-    ax.set_xlim(0, 21)
+    # ax.set_ylim(0, 100)
+    # ax.set_xlim(0, 21)
     ax.set_xlabel("W")
     ax.set_ylabel(r"$\langle\xi_{loc}\rangle_{disorder}$")
 

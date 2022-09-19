@@ -20,10 +20,20 @@ int hamiltonian(CDTYPE * ham, int len, int width,
     DTYPE low = -disorder_strength / 2.0;
     DTYPE high = disorder_strength / 2.0;
     utils_uniform_dist(low, high, num_sites, disorder, 0);
+
+
     // Produce matrix
     int site1, site2;
     int index_up_up, index_dn_dn, index_up_dn, index_dn_up;
     int i, j, loc;
+
+    // printf("\nDisorder: [");
+    // for(i = 0; i < num_sites; i++)
+    // {
+    //     printf("%e,", *(disorder + i));
+    // }
+    // printf("]\n");
+
 
     //                                      updn dnup
     DTYPE spinorbit_coeffs[NEIGHS][2] = {   {-1, 1},  // x-1

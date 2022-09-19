@@ -14,7 +14,7 @@ def main():
 
     for spin in spins:
         data = getData(params, spin=spin)
-        print("Data Check:", checkData(data))
+        # print("Data Check:", checkData(data))
         fit_vals = fitData(data, params)
         plotData(fit_vals, data, params, spin=spin)
         exp, mant, resid, cutoff = fit_vals
@@ -90,6 +90,11 @@ def fitData(data, params):
     poly = np.polynomial.polynomial.Polynomial
     dists, gfuncsq = data
     num_points = dists.shape[0]
+
+    # Remove points at the tail which are absurdly small
+    for i in range()
+
+
     diff = -1000
     residuals = 10000
     cutoff = -1

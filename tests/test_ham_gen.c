@@ -60,7 +60,7 @@ int test_hermitian(CDTYPE * matrix, int size)
         {
             index = RTC(i, j, size);
             index_flip = RTC(j, i, size);
-            if(*(matrix + index) != conj(*  (matrix + index_flip)))
+            if(*(matrix + index) != conj(*(matrix + index_flip)))
                 success = 0;
         }
     }
