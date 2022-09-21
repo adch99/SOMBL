@@ -87,14 +87,32 @@ int utils_get_eigh(CDTYPE * matrix, int size, DTYPE * eigvals)
 {
     // printf("Running zheev...");
     // fflush(stdout);
-    int info = LAPACKE_zheev(LAPACK_COL_MAJOR, 'V', 'U', size,
-                            matrix, size, eigvals);
+    lapack_int info, lda, n, lwork;
+    double * rwork;
+    lapack_complex_double * work, query;
+
+    lda = size;
+    n = size;
+    rwork = calloc(3*n-2, sizeof(double));
+
+    lwork = -1;
+    info = LAPACKE_zheev_work(LAPACK_COL_MAJOR, 'V', 'U', n,
+                        matrix, lda, eigvals, &query, lwork, rwork);
+    
+    lwork = query;
+    work = calloc(query, sizeof(lapack_complex_double));
+    info = LAPACKE_zheev_work(LAPACK_COL_MAJOR, 'V', 'U', n,
+                        matrix, lda, eigvals, work, lwork, rwork);
     
     if (info != 0)
     {
         printf("LAPACKE_zheev error! Code: %d", info);
         return(info); // Some error has occured.
     }
+
+    free(work);
+    free(rwork);
+
     return(0);
 }
 
@@ -323,7 +341,7 @@ int utils_construct_data_vs_dist(DTYPE * matrix, int size, int length,
     // For our purposes, we will ignore the
     // range outside length/2. Change the
     // line below to include the entire range
-    DTYPE highest = floor((DTYPE) length / sqrt(2));
+    DTYPE highest = length;
     // DTYPE highest = (DTYPE) length / 2.0;
     // DTYPE highest = (DTYPE) length * sqrt(2.0) / M_PI;
     int * counts;
@@ -370,8 +388,8 @@ int utils_construct_data_vs_dist(DTYPE * matrix, int size, int length,
  
             dx = abs(site1x - site2x);
             dy = abs(site1y - site2y);
-            dx = INTMIN(abs(length/2-dx), dx);
-            dy = INTMIN(abs(length/2-dy), dy);
+            // dx = INTMIN(abs(length/2-dx), dx);
+            // dy = INTMIN(abs(length/2-dy), dy);
             len = sqrt((DTYPE) (dx*dx + dy*dy));
             // len = sqrt(utils_pbc_chord_length_sq(dx, length, dy, length));
             // printf("dx = %d\tdy = %d\tlen = %e\n", dx, dy, len);

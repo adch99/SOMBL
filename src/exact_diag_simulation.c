@@ -172,7 +172,6 @@ int run(struct SystemParams * params, int create_neighbours,
 
     free(eigvals);
     free(ham);
-
     return(0);
 }
 

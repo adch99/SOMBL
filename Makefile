@@ -4,9 +4,9 @@ CC=gcc
 # IDIRS=-I$(BLASDIR)/include
 # LBLAS=-L$(BLASDIR)/lib -Wl,-rpath,$(BLASDIR)/lib -lopenblas -lpthread
 LBLAS=-lcblas -lblas
-CFLAGS=-Wall -Wextra -g -fdiagnostics-color=always -ffast-math $(IDIRS)
+CFLAGS=-Wall -Wextra -g -fdiagnostics-color=always -ffast-math $(IDIRS) -O0
 # CFLAGS=-O3 -ffast-math -fopenmp $(IDIRS) 
-LFLAGS=-llapacke -lm $(LBLAS)
+LFLAGS=-llapacke -llapack -lm $(LBLAS)
 ERRORLOG=logs/compiler_error.log
 
 _DEPS = utils/utils.c ham_gen/ham_gen.c params/params.c io/io.c
@@ -14,28 +14,23 @@ DEPS = $(patsubst %,src/%,$(_DEPS))
 
 OBJ = $(patsubst %.c,build/%.o,$(_DEPS))
 
+_EXECS = exact_diag_simulation calculate_dist_vs_gfuncsq \
+calculate_imbalance output_hamiltonian run_diag_params
+EXECS = $(patsubst %,build/%,$(_EXECS))
+
 TESTS = $(wildcard tests/*.c)
 
-default: exact_diag_simulation
+default: $(EXECS)
 
-all: exact_diag_simulation calculate_dist_vs_gfuncsq calculate_imbalance tests
+all: $(EXECS) tests
 
-bins: exact_diag_simulation calculate_dist_vs_gfuncsq calculate_imbalance
+bins: $(EXECS)
 
 build/%.o: src/%.c
 	$(CC) -c -o $@ $^ $(CFLAGS)
 
-exact_diag_simulation: $(OBJ)
-	$(CC) -o build/$@ src/$@.c $^ $(CFLAGS) $(LFLAGS)
-
-calculate_dist_vs_gfuncsq: $(OBJ)
-	$(CC) -o build/$@ src/$@.c $^ $(CFLAGS) $(LFLAGS)
-
-calculate_imbalance: $(OBJ)
-	$(CC) -o build/$@ src/$@.c $^ $(CFLAGS) $(LFLAGS)
-
-output_hamiltonian: $(OBJ)
-	$(CC) -o build/$@ src/$@.c $^ $(CFLAGS) $(LFLAGS)
+$(EXECS): build/%: src/%.c $(OBJ)
+	$(CC) -o $@  $^ $(CFLAGS) $(LFLAGS)
 
 build/tests/%: tests/%.c $(OBJ)
 	$(CC) -o $@ $^ $(CFLAGS) $(LFLAGS)

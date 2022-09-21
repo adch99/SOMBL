@@ -5,21 +5,23 @@ import json
 import numpy as np
 import matplotlib.pyplot as plt
 
-params = {
-    "coupling_const":     0,
-    # "hop_strength":     1.0,
-    "hopup":            1.0,
-    "hopdn":            1.0,
-    "disorder_vals":    np.linspace(5, 20, 11),
-    "size":             10,
-    "num_runs":         100,
-    "nospin":           False
-}
-
+def getParams(paramsFilename):
+    params = {
+        "coupling_const":   0.0,
+        "hopup":            1.0,
+        "hopdn":            1.0,
+        "disorder_low":     5,
+        "disorder_high":    20,
+        "disorder_samples": 11,
+        "size":             10,
+        "num_runs":         100,
+        "nospin":           False
+    }
+    return params
 
 def getFilename(params):
-    W_min = params['disorder_vals'][0]
-    W_max = params['disorder_vals'][-1]
+    W_min = params['disorder_low']
+    W_max = params['disorder_high']
 
     basename = "mbl_nospin" if params["nospin"] else "mbl"
     basename += f"_{params['size']}x{params['size']}"
@@ -35,7 +37,12 @@ def getFilename(params):
 
 def runExactDiag(params):
     print("Starting exact diagonalizations")
-    for i, disorder_strength in enumerate(params['disorder_vals']):
+    iterator = np.linspace(
+                        params["disorder_low"],
+                        params["disorder_high"],
+                        params["disorder_samples"]
+                        )
+    for i, disorder_strength in enumerate(iterator):
         args = ["./build/exact_diag_simulation",
                 "-s", f"{params['size']}",
                 "-c", f"{params['coupling_const']}",
@@ -47,10 +54,18 @@ def runExactDiag(params):
         if params["nospin"]:
             args.append("-p")
 
-        print(f"DIAG: W = {disorder_strength:.2f} Started...",
+        command = " ".join(args)
+
+        print(
+            f"DIAG: W = {disorder_strength:.2f} Started...",
             end="", flush=True)
         start_time = time.time()
-        result = subprocess.run(args, capture_output=True, text=True)
+        result = subprocess.run(
+                                [command, ],
+                                shell=True,
+                                capture_output=True,
+                                text=True
+                                )
         try:
             result.check_returncode()
         except subprocess.CalledProcessError:
@@ -67,7 +82,12 @@ def runExactDiag(params):
 
 def runFuncCalc(params):
     print("Starting calculation of G(r)")
-    for i, disorder_strength in enumerate(params['disorder_vals']):
+    iterator = np.linspace(
+                        params["disorder_low"],
+                        params["disorder_high"],
+                        params["disorder_samples"]
+                        )
+    for i, disorder_strength in enumerate(iterator):
         args = ["./build/calculate_dist_vs_gfuncsq",
                 "-s", f"{params['size']}",
                 "-c", f"{params['coupling_const']}",
@@ -79,11 +99,21 @@ def runFuncCalc(params):
         if params["nospin"]:
             args.append("-p")
 
-        print(f"FUNC: W = {disorder_strength:.2e} Started...",
+        print(
+            f"FUNC: W = {disorder_strength:.2e} Started...",
             end="", flush=True)
         start_time = time.time()
         result = subprocess.run(args, capture_output=True, text=True)
-        result.check_returncode()
+        try:
+            result.check_returncode()
+        except subprocess.CalledProcessError:
+            print("\nCALL TO build/calculate_dist_vs_gfuncsq FAILED!")
+            print("PARAMS:", params)
+            print("CALL: ", " ".join(args))
+            print("STDERR:", result.stderr)
+            print("STDOUT:", result.stdout)
+            print("RETURNCODE:", result.returncode)
+            exit(1)
         time_taken = time.time() - start_time
         print(f"Done in {time_taken:.1f}s")
 
@@ -92,7 +122,12 @@ def runLocLens(params):
     loc_lens = np.zeros(params['disorder_vals'].shape)
     print(f"{'W':5} {'Xi':11} {'Time':5} {'Residpp':11} {'Cutoff':5}")
 
-    for i, disorder_strength in enumerate(params['disorder_vals']):
+    iterator = np.linspace(
+                        params["disorder_low"],
+                        params["disorder_high"],
+                        params["disorder_samples"]
+                        )
+    for i, disorder_strength in enumerate(iterator):
         args = ["./scripts/calculate_loc_lens.py",
                 "-s", f"{params['size']}",
                 "-c", f"{params['coupling_const']}",
@@ -144,8 +179,8 @@ def plotData(disorder_vals, loc_lens, name=None):
 
 
 def main(params):
-    runExactDiag(params)
-    print("")
+    # runExactDiag(params)
+    # print("")
     runFuncCalc(params)
     print("")
     data = runLocLens(params)
@@ -153,5 +188,7 @@ def main(params):
 
 
 if __name__ == "__main__":
+    params = getParams("data/params.json")
+    print(params)
     main(params)
     plt.show()

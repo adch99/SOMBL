@@ -65,7 +65,8 @@ int main(int argc, char ** argv)
     int data_len;
     // Let's bin the data into bins of width 1.
     // int bins = floor(params.len * sqrt(2) / M_PI);
-    int bins = floor((DTYPE) params.len / sqrt(2));
+    // int bins = floor((DTYPE) params.len * sqrt(2));
+    int bins = params.len;
     printf("Bins: %d\n", bins);
     // int bins = 30;
     data_len = utils_construct_data_vs_dist(matrix, params.num_states, params.len,

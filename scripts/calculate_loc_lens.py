@@ -39,24 +39,44 @@ def getParams():
     function to the G^2(r) data. Prints the localization length
     extracted and plots the fit and the datapoints.
     """
-    parser = argparse.ArgumentParser(prog="calculate_loc_lens", description=desc)
-    parser.add_argument("-s", "--size", help="Length and width of the lattice",
+    parser = argparse.ArgumentParser(
+                                    prog="calculate_loc_lens",
+                                    description=desc)
+    parser.add_argument(
+                        "-s", "--size",
+                        help="Length and width of the lattice",
                         type=int, default=20)
-    parser.add_argument("-c", "--coupling", help="Spin-orbit coupling constant",
+    parser.add_argument(
+                        "-c", "--coupling",
+                        help="Spin-orbit coupling constant",
                         type=float, default=0.0)
-    parser.add_argument("-w", "--disorder", help="Strength of the disorder",
+    parser.add_argument(
+                        "-w", "--disorder",
+                        help="Strength of the disorder",
                         type=float, default=10.0)
-    parser.add_argument("-t", "--hopping", help="Strength of the hopping",
+    parser.add_argument(
+                        "-t", "--hopping",
+                        help="Strength of the hopping",
                         type=float, default=1.0)
-    parser.add_argument("-u", "--hopup", help="Strength of the hopping of up spins",
+    parser.add_argument(
+                        "-u", "--hopup",
+                        help="Strength of the hopping of up spins",
                         type=float, default=1.0)
-    parser.add_argument("-d", "--hopdn", help="Strength of the hopping of down spins",
+    parser.add_argument(
+                        "-d", "--hopdn",
+                        help="Strength of the hopping of down spins",
                         type=float, default=1.0)
-    parser.add_argument("-n", "--runs", help="Number of runs in the disorder average",
+    parser.add_argument(
+                        "-n", "--runs",
+                        help="Number of runs in the disorder average",
                         type=int, default=100)
-    parser.add_argument("-p", "--nospin", help="Use a spinless model hamiltonian.",
+    parser.add_argument(
+                        "-p", "--nospin",
+                        help="Use a spinless model hamiltonian.",
                         action="store_true")
-    parser.add_argument("--silent", help="Do not show the plot interactively.",
+    parser.add_argument(
+                        "--silent",
+                        help="Do not show the plot interactively.",
                         action="store_true")
     params = parser.parse_args()
     return params
@@ -92,8 +112,7 @@ def fitData(data, params):
     num_points = dists.shape[0]
 
     # Remove points at the tail which are absurdly small
-    for i in range()
-
+    # for i in range()
 
     diff = -1000
     residuals = 10000

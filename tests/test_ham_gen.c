@@ -18,16 +18,17 @@ int test_ceq(CDTYPE a, CDTYPE b, DTYPE tol);
 // Functions to test
 int test_hamiltonian(); 
 int test_hamiltonian_nospin();
-int test_get_neighbour_list();
+int test_get_neighbour_list_pbc();
+int test_get_neighbour_list_obc();
 
 int main(int argc, char ** argv)
 {
     (void) argc;
     (void) argv;
     // srandom(17);
-    tester(test_hamiltonian, "test_hamiltonian");
-    tester(test_hamiltonian_nospin, "test_hamiltonian_nospin");
-    tester(test_get_neighbour_list, "test_get_neighbour_list");
+    // tester(test_hamiltonian, "test_hamiltonian");
+    // tester(test_hamiltonian_nospin, "test_hamiltonian_nospin");
+    tester(test_get_neighbour_list_obc, "test_get_neighbour_list_obc");
     return 0;
 }
 
@@ -353,7 +354,7 @@ int test_hamiltonian_nospin()
     return success;
 }
 
-int test_get_neighbour_list()
+int test_get_neighbour_list_pbc()
 {
     int success = 1;
     int length, width;
@@ -387,6 +388,46 @@ int test_get_neighbour_list()
     free(neighbours);
     return(success);
 }
+
+int test_get_neighbour_list_obc()
+{
+    int success = 1;
+    int length, width;
+    length = width = 3;
+    int num_sites = length * width;
+    int (*neighbours)[NEIGHS] = malloc((num_sites * NEIGHS) * sizeof(int));
+    get_neighbour_lists(neighbours, length, width);
+
+    int expected[][NEIGHS] = {
+        {-1,  1, -1,  3},
+        { 0,  2, -1,  4},
+        { 1, -1, -1,  5},
+        {-1,  4,  0,  6},
+        { 3,  5,  1,  7},
+        { 4, -1,  2,  8},
+        {-1,  7,  3, -1},
+        { 6,  8,  4, -1},
+        { 7, -1,  5, -1}
+    };
+
+    int i, j;
+    for(i=0;i<num_sites;i++)
+    {
+        // printf("%d: ", i);
+        for(j=0;j<NEIGHS;j++)
+        {
+            // printf("%3d ", *(*(neighbours + i) + j));
+            if(expected[i][j] != *(*(neighbours + i) + j))
+                success = 0;
+        }
+        // printf("\n");
+    }
+    // printf("\n");
+
+    free(neighbours);
+    return(success);
+}
+
 
 int test_check_neighbour()
 {
