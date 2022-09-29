@@ -14,6 +14,7 @@ def main():
 
     for spin in spins:
         data = getData(params, spin=spin)
+        data = cleanData(data)
         # print("Data Check:", checkData(data))
         fit_vals = fitData(data, params)
         plotData(fit_vals, data, params, spin=spin)
@@ -106,6 +107,12 @@ def getFilename(params, spin=None):
     return basename
 
 
+def cleanData(data, tol=1e-10):
+    dists, gfuncsq = data
+    cond = (gfuncsq > tol)
+    return dists[cond], gfuncsq[cond]
+
+
 def fitData(data, params):
     poly = np.polynomial.polynomial.Polynomial
     dists, gfuncsq = data
@@ -117,7 +124,9 @@ def fitData(data, params):
     diff = -1000
     residuals = 10000
     cutoff = -1
-    while diff < 0 and (num_points - cutoff) >= 4:
+    minPoints = np.ceil(0.7 * num_points)
+
+    while diff < 0 and (num_points - cutoff) >= minPoints:
         # We need at least 3 points, hence the second condition
         cutoff += 1
         last_residuals = residuals
@@ -164,7 +173,13 @@ def plotData(fit_vals, data, params, spin=None):
     axes.set_yscale("log")
     axes.set_xlabel(r"$r$")
     axes.set_ylabel(r"$G_R^2(r)$")
-    axes.set_title(f"Exponential Fit of y = {mant:.3e}*exp({exp:.3e}x)")
+
+    title = f"s = {spin} "
+    title += r"$\xi$" + f" = {-2/exp:.3e} "
+    title += f"c={params.coupling} w={params.disorder} "
+    title += f"l={params.size} n={params.runs}"
+
+    axes.set_title(title)
     axes.legend()
 
     filename = "plots/" + getFilename(params, spin=spin)

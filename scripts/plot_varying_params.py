@@ -119,7 +119,7 @@ def runFuncCalc(params):
 
 
 def runLocLens(params):
-    loc_lens = np.zeros(params['disorder_vals'].shape)
+    loc_lens = np.zeros(params["disorder_samples"])
     print(f"{'W':5} {'Xi':11} {'Time':5} {'Residpp':11} {'Cutoff':5}")
 
     iterator = np.linspace(
@@ -151,12 +151,12 @@ def runLocLens(params):
             print("stderr:", result.stderr)
             exit(1)
         time_taken = time.time() - start_time
-        data = json.loads(result.stdout)
-        loc_lens[i] = data["xi"]
-        output_string = f"{disorder_strength:-5} {loc_lens[i]:-.5e}"
-        output_string += f" {time_taken:-.3f} {data['residpp']:-5e}"
-        output_string += f" {data['cutoff']}"
-        print(output_string)
+        # data = json.loads(result.stdout)
+        # loc_lens[i] = data["xi"]
+        # output_string = f"{disorder_strength:-5} {loc_lens[i]:-.5e}"
+        # output_string += f" {time_taken:-.3f} {data['residpp']:-5e}"
+        # output_string += f" {data['cutoff']}"
+        # print(output_string)
     return params["disorder_vals"], loc_lens
 
 

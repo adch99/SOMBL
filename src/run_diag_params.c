@@ -11,14 +11,15 @@ int create_process(char * cmdName, char ** argv, char * logfile);
 
 int main(int argc, char ** argv)
 {
-    char * logfile = "logs/run_diag_params.log";
+    // char * logfile = "logs/run_diag_params.log";
+    char * logfile = "/dev/null";
 
     char size[] = "10";
     char coupling[] = "0.0";
     char hopup[] = "1.0";
     char hopdn[] = "1.0";
     char hopping[] = "1.0";
-    char numRuns[] = "10";
+    char numRuns[] = "100";
     int nospin = 0;
     DTYPE disorder_low = 5.0;
     DTYPE disorder_high = 20.0;
