@@ -85,8 +85,8 @@ def getParams():
 
 def getData(params, spin=None):
     filename = "data/" + getFilename(params, spin=spin) + ".dat"
-    dists, gfuncsq = np.loadtxt(filename).T
-    return dists, gfuncsq
+    dists, gfuncsq, errors = np.loadtxt(filename).T
+    return dists, gfuncsq, errors
 
 
 def getFilename(params, spin=None):
@@ -108,14 +108,14 @@ def getFilename(params, spin=None):
 
 
 def cleanData(data, tol=1e-10):
-    dists, gfuncsq = data
+    dists, gfuncsq, errors = data
     cond = (gfuncsq > tol)
-    return dists[cond], gfuncsq[cond]
+    return dists[cond], gfuncsq[cond], errors[cond]
 
 
 def fitData(data, params):
     poly = np.polynomial.polynomial.Polynomial
-    dists, gfuncsq = data
+    dists, gfuncsq, errors = data
     num_points = dists.shape[0]
 
     # Remove points at the tail which are absurdly small
@@ -132,7 +132,7 @@ def fitData(data, params):
         last_residuals = residuals
         x = dists[cutoff:]
         y = np.log(gfuncsq[cutoff:])
-        series, extras = poly.fit(x, y, deg=1, full=True)
+        series, extras = poly.fit(x, y, deg=1, full=True, w=1/errors)
         residuals = extras[0][0] / (num_points - cutoff)
         diff = residuals - last_residuals
 
@@ -143,7 +143,7 @@ def fitData(data, params):
 
 
 def checkData(data):
-    dists, gfuncsq = data
+    dists, gfuncsq, errors = data
     tol = 1e-6
     probsum = 0
     dr = dists[1] - dists[0]
@@ -162,7 +162,7 @@ def checkData(data):
 
 def plotData(fit_vals, data, params, spin=None):
     exp, mant, resid, cutoff = fit_vals
-    dists, gfuncsq = data
+    dists, gfuncsq, errors = data
     x = np.linspace(dists[cutoff], dists[-1], 100)
     y = mant * np.exp(exp*x)
     fig, axes = plt.subplots(figsize=(12, 8))
