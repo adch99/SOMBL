@@ -15,6 +15,11 @@ def main():
     for spin in spins:
         data = getData(params, spin=spin)
         data = cleanData(data)
+        num_points = data[0].shape[0]
+        if num_points == 0:
+            print(f"All points for spin = {spin} are too close to zero!")
+            print("Cannot evaluate anything")
+            continue
         # print("Data Check:", checkData(data))
         fit_vals = fitData(data, params)
         plotData(fit_vals, data, params, spin=spin)
