@@ -326,7 +326,8 @@ DTYPE utils_compute_gfsq_elem(int i, int j, CDTYPE * eigenvectors,
     And remember to free them after use.
 */
 int utils_construct_data_vs_dist(DTYPE * matrix, int size, int length,
-                            int bins, DTYPE ** dists, DTYPE ** func)
+                            int bins, DTYPE ** dists, DTYPE ** func,
+                            DTYPE ** funcerr)
 {
     int i, j;
     int nospin = (size==length*length)?1:0;
@@ -351,12 +352,14 @@ int utils_construct_data_vs_dist(DTYPE * matrix, int size, int length,
         counts = calloc(bins, sizeof(int));
         *dists = calloc(bins, sizeof(DTYPE));
         *func = calloc(bins, sizeof(DTYPE));
+        *funcerr = calloc(bins, sizeof(DTYPE));
     }
     else
     {
         *dists = calloc(bins, sizeof(DTYPE));
         counts = calloc(4*bins, sizeof(int));
         *func = calloc(4*bins, sizeof(DTYPE));
+        *funcerr = calloc(4*bins, sizeof(DTYPE));
     }
 
     // printf("bin_width = %e\n", bin_width);
@@ -399,16 +402,19 @@ int utils_construct_data_vs_dist(DTYPE * matrix, int size, int length,
             {
                 value = *(matrix + RTC(i, j, size));
                 utils_bin_data(len, value, bins, counts + bins*spins,
-                                lowest, bin_width, *func + bins*spins);
+                                lowest, bin_width, *func + bins*spins,
+                                *funcerr + bins*spins);
             }
             else
             {
                 value = *(matrix + RTC(i, j, size));
                 utils_bin_data(len, value, bins, counts + bins*spins,
-                                lowest, bin_width, *func + bins*spins);
+                                lowest, bin_width, *func + bins*spins,
+                                *funcerr + bins*spins);
                 value = *(matrix + RTC(j, i, size));
                 utils_bin_data(len, value, bins, counts + bins*spins,
-                                lowest, bin_width, *func + bins*spins);
+                                lowest, bin_width, *func + bins*spins,
+                                *funcerr + bins*spins);
             }
         }
     }
@@ -416,6 +422,7 @@ int utils_construct_data_vs_dist(DTYPE * matrix, int size, int length,
     // Calculate the averages
     unsigned int spins;
     unsigned int total_spins;
+    int index;
     if(nospin == 1)
         total_spins = 1;
     else
@@ -425,22 +432,33 @@ int utils_construct_data_vs_dist(DTYPE * matrix, int size, int length,
     {
         for(i = 0; i < bins; i++)
         {
-            if(isnan(*(*func + spins*bins + i)))
+            index = spins*bins + i;
+            if(isnan(*(*func + index)))
             {
                 printf("NaN detected at site i = %d\n", i);
             }
 
-            if(*(counts + bins*spins + i) == 0)
+            if(*(counts + index) == 0)
             {
-                *(*func + bins*spins + i) = DBL_MIN;
+                *(*func + index) = DBL_MIN;
                 // printf("bin i=%d has counts=%d\n", i, *(counts + i));
             }
             else
             {
-                *(*func + bins*spins + i) /= (DTYPE) *(counts + bins*spins + i);
-                DTYPE value = *(*func + bins*spins + i);
+                // Divide by the counts
+                *(*func + index) /= (DTYPE) *(counts + index);
+                // Near zero values can be negative
+                // Make them positive for plotting
+                // and convenience.
+                DTYPE value = *(*func + index);
                 if(value < 0 && fabs(value) < 1e-15)
-                    *(*func + spins*bins + i) *= -1;
+                    *(*func + index) *= -1;
+
+                // Divide by counts to get <x^2>
+                // Then calculate sqrt(<x^2> - <x>^2)
+                *(*funcerr + index) /= (DTYPE) *(counts + index);
+                *(*funcerr + index) -= value*value;
+                *(*funcerr + index) = sqrt(*(*funcerr + index));
             }
         }
     }
@@ -512,7 +530,8 @@ int utils_get_matrix_index(int x, int y, unsigned int spin,
     At the end, this will be averaged out. 
 */
 int utils_bin_data(DTYPE index, DTYPE value, int bins, int * counts,
-                DTYPE lowest, DTYPE bin_width, DTYPE * value_hist)
+                DTYPE lowest, DTYPE bin_width, DTYPE * value_hist,
+                DTYPE * errors)
 {
     if(isnan(value) || isnan(index))
     {
@@ -530,6 +549,8 @@ int utils_bin_data(DTYPE index, DTYPE value, int bins, int * counts,
 
     *(counts + bin_num) += 1;
     *(value_hist + bin_num) += value;
+    *(errors + bin_num) += value*value; // We store sum of squares here
+    // we will subtract mean^2 later to get stddev
 
     return(0);
 }

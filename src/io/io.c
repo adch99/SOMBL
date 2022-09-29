@@ -137,7 +137,8 @@ int io_get_array_from_file(int * array, int length, FILE * ifile)
 }
 
 int io_output_function_data(DTYPE * dists, DTYPE * gfuncsq,
-                        char * filename, int data_len)
+                        DTYPE * errors, char * filename,
+                        int data_len)
 {
     // Write the values to a file
     FILE * ofile = fopen(filename, "w");
@@ -152,8 +153,10 @@ int io_output_function_data(DTYPE * dists, DTYPE * gfuncsq,
         // if(isnan(*(dists + i)) || isnan(*(gfuncsq + i)))
         //     printf("NaN detected in postprocess.");
 
-        fprintf(ofile, "%e %e\n", *(dists + i), *(gfuncsq + i));
-        printf("%e %e\n", *(dists + i), *(gfuncsq + i));
+        fprintf(ofile, "%e %e %e\n",
+                *(dists + i), *(gfuncsq + i), *(errors + i));
+        printf("%e %e %e\n",
+                *(dists + i), *(gfuncsq + i), *(errors + i));
 
     }
     fclose(ofile);

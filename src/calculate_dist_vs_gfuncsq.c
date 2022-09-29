@@ -62,6 +62,7 @@ int main(int argc, char ** argv)
     // distance G^2(|r_i - r_j|)
     DTYPE * dists;
     DTYPE * gfuncsq;
+    DTYPE * gfuncsq_err;
     int data_len;
     // Let's bin the data into bins of width 1.
     // int bins = floor(params.len * sqrt(2) / M_PI);
@@ -70,10 +71,13 @@ int main(int argc, char ** argv)
     printf("Bins: %d\n", bins);
     // int bins = 30;
     data_len = utils_construct_data_vs_dist(matrix, params.num_states, params.len,
-                                        bins, &dists, &gfuncsq);
+                                        bins, &dists, &gfuncsq, &gfuncsq_err);
 
     if(params.nospin == 1)
-        io_output_function_data(dists, gfuncsq, outfiles.dist_vs_gfuncsq, data_len);
+    {
+        io_output_function_data(dists, gfuncsq, gfuncsq_err,
+                                outfiles.dist_vs_gfuncsq, data_len);
+    }        
     else
     {
         int i;
@@ -81,7 +85,8 @@ int main(int argc, char ** argv)
         {
             char * fname = outfiles.dist_vs_gfuncsq_spin[i];
             printf("Outputting to %s\n", fname);
-            io_output_function_data(dists, gfuncsq + i*bins, fname, data_len);
+            io_output_function_data(dists, gfuncsq + i*bins,
+                                    gfuncsq_err + i*bins, fname, data_len);
         }
     }
     params_cleanup(&params, &outfiles);
