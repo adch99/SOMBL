@@ -5,7 +5,7 @@ CC=gcc
 # LBLAS=-L$(BLASDIR)/lib -Wl,-rpath,$(BLASDIR)/lib -lopenblas -lpthread
 LBLAS=-lcblas -lblas
 # CFLAGS=-Wall -Wextra -g -fdiagnostics-color=always -ffast-math $(IDIRS) -O0
-CFLAGS=-ffast-math -O3 $(IDIRS)
+CFLAGS=-ffast-math -O2 $(IDIRS)
 # CFLAGS=-O3 -ffast-math -fopenmp $(IDIRS) 
 LFLAGS=-llapacke -llapack -lm $(LBLAS)
 ERRORLOG=logs/compiler_error.log

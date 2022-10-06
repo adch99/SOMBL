@@ -164,7 +164,7 @@ int run(struct SystemParams * params, int create_neighbours,
     // printf("Gfunc...");
     // fflush(stdout);
     int degeneracy;
-    if((params->coupling_const < 1e-15) && (params->nospin == 0))
+    if(params->nospin == 0)
         degeneracy = DEGEN_EIGVALS;
     else
         degeneracy = NONDEGEN_EIGVALS;
