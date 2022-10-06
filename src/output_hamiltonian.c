@@ -5,6 +5,8 @@
 #include "ham_gen/ham_gen.h"
 // #include "io/io.h"
 
+#define SIZE 4
+#define SIZESTR "4"
 #define UP 0
 #define DOWN 1
 
@@ -14,14 +16,14 @@ int main(int argc, char ** argv)
     (void) argv;
     srandom(17);
     int length, width;
-    length = width = 4;
+    length = width = SIZE;
     int num_sites = length*width;
     int num_states = 2*num_sites;
     CDTYPE * ham = calloc(num_states*num_states, sizeof(CDTYPE));
     int (*neighbour)[NEIGHS] = malloc((num_sites * NEIGHS) * sizeof(int));
     get_neighbour_lists(neighbour, length, width);
-    hamiltonian(ham, length, width, 0, 15.0, 1.0, 1.0, neighbour);
-    FILE * ofile = fopen("data/matrix_4x4_sample.dat", "w");
+    hamiltonian(ham, length, width, 0.0, 18.0, 1.0, 1.0, neighbour);
+    FILE * ofile = fopen("data/matrix_"SIZESTR"x"SIZESTR"_sample.dat", "w");
     utils_save_matrix(ham, num_states, num_states, 'C', 'F', ofile);
     fclose(ofile);
     DTYPE * eigvals = malloc(num_states * sizeof(DTYPE));
@@ -33,7 +35,7 @@ int main(int argc, char ** argv)
         printf("%e ", *(eigvals + i));
     printf("\n");
 
-    ofile = fopen("data/matrix_4x4_eigvecs.dat", "w");
+    ofile = fopen("data/matrix_"SIZESTR"x"SIZESTR"_eigvecs.dat", "w");
     utils_save_matrix(ham, num_states, num_states, 'C', 'F', ofile);
     fclose(ofile);
 
@@ -49,7 +51,7 @@ int main(int argc, char ** argv)
     printf("G(%d : %d, %d : %d) = %e\n", site1, spin1, site2, spin2, value);
 
     utils_get_green_func_lim(ham, num_states, gfuncsq, DEGEN_EIGVALS);
-    ofile = fopen("data/matrix_4x4_gfuncsq.dat", "w");
+    ofile = fopen("data/matrix_"SIZESTR"x"SIZESTR"_gfuncsq.dat", "w");
     utils_save_matrix(gfuncsq, num_states, num_states, 'R', 'F', ofile);
     fclose(ofile);
 

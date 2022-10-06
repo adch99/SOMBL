@@ -68,12 +68,12 @@ int params_setup(int argc, char ** argv, struct SystemParams * params,
     // Set up the data files for the system params.
     params_set_up_datastream(*params, outfiles);
 
-    printf("Filenames:\n");
-    printf("gfuncsq: %s\n", outfiles->gfuncsq);
-    printf("dist_vs_gfuncsq: %s\n", outfiles->dist_vs_gfuncsq);
-    int i;
-    for(i = 0; i < 4; i++)
-        printf("dist_vs_gfuncsq_spin[%d]: %s\n", i, outfiles->dist_vs_gfuncsq_spin[i]);
+    // printf("Filenames:\n");
+    // printf("gfuncsq: %s\n", outfiles->gfuncsq);
+    // printf("dist_vs_gfuncsq: %s\n", outfiles->dist_vs_gfuncsq);
+    // int i;
+    // for(i = 0; i < 4; i++)
+    //     printf("dist_vs_gfuncsq_spin[%d]: %s\n", i, outfiles->dist_vs_gfuncsq_spin[i]);
 
     return 0;
 }

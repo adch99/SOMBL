@@ -78,6 +78,7 @@ int main(int argc, char ** argv)
 
         printf("Done in %lds\n", (time(NULL) - start_time));
     }
+    // wait();
 
     return(0);
 }

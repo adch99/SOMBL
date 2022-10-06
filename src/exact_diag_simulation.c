@@ -64,13 +64,13 @@ int main(int argc, char ** argv)
 
     params_setup(argc, argv, &params, &outfiles, &argp);
 
-    printf("Exact Diagonalization\n");
-    printf("---------------------\n");
-    printf("len: %d\t nospin: %d\t coupling: %.2e\n"
-        "disorder: %.2e\t hop_up: %.2e\t hop_dn: %.2e\n",
-        params.len, params.nospin, params.coupling_const,
-        params.disorder_strength, params.hop_strength_upup,
-        params.hop_strength_dndn);
+    // printf("Exact Diagonalization\n");
+    // printf("---------------------\n");
+    // printf("len: %d\t nospin: %d\t coupling: %.2e\n"
+    //     "disorder: %.2e\t hop_up: %.2e\t hop_dn: %.2e\n",
+    //     params.len, params.nospin, params.coupling_const,
+    //     params.disorder_strength, params.hop_strength_upup,
+    //     params.hop_strength_dndn);
 
     // if(params.nospin == 1)
     //     params.num_states = params.len*params.width;
@@ -93,16 +93,16 @@ int main(int argc, char ** argv)
         return(1);
     }
 
-    printf("Starting Simulation for Exact Diagonalization...\n");
+    // printf("Starting Simulation for Exact Diagonalization...\n");
     for(ctr = 1; ctr <= params.numRuns; ctr++)
     {
-        printf("Run %d started...", ctr);
-        fflush(stdout);
+        // printf("Run %d started...", ctr);
+        // fflush(stdout);
         /* Call run */
         run(&params, create_neighbours, gfunc);
         create_neighbours = 0;
         output_gfuncsq_matrix(ctr, gfunc, params, outfiles);
-        printf("Done\n");
+        // printf("Done\n");
     }
 
     // DTYPE avg_loc_len = post_process(params, outfiles, gfunc);
@@ -142,8 +142,8 @@ int run(struct SystemParams * params, int create_neighbours,
         exit(1);
     }
     
-    printf("Creating Ham...");
-    fflush(stdout);
+    // printf("Creating Ham...");
+    // fflush(stdout);
     if(params->nospin == 1)
         hamiltonian_nospin(ham, params->len, params->width,
                 params->disorder_strength, params->hop_strength_upup,
@@ -155,14 +155,14 @@ int run(struct SystemParams * params, int create_neighbours,
 
 
     // Calculate eigenvectors
-    printf("Eigh...");
-    fflush(stdout);
+    // printf("Eigh...");
+    // fflush(stdout);
     DTYPE * eigvals = calloc(num_states, sizeof(DTYPE));
     utils_get_eigh(ham, num_states, eigvals);
 
     // Calculate and add green's function long time limit squared
-    printf("Gfunc...");
-    fflush(stdout);
+    // printf("Gfunc...");
+    // fflush(stdout);
     int degeneracy;
     if((params->coupling_const < 1e-15) && (params->nospin == 0))
         degeneracy = DEGEN_EIGVALS;
