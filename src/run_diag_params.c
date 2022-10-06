@@ -96,7 +96,7 @@ int create_process(char * cmdName, char ** argv, char * logfile)
     if(pid == 0) // This is the child process
     {
         /* open file for writing */
-        int fd = open(logfile, O_WRONLY | O_APPEND | O_CREAT);
+        int fd = open(logfile, O_WRONLY | O_APPEND | O_CREAT, S_IRUSR | S_IWUSR);
 
         dup2(fd, 1);    /* make stdout a copy of fd (> /dev/null) */
         // dup2(fd, 2);    /* ...and same with stderr */
