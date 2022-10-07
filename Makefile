@@ -1,9 +1,9 @@
 CC=gcc
 # BLASDIR=../openblas
-# BLASDIR=../../Build/openblas
-# IDIRS=-I$(BLASDIR)/include
-# LBLAS=-L$(BLASDIR)/lib -Wl,-rpath,$(BLASDIR)/lib -lopenblas -lpthread
-LBLAS=-lcblas -lblas
+BLASDIR=../../Build/openblas
+IDIRS=-I$(BLASDIR)/include
+LBLAS=-L$(BLASDIR)/lib -Wl,-rpath,$(BLASDIR)/lib -lopenblas -lpthread
+# LBLAS=-lcblas -lblas
 # CFLAGS=-Wall -Wextra -g -fdiagnostics-color=always -ffast-math $(IDIRS) -O0
 CFLAGS=-ffast-math -O2 $(IDIRS)
 # CFLAGS=-O3 -ffast-math -fopenmp $(IDIRS) 
