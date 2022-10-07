@@ -4,7 +4,7 @@
 #include <math.h>
 #include <float.h>
 #include <complex.h>
-#include <lapacke.h>
+#include "mkl_lapacke.h"
 #include "utils.h"
 #include "../constants.h"
 
@@ -88,30 +88,19 @@ int utils_get_eigh(CDTYPE * matrix, int size, DTYPE * eigvals)
     // printf("Running zheev...");
     // fflush(stdout);
     lapack_int info, lda, n, lwork;
-    double * rwork;
     lapack_complex_double * work, query;
 
     lda = size;
     n = size;
-    rwork = calloc(3*n-2, sizeof(double));
 
-    lwork = -1;
-    info = LAPACKE_zheev_work(LAPACK_COL_MAJOR, 'V', 'U', n,
-                        matrix, lda, eigvals, &query, lwork, rwork);
-    
-    lwork = query;
-    work = calloc(query, sizeof(lapack_complex_double));
-    info = LAPACKE_zheev_work(LAPACK_COL_MAJOR, 'V', 'U', n,
-                        matrix, lda, eigvals, work, lwork, rwork);
+    info = LAPACKE_zheev(LAPACK_COL_MAJOR, 'V', 'U', n,
+                        matrix, lda, eigvals);
     
     if (info != 0)
     {
         printf("LAPACKE_zheev error! Code: %d", info);
         return(info); // Some error has occured.
     }
-
-    free(work);
-    free(rwork);
 
     return(0);
 }

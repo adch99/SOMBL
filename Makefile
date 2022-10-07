@@ -2,12 +2,17 @@ CC=gcc
 # BLASDIR=../openblas
 # BLASDIR=../../Build/openblas
 # IDIRS=-I$(BLASDIR)/include
+MKLROOT=/opt/intel/oneapi/mkl/latest
+IDIRS=-I${MKLROOT}/include
+LDIRS=-L${MKLROOT}/lib/intel64
 # LBLAS=-L$(BLASDIR)/lib -Wl,-rpath,$(BLASDIR)/lib -lopenblas -lpthread
-LBLAS=-lcblas -lblas
+# LBLAS=-lcblas -lblas
 # CFLAGS=-Wall -Wextra -g -fdiagnostics-color=always -ffast-math $(IDIRS) -O0
-CFLAGS=-ffast-math -O2 $(IDIRS)
+# CFLAGS=-ffast-math -O2 $(IDIRS)
+CFLAGS=-fopenmp -m64 ${IDIRS}
 # CFLAGS=-O3 -ffast-math -fopenmp $(IDIRS) 
-LFLAGS=-llapacke -llapack -lm $(LBLAS)
+LFLAGS=-Wl,--no-as-needed ${LDIRS} -lmkl_intel_lp64 -lmkl_core -lmkl_gnu_thread -lpthread -lm -ldl
+# LFLAGS=-llapacke -llapack -lm $(LBLAS)
 ERRORLOG=logs/compiler_error.log
 
 _DEPS = utils/utils.c ham_gen/ham_gen.c params/params.c io/io.c
