@@ -64,7 +64,7 @@ int utils_get_eigvalsh(CDTYPE * matrix, int size, DTYPE * eigvals)
     // Diagonalize with LAPACK
     // printf("Entered utils_get_eigvalsh\n");
     int info = LAPACKE_zheev(LAPACK_COL_MAJOR, 'N', 'U', size,
-                            matrix, size, eigvals);
+                            (MKL_Complex16 *) matrix, size, eigvals);
     if (info != 0)
     {
         printf("LAPACKE_zheev error! Code: %d", info);
@@ -94,7 +94,7 @@ int utils_get_eigh(CDTYPE * matrix, int size, DTYPE * eigvals)
     n = size;
 
     info = LAPACKE_zheev(LAPACK_COL_MAJOR, 'V', 'U', n,
-                        matrix, lda, eigvals);
+                        (MKL_Complex16 *) matrix, lda, eigvals);
     
     if (info != 0)
     {
