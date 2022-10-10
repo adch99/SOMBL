@@ -3,6 +3,7 @@
 #include "constants.h"
 #include "utils/utils.h"
 #include "ham_gen/ham_gen.h"
+#include "diag/diag.h"
 // #include "io/io.h"
 
 #define SIZE 4
@@ -27,7 +28,7 @@ int main(int argc, char ** argv)
     utils_save_matrix(ham, num_states, num_states, 'C', 'F', ofile);
     fclose(ofile);
     DTYPE * eigvals = malloc(num_states * sizeof(DTYPE));
-    utils_get_eigh(ham, num_states, eigvals);
+    diag_get_eigh(ham, num_states, eigvals);
 
     int i;
     printf("\nEigvals: ");

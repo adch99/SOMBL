@@ -97,13 +97,13 @@ int main(int argc, char ** argv)
     printf("Starting Simulation for Exact Diagonalization...\n");
     for(ctr = 1; ctr <= params.numRuns; ctr++)
     {
-        printf("Run %d started...", ctr);
-        fflush(stdout);
+        // printf("Run %d started...", ctr);
+        // fflush(stdout);
         /* Call run */
         run(&params, create_neighbours, gfunc);
         create_neighbours = 0;
-        // output_gfuncsq_matrix(ctr, gfunc, params, outfiles);
-        printf("Done\n");
+        output_gfuncsq_matrix(ctr, gfunc, params, outfiles);
+        // printf("Done\n");
     }
 
     // DTYPE avg_loc_len = post_process(params, outfiles, gfunc);
@@ -143,8 +143,8 @@ int run(struct SystemParams * params, int create_neighbours,
         exit(1);
     }
     
-    printf("Creating Ham...");
-    fflush(stdout);
+    // printf("Creating Ham...");
+    // fflush(stdout);
     if(params->nospin == 1)
         hamiltonian_nospin(ham, params->len, params->width,
                 params->disorder_strength, params->hop_strength_upup,
@@ -156,22 +156,22 @@ int run(struct SystemParams * params, int create_neighbours,
 
 
     // Calculate eigenvectors
-    printf("Eigh...");
-    fflush(stdout);
+    // printf("Eigh...");
+    // fflush(stdout);
     DTYPE * eigvals = calloc(num_states, sizeof(DTYPE));
     diag_get_eigh(ham, num_states, eigvals);
 
     // Calculate and add green's function long time limit squared
-    printf("Gfunc...");
-    fflush(stdout);
+    // printf("Gfunc...");
+    // fflush(stdout);
     int degeneracy;
     if(params->nospin == 0)
         degeneracy = DEGEN_EIGVALS;
     else
         degeneracy = NONDEGEN_EIGVALS;
     utils_get_green_func_lim(ham, num_states, gfunc, degeneracy);
-    printf("Wrapping up...");
-    fflush(stdout);
+    // printf("Wrapping up...");
+    // fflush(stdout);
 
     free(eigvals);
     free(ham);

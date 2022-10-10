@@ -14,16 +14,16 @@ int main(int argc, char ** argv)
     // char * logfile = "logs/run_diag_params.log";
     char * logfile = "/dev/null";
 
-    char size[] = "10";
+    char size[] = "40";
     char coupling[] = "0.0";
     char hopup[] = "1.0";
     char hopdn[] = "1.0";
     char hopping[] = "1.0";
     char numRuns[] = "100";
     int nospin = 0;
-    DTYPE disorder_low = 5.0;
-    DTYPE disorder_high = 20.0;
-    int disorder_samples = 11;
+    DTYPE disorder_low = 6.5;
+    DTYPE disorder_high = 18.5;
+    int disorder_samples = 9;
 
     DTYPE disorder;
     char disorder_str[32];
@@ -43,7 +43,7 @@ int main(int argc, char ** argv)
     DTYPE coeff = (disorder_high - disorder_low) / (DTYPE) (disorder_samples-1);
     for(i = 0; i < disorder_samples; i++)
     {
-        disorder = disorder_low + coeff * i;
+        disorder = disorder_high - coeff * i;
         sprintf(disorder_str, "%lf", disorder);
 
         printf("DIAG: W = %6.3f... ", disorder);
