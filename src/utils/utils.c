@@ -4,7 +4,8 @@
 #include <math.h>
 #include <float.h>
 #include <complex.h>
-#include <lapacke.h>
+#include <cblas.h>
+#include <omp.h>
 #include "utils.h"
 #include "../constants.h"
 
@@ -51,71 +52,6 @@ DTYPE utils_loc_len(DTYPE energy, const DTYPE * eigenvals, DTYPE hop_strength,
     loc_len = 1.0 / lambda;
     return(loc_len);    
 }
-
-/*
-    Returns the eigenvalues of the hermitian matrix given in
-    the array of eigvals given. We assume the array has
-    already been preprocessed for the used library
-    (currently LAPACK). NOTE: The matrix given to
-    diagonalize will be destroyed by this function.
-*/
-int utils_get_eigvalsh(CDTYPE * matrix, int size, DTYPE * eigvals)
-{    
-    // Diagonalize with LAPACK
-    // printf("Entered utils_get_eigvalsh\n");
-    int info = LAPACKE_zheev(LAPACK_COL_MAJOR, 'N', 'U', size,
-                            matrix, size, eigvals);
-    if (info != 0)
-    {
-        printf("LAPACKE_zheev error! Code: %d", info);
-        return info; // Some error has occured.
-    }
-    
-    return 0;
-}
-
-/*
-    Returns the eigenvalues of the hermitian matrix given in
-    the array of eigvals given. We assume the array has
-    already been preprocessed for the used library
-    (currently LAPACK). NOTE: The matrix given to
-    diagonalize will be destroyed by this function.
-    Orthonormalized eigenvectors will be written into the
-    matrix.
-*/
-int utils_get_eigh(CDTYPE * matrix, int size, DTYPE * eigvals)
-{
-    // printf("Running zheev...");
-    // fflush(stdout);
-    lapack_int info, lda, n, lwork;
-    double * rwork;
-    lapack_complex_double * work, query;
-
-    lda = size;
-    n = size;
-    rwork = calloc(3*n-2, sizeof(double));
-
-    lwork = -1;
-    info = LAPACKE_zheev_work(LAPACK_COL_MAJOR, 'V', 'U', n,
-                        matrix, lda, eigvals, &query, lwork, rwork);
-    
-    lwork = query;
-    work = calloc(query, sizeof(lapack_complex_double));
-    info = LAPACKE_zheev_work(LAPACK_COL_MAJOR, 'V', 'U', n,
-                        matrix, lda, eigvals, work, lwork, rwork);
-    
-    if (info != 0)
-    {
-        printf("LAPACKE_zheev error! Code: %d", info);
-        return(info); // Some error has occured.
-    }
-
-    free(work);
-    free(rwork);
-
-    return(0);
-}
-
 
 /*
     Generates 'num_samples' numbers in the range [low, high]
@@ -243,6 +179,26 @@ int utils_get_green_func_lim(CDTYPE * eigenvectors, int size,
 
     // Construct green function limit squared
     int i, j;
+
+    // First let's square the eigenvectors matrix
+    // element by element
+    // DTYPE * eigvec_sq = calloc(size*size, sizeof(DTYPE));
+    // CDTYPE elem;
+    // DTYPE amp;
+
+    // for(i = 0; i < size; i++)
+    // {
+    //     for(j = 0; j < size; j++)
+    //     {
+    //         elem = *(eigenvectors + RTC(i, j, size));
+    //         amp = cabs(elem);
+    //         *(eigvec_sq + RTC(i, j, size)) = amp*amp; 
+    //     }
+    // }
+
+    // cblas_dsyrk(CblasColMajor, CblasUpper, CblasTrans, size, size,
+    //             1.0, eigvec_sq, size, 1.0, green_func, size);
+
     // int num_threads;
     // #pragma omp critical
     // {
@@ -250,22 +206,27 @@ int utils_get_green_func_lim(CDTYPE * eigenvectors, int size,
     // }
     
     // #pragma omp parallel for collapse(2)
+    int index_ij = 0;
+    int index_ji;
     for(i = 0; i < size; i++)
     {
+        index_ji = i;
         for(j = 0; j <= i; j++)
         {
             DTYPE sum = utils_compute_gfsq_elem(i, j, eigenvectors, size,
                                                 degeneracy);
             // #pragma omp critical
             {
-                *(green_func + i*size + j) += sum;
+                *(green_func + index_ij) += sum;
                 if(i != j)
-                    *(green_func + j*size + i) += sum;
+                    *(green_func + index_ji) += sum;
             }
-
+            index_ji += size;
         }
+        index_ij++;
     }    
     // printf("Threads: %d\n", num_threads);
+    // free(eigvec_sq);
     return 0;
 }
 
@@ -278,19 +239,36 @@ DTYPE utils_compute_gfsq_elem(int i, int j, CDTYPE * eigenvectors,
 {
     DTYPE sum = 0.0;
     int k, l;
+
+    int index1, index2;
+    index1 = RTC(i, 0, size);
+    index2 = RTC(j, 0, size);
+    // We can eliminate some operations
+    // by adding 'size' to index1
+    // rather than calling RTC each time.
+    // This removes one multiply computation
+    // from the L^6 block.
+
+    // If you want to parallelize this block,
+    // move this back down into the block as
+    // index1 and index2 will need to be local
+    // for parallelization.
+    // index1 = RTC(i, k, size);
+    // index2 = RTC(j, k, size);
+
+    CDTYPE psi1, psi2;
+    DTYPE mod1, mod2;
+
     // #pragma omp parallel for reduction (+:sum) schedule(auto)
     for(k = 0; k < size; k++)
     {
-        int index1, index2;
-        CDTYPE psi1, psi2;
-        DTYPE mod1, mod2;
-        index1 = RTC(i, k, size);
-        index2 = RTC(j, k, size);
         psi1 = *(eigenvectors + index1);
         psi2 = *(eigenvectors + index2);
         mod1 = creal(psi1)*creal(psi1) + cimag(psi1)*cimag(psi1);
         mod2 = creal(psi2)*creal(psi2) + cimag(psi2)*cimag(psi2);
         sum += mod1 * mod2;
+        index1 += size;
+        index2 += size;
     }
 
     if(degeneracy == DEGEN_EIGVALS)
@@ -298,23 +276,38 @@ DTYPE utils_compute_gfsq_elem(int i, int j, CDTYPE * eigenvectors,
         // We assume that the degeneracy occurs in
         // pairs and that we have all the eigenvalues
         // being degenerate (Kramer degeneracy).
+        
+        int index_ik, index_il, index_jk, index_jl;
+        index_ik = RTC(i, 0, size);
+        index_il = RTC(i, 1, size);
+        index_jk = RTC(j, 0, size);
+        index_jl = RTC(j, 1, size);
+        CDTYPE psi_k_i, psi_l_i;
+        CDTYPE psi_k_j, psi_l_j;
+        CDTYPE term;
+
+        // #pragma omp parallel for reduction (+:sum) schedule(auto)
         for(k = 0; k < size; k += 2)
         {
-            l = k + 1;
-            CDTYPE psi_k_i, psi_l_i;
-            CDTYPE psi_k_j, psi_l_j;
-            CDTYPE term;
-            psi_k_i = *(eigenvectors + RTC(i, k, size));
-            psi_l_i = *(eigenvectors + RTC(i, l, size));
-            psi_k_j = *(eigenvectors + RTC(j, k, size));
-            psi_l_j = *(eigenvectors + RTC(j, l, size));
+            // l = k + 1;
+            psi_k_i = *(eigenvectors + index_ik);
+            psi_l_i = *(eigenvectors + index_il);
+            psi_k_j = *(eigenvectors + index_jk);
+            psi_l_j = *(eigenvectors + index_jl);
 
             term = psi_k_i * conj(psi_l_i) * conj(psi_k_j) * psi_l_j;
             sum += term + conj(term);
+            
+            index_ik += 2*size;
+            index_il += 2*size;
+            index_jk += 2*size;
+            index_jl += 2*size;
         }
     }
     return(sum);
 }
+
+
 
 
 /*

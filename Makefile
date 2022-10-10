@@ -1,16 +1,16 @@
 CC=gcc
 # BLASDIR=../openblas
-BLASDIR=../../Build/openblas
-IDIRS=-I$(BLASDIR)/include
-LBLAS=-L$(BLASDIR)/lib -Wl,-rpath,$(BLASDIR)/lib -lopenblas -lpthread
-# LBLAS=-lcblas -lblas
-# CFLAGS=-Wall -Wextra -g -fdiagnostics-color=always -ffast-math $(IDIRS) -O0
+# BLASDIR=../../Build/openblas
+# IDIRS=-I$(BLASDIR)/include
+# LBLAS=-L$(BLASDIR)/lib -Wl,-rpath,$(BLASDIR)/lib -lopenblas -lpthread
+LBLAS=-lcblas -lblas
+# CFLAGS=-Wall -Wextra -g -fdiagnostics-color=always -ffast-math $(IDIRS) -fopenmp
 CFLAGS=-ffast-math -O2 $(IDIRS)
 # CFLAGS=-O3 -ffast-math -fopenmp $(IDIRS) 
 LFLAGS=-llapacke -llapack -lm $(LBLAS)
 ERRORLOG=logs/compiler_error.log
 
-_DEPS = utils/utils.c ham_gen/ham_gen.c params/params.c io/io.c
+_DEPS = utils/utils.c ham_gen/ham_gen.c params/params.c io/io.c diag/diag.c
 DEPS = $(patsubst %,src/%,$(_DEPS))
 
 OBJ = $(patsubst %.c,build/%.o,$(_DEPS))

@@ -73,7 +73,7 @@ def fitData(data, params):
     diff = -1000
     cost = 10000
     cutoff = -1
-    minPoints = np.ceil(0.7 * num_points)
+    minPoints = np.ceil(0.6 * num_points)
 
     while diff < 0 and (num_points - cutoff) >= minPoints:
         # We need at least 3 points, hence the second condition
@@ -82,6 +82,7 @@ def fitData(data, params):
         x = dists[cutoff:]
         y = np.log(gfuncsq[cutoff:])
         series, extras = poly.fit(x, y, deg=1, full=True)#, w=1/errors)
+        
         used_points = num_points - cutoff
         cost = extras[0][0] / used_points #+ alpha*used_points
         diff = cost - last_cost
@@ -135,10 +136,12 @@ def plotData(fit_vals, data, params, spin=None):
     data_y = gfuncsq[cutoff:]
     data_yerr = errors[cutoff:]
     label = "Main Data"
-    axes.errorbar(x=data_x, y=data_y, yerr=data_yerr,
-                label=label, **style_args)
-    axes.plot(x, y)
+    # axes.errorbar(x=data_x, y=data_y, yerr=data_yerr,
+    #             label=label, **style_args)
+    axes.plot(data_x, data_y, label=label)
+    # axes.plot(x, y)
     axes.set_yscale("log")
+    axes.set_xscale("log")
     axes.set_xlabel(r"$r$")
     axes.set_ylabel(r"$G_R^2(r)$")
 
