@@ -23,7 +23,7 @@ int main(int argc, char ** argv)
     CDTYPE * ham = calloc(num_states*num_states, sizeof(CDTYPE));
     int (*neighbour)[NEIGHS] = malloc((num_sites * NEIGHS) * sizeof(int));
     get_neighbour_lists(neighbour, length, width);
-    hamiltonian(ham, length, width, 0.0, 18.0, 1.0, 1.0, neighbour);
+    hamiltonian(ham, length, width, 1.0, 18.0, 1.0, 1.0, neighbour);
     FILE * ofile = fopen("data/matrix_"SIZESTR"x"SIZESTR"_sample.dat", "w");
     utils_save_matrix(ham, num_states, num_states, 'C', 'F', ofile);
     fclose(ofile);
@@ -55,6 +55,18 @@ int main(int argc, char ** argv)
     ofile = fopen("data/matrix_"SIZESTR"x"SIZESTR"_gfuncsq.dat", "w");
     utils_save_matrix(gfuncsq, num_states, num_states, 'R', 'F', ofile);
     fclose(ofile);
+
+    int j;
+    printf("Neighbours:\n");
+    for(i = 0; i < num_sites; i++)
+    {
+        printf("%d: ", i);
+        for(j = 0; j < 4; j++)
+        {
+            printf("%5d ", *(*(neighbour + i) + j));
+        }
+        printf("\n");
+    }
 
     free(gfuncsq);
     free(eigvals);

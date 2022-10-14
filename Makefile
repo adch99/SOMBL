@@ -1,7 +1,7 @@
 CC=gcc
 # BLASDIR=../openblas
-BLASDIR=../../Build/openblas
-IDIRS=-I$(BLASDIR)/include
+BLASDIR=../../Build/openblas/build/
+IDIRS=-I$(BLASDIR)/generated
 LBLAS=-L$(BLASDIR)/lib -Wl,-rpath,$(BLASDIR)/lib -lopenblas -lpthread
 # LBLAS=-lcblas -lblas
 # CFLAGS=-Wall -Wextra -g -fdiagnostics-color=always -ffast-math $(IDIRS) -fopenmp
@@ -16,7 +16,7 @@ DEPS = $(patsubst %,src/%,$(_DEPS))
 OBJ = $(patsubst %.c,build/%.o,$(_DEPS))
 
 _EXECS = exact_diag_simulation calculate_dist_vs_gfuncsq \
-calculate_imbalance output_hamiltonian run_diag_params
+calculate_imbalance output_hamiltonian gfunc_complexity_test gfunc_complexity_test_2
 EXECS = $(patsubst %,build/%,$(_EXECS))
 
 TESTS = $(wildcard tests/*.c)

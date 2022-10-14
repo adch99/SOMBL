@@ -14,16 +14,16 @@ int main(int argc, char ** argv)
     // char * logfile = "logs/run_diag_params.log";
     char * logfile = "/dev/null";
 
-    char size[] = "40";
-    char coupling[] = "0.0";
-    char hopup[] = "1.0";
-    char hopdn[] = "1.0";
-    char hopping[] = "1.0";
-    char numRuns[] = "100";
+    char size[] = "#SIZE#";
+    char coupling[] = "#COUP#";
+    char hopup[] = "#HOPUP#";
+    char hopdn[] = "#HOPDN#";
+    // char hopping[] = "#HOP#";
+    char numRuns[] = "#RUNS#";
     int nospin = 0;
-    DTYPE disorder_low = 6.5;
-    DTYPE disorder_high = 18.5;
-    int disorder_samples = 9;
+    DTYPE disorder_low = #DISLOW#;
+    DTYPE disorder_high = #DISHIGH#;
+    int disorder_samples = #DISSAM#;
 
     DTYPE disorder;
     char disorder_str[32];

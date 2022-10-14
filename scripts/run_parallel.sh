@@ -9,20 +9,20 @@ hopdn=1.0
 hopping=1.0
 numruns=100
 nospin=false
-disorder_low=5.0
-disorder_high=20.0
-disorder_step=1.5
+disorder_low=6.5
+disorder_high=18.5
+disorder_step=-1.5
 
-run_sim()
+run_basic()
 {
     echo "Running -c $1 -w $2"
     build/exact_diag_simulation -c $1 -w $2 \
         -s $size -u $hopup -d $hopdn -n $numruns
 }
 
-export -f run_sim
+export -f run_basic
 
-parallel -j$(nproc) run_sim ::: 0 ::: $(seq $disorder_low $disorder_step $disorder_high)
+parallel -j$(nproc) run_basic ::: 0 ::: $(seq $disorder_low $disorder_step $disorder_high)
 
 # for coupling in 0 0.1 0.5 1.0 2.0 5.0 10.0; do
 # for coupling in 0; do

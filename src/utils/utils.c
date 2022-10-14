@@ -178,55 +178,73 @@ int utils_get_green_func_lim(CDTYPE * eigenvectors, int size,
 {
 
     // Construct green function limit squared
-    int i, j;
+    int i, j, n;
 
     // First let's square the eigenvectors matrix
     // element by element
-    // DTYPE * eigvec_sq = calloc(size*size, sizeof(DTYPE));
-    // CDTYPE elem;
-    // DTYPE amp;
+    DTYPE * eigvec_sq = calloc(size*size, sizeof(DTYPE));
+    CDTYPE elem;
 
+
+    for(i = 0; i < size; i++)
+    {
+        for(j = 0; j < size; j++)
+        {
+            elem = *(eigenvectors + RTC(i, j, size));
+            *(eigvec_sq + RTC(i, j, size)) = creal(elem)*creal(elem) + cimag(elem)*cimag(elem); 
+        }
+    }
+
+    cblas_dsyrk(CblasColMajor, CblasUpper, CblasNoTrans, size, size,
+                1.0, eigvec_sq, size, 1.0, green_func, size);
+    free(eigvec_sq);
+    
     // for(i = 0; i < size; i++)
     // {
-    //     for(j = 0; j < size; j++)
+    //     for(j = 0; j <= i; j++)
     //     {
-    //         elem = *(eigenvectors + RTC(i, j, size));
-    //         amp = cabs(elem);
-    //         *(eigvec_sq + RTC(i, j, size)) = amp*amp; 
+    //         DTYPE sum = utils_compute_gfsq_elem(i, j, eigenvectors, size,
+    //                                             degeneracy);
+    //         *(green_func + RTC(i,j,size)) += sum;
+    //         if(i != j)
+    //             *(green_func + RTC(j,i,size)) += sum;
     //     }
     // }
 
-    // cblas_dsyrk(CblasColMajor, CblasUpper, CblasTrans, size, size,
-    //             1.0, eigvec_sq, size, 1.0, green_func, size);
-
-    // int num_threads;
-    // #pragma omp critical
-    // {
-    //     num_threads = omp_get_num_threads();
-    // }
-    
-    // #pragma omp parallel for collapse(2)
-    int index_ij = 0;
-    int index_ji;
-    for(i = 0; i < size; i++)
+    if (degeneracy == DEGEN_EIGVALS)
     {
-        index_ji = i;
-        for(j = 0; j <= i; j++)
+        CDTYPE * B = calloc(size*size/2, sizeof(CDTYPE));
+        CDTYPE * BBh = calloc(size*size, sizeof(CDTYPE));
+
+        // Create B = (N x N/2) matrix
+        // B_in = psi_{2n}(i)^*  psi_{2n+1}(i)
+        for(i = 0; i < size; i++)
         {
-            DTYPE sum = utils_compute_gfsq_elem(i, j, eigenvectors, size,
-                                                degeneracy);
-            // #pragma omp critical
+            for(n = 0; n < size/2; n++)
             {
-                *(green_func + index_ij) += sum;
-                if(i != j)
-                    *(green_func + index_ji) += sum;
+                *(B + RTC(i,n,size)) = conj(*(eigenvectors + RTC(i,2*n,size))) * (*(eigenvectors + RTC(i,2*n+1,size)));
             }
-            index_ji += size;
         }
-        index_ij++;
-    }    
-    // printf("Threads: %d\n", num_threads);
-    // free(eigvec_sq);
+        cblas_zherk(CblasColMajor, CblasUpper, CblasNoTrans,
+                    size, size/2, 1.0, B, size, 0.0, BBh, size);
+        // printf("Bello\n");
+        int index_ij;
+        for(i = 0; i < size; i++)
+        {
+            for(j = i; j < size; j++)
+            {
+                index_ij = RTC(i, j, size);
+                *(green_func + index_ij) += 2*creal(*(BBh + index_ij));
+            }
+        }
+
+        free(B);
+        free(BBh);
+
+    }
+    // Only upper half matrix is updated by BLAS.
+    // Copying to lower half.
+    utils_reflect_upper_to_lower(green_func, size);
     return 0;
 }
 
@@ -240,36 +258,39 @@ DTYPE utils_compute_gfsq_elem(int i, int j, CDTYPE * eigenvectors,
     DTYPE sum = 0.0;
     int k, l;
 
-    int index1, index2;
-    index1 = RTC(i, 0, size);
-    index2 = RTC(j, 0, size);
-    // We can eliminate some operations
-    // by adding 'size' to index1
-    // rather than calling RTC each time.
-    // This removes one multiply computation
-    // from the L^6 block.
+    // int index1, index2;
+    // index1 = RTC(i, 0, size);
+    // index2 = RTC(j, 0, size);
+    // // We can eliminate some operations
+    // // by adding 'size' to index1
+    // // rather than calling RTC each time.
+    // // This removes one multiply computation
+    // // from the L^6 block.
 
-    // If you want to parallelize this block,
-    // move this back down into the block as
-    // index1 and index2 will need to be local
-    // for parallelization.
-    // index1 = RTC(i, k, size);
-    // index2 = RTC(j, k, size);
+    // // If you want to parallelize this block,
+    // // move this back down into the block as
+    // // index1 and index2 will need to be local
+    // // for parallelization.
+    // // index1 = RTC(i, k, size);
+    // // index2 = RTC(j, k, size);
 
-    CDTYPE psi1, psi2;
-    DTYPE mod1, mod2;
+    // CDTYPE psi1, psi2;
+    // DTYPE mod1, mod2;
 
-    // #pragma omp parallel for reduction (+:sum) schedule(auto)
-    for(k = 0; k < size; k++)
-    {
-        psi1 = *(eigenvectors + index1);
-        psi2 = *(eigenvectors + index2);
-        mod1 = creal(psi1)*creal(psi1) + cimag(psi1)*cimag(psi1);
-        mod2 = creal(psi2)*creal(psi2) + cimag(psi2)*cimag(psi2);
-        sum += mod1 * mod2;
-        index1 += size;
-        index2 += size;
-    }
+    // // CDTYPE * ptr1 = eigenvectors + RTC(i, 0, size);
+    // // CDTYPE * ptr2 = eigenvectors + RTC(j, 0, size);
+
+    // // #pragma omp parallel for reduction (+:sum) schedule(auto)
+    // for(k = 0; k < size; k++)
+    // {
+    //     psi1 = *(eigenvectors + index1);
+    //     psi2 = *(eigenvectors + index2);
+    //     mod1 = creal(psi1)*creal(psi1) + cimag(psi1)*cimag(psi1);
+    //     mod2 = creal(psi2)*creal(psi2) + cimag(psi2)*cimag(psi2);
+    //     sum += mod1 * mod2;
+    //     index1 += size;
+    //     index2 += size;
+    // }
 
     if(degeneracy == DEGEN_EIGVALS)
     {
@@ -277,31 +298,50 @@ DTYPE utils_compute_gfsq_elem(int i, int j, CDTYPE * eigenvectors,
         // pairs and that we have all the eigenvalues
         // being degenerate (Kramer degeneracy).
         
-        int index_ik, index_il, index_jk, index_jl;
-        index_ik = RTC(i, 0, size);
-        index_il = RTC(i, 1, size);
-        index_jk = RTC(j, 0, size);
-        index_jl = RTC(j, 1, size);
-        CDTYPE psi_k_i, psi_l_i;
-        CDTYPE psi_k_j, psi_l_j;
+        // int index_ik, index_il, index_jk, index_jl;
+        // index_ik = RTC(i, 0, size);
+        // index_il = RTC(i, 1, size);
+        // index_jk = RTC(j, 0, size);
+        // index_jl = RTC(j, 1, size);
+
+        CDTYPE * ptr_ik = eigenvectors + RTC(i, 0, size);
+        CDTYPE * ptr_il = eigenvectors + RTC(i, 1, size);
+        CDTYPE * ptr_jk = eigenvectors + RTC(j, 0, size);
+        CDTYPE * ptr_jl = eigenvectors + RTC(j, 1, size);
+
+
+        // CDTYPE psi_k_i, psi_l_i;
+        // CDTYPE psi_k_j, psi_l_j;
         CDTYPE term;
 
         // #pragma omp parallel for reduction (+:sum) schedule(auto)
         for(k = 0; k < size; k += 2)
         {
             // l = k + 1;
-            psi_k_i = *(eigenvectors + index_ik);
-            psi_l_i = *(eigenvectors + index_il);
-            psi_k_j = *(eigenvectors + index_jk);
-            psi_l_j = *(eigenvectors + index_jl);
+            // index_ik = RTC(i, k, size);
+            // index_il = RTC(i, l, size);
+            // index_jk = RTC(j, k, size);
+            // index_jl = RTC(j, l, size);
 
-            term = psi_k_i * conj(psi_l_i) * conj(psi_k_j) * psi_l_j;
+            // psi_k_i = *(eigenvectors + index_ik);
+            // psi_l_i = *(eigenvectors + index_il);
+            // psi_k_j = *(eigenvectors + index_jk);
+            // psi_l_j = *(eigenvectors + index_jl);
+
+            // term = psi_k_i * conj(psi_l_i) * conj(psi_k_j) * psi_l_j;
+            // term = *(eigenvectors + index_ik) * conj(*(eigenvectors + index_il)) \
+            //         * conj(*(eigenvectors + index_jk)) * (*(eigenvectors + index_jl));
+            term = (*ptr_ik) * conj(*ptr_il) * conj(*ptr_jk) * (*ptr_jl);
             sum += term + conj(term);
-            
-            index_ik += 2*size;
-            index_il += 2*size;
-            index_jk += 2*size;
-            index_jl += 2*size;
+
+            ptr_ik += 2*size;            
+            ptr_il += 2*size;            
+            ptr_jk += 2*size;            
+            ptr_jl += 2*size;            
+            // index_ik += 2*size;
+            // index_il += 2*size;
+            // index_jk += 2*size;
+            // index_jl += 2*size;
         }
     }
     return(sum);
@@ -633,3 +673,23 @@ DTYPE utils_pbc_chord_length_sq(int index1, int length1, int index2, int length2
     return chordsq;   
 }
 
+
+/*
+    Creates symmetric matrix from the upper half.
+    A lot of symmetric blas routines may only
+    write to one half of the matrix. We need to
+    reflect the values to the lower half also
+    for other parts of the program to work. 
+*/
+int utils_reflect_upper_to_lower(DTYPE * matrix, int n)
+{
+    int i, j;
+    for(i = 0; i < n; i++)
+    {
+        for(j = 0; j < i; j++)
+        {
+            *(matrix + RTC(i,j,n)) = *(matrix + RTC(j,i,n));
+        }
+    }
+    return(0);
+}
