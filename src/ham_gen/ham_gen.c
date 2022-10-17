@@ -34,12 +34,13 @@ int hamiltonian(CDTYPE * ham, int len, int width,
     // }
     // printf("]\n");
 
+    // printf("Coupling: %e\n", coupling_const);
 
     //                                      updn dnup
-    DTYPE spinorbit_coeffs[NEIGHS][2] = {   {-1, 1},  // x-1
-                                            {1, -1},  // x+1
-                                            {I,  I},  // y-1 
-                                            {-I, I}}; // y+1
+    CDTYPE spinorbit_coeffs[NEIGHS][2] = {  { 1, -1},  // x-1
+                                            {-1,  1},  // x+1
+                                            {-I, -I},  // y-1 
+                                            { I,  I}}; // y+1
 
     for(i = 0; i < num_sites*2; i++)
     {
@@ -56,6 +57,18 @@ int hamiltonian(CDTYPE * ham, int len, int width,
         {
             site2 = *(*(neighbours + site1) + loc);
 
+            // if(site1 == 0 && site2 == 4)
+            // {
+            //     CDTYPE x = -hop_strength_upup;
+            //     printf("upup: %.5f+%.5fj\n", creal(x), cimag(x));
+            //     x = -hop_strength_dndn;
+            //     printf("dndn: %.5f+%.5fj\n", creal(x), cimag(x));
+            //     x = coupling_const * spinorbit_coeffs[loc][0];
+            //     printf("updn: %.5f+%.5fj\n", creal(x), cimag(x));
+            //     x = coupling_const * spinorbit_coeffs[loc][1];
+            //     printf("dnup: %.5f+%.5fj\n", creal(x), cimag(x));
+            // }
+
             // Check if the neighbour actually exists
             // If not, then index will be -1,
             // so check and skip updating
@@ -63,10 +76,10 @@ int hamiltonian(CDTYPE * ham, int len, int width,
                 continue;
 
             // RTC is row major to column major
-            index_up_up = RTC(2*site1, 2*site2, 2*num_sites); 
-            index_dn_dn = RTC(2*site1+1, 2*site2+1, 2*num_sites); 
-            index_up_dn = RTC(2*site1, 2*site2+1, 2*num_sites); 
-            index_dn_up = RTC(2*site1+1, 2*site2, 2*num_sites); 
+            index_up_up = RTC(2*site2, 2*site1, 2*num_sites); 
+            index_dn_dn = RTC(2*site2+1, 2*site1+1, 2*num_sites); 
+            index_up_dn = RTC(2*site2, 2*site1+1, 2*num_sites); 
+            index_dn_up = RTC(2*site2+1, 2*site1, 2*num_sites); 
 
             *(ham + index_up_up) = -hop_strength_upup;
             *(ham + index_dn_dn) = -hop_strength_dndn;

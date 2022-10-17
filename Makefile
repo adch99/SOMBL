@@ -4,7 +4,7 @@ BLASDIR=../../Build/openblas/build/
 IDIRS=-I$(BLASDIR)/generated
 LBLAS=-L$(BLASDIR)/lib -Wl,-rpath,$(BLASDIR)/lib -lopenblas -lpthread
 # LBLAS=-lcblas -lblas
-# CFLAGS=-Wall -Wextra -g -fdiagnostics-color=always -ffast-math $(IDIRS) -fopenmp
+# CFLAGS=-Wall -Wextra -g -fdiagnostics-color=always -ffast-math $(IDIRS) -fopenmp -ftrapv -fwrapv
 CFLAGS=-ffast-math -O3 $(IDIRS)
 # CFLAGS=-O3 -ffast-math -fopenmp $(IDIRS) 
 LFLAGS=-llapacke -llapack -lm $(LBLAS)

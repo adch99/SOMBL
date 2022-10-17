@@ -11,19 +11,19 @@
 int init_matrix(double complex * A, int size);
 int check_matrix_colmajor(double * A, double * B, int m,
                         int n, double tol);
-int the_right_way(double * G, double complex * A, int size);
-int the_easier_way(double * G, double complex * A, int size);
+int the_right_way(double * G, const double complex * A, int size);
+int the_easier_way(double * G, const double complex * A, int size);
 
-int the_reference_way(CDTYPE * eigenvectors, int size,
+int the_reference_way(const CDTYPE * eigenvectors, int size,
                             DTYPE * green_func, int degeneracy);
-DTYPE reference_way_elem(int i, int j, CDTYPE * eigenvectors,
+DTYPE reference_way_elem(int i, int j, const CDTYPE * eigenvectors,
                             int size, int degeneracy);
 
 
 int main(int argc, char ** argv)
 {
     (void) argc; (void) argv;
-    int size = 500;
+    int size = 1000;
     double complex * A = calloc(size*size, sizeof(double complex));
     // double A[4] = {1, 3, 2, 4};
     init_matrix(A, size);
@@ -59,24 +59,36 @@ int main(int argc, char ** argv)
     }
     printf("Diff: %e\n", diff);
 
-    int success = check_matrix_colmajor(G1, G2, size, size, 1e-3);
-    success = success && check_matrix_colmajor(G1, G3, size, size, 1e-3);
-    success = success && check_matrix_colmajor(G1, G4, size, size, 1e-3);
+    int success12 = check_matrix_colmajor(G1, G2, size, size, 1e-6);
+    int success13 = check_matrix_colmajor(G1, G3, size, size, 1e-6);
+    int success14 = check_matrix_colmajor(G1, G4, size, size, 1e-6);
+    int success23 = check_matrix_colmajor(G2, G3, size, size, 1e-6);
+
+    int success = (success12 && success13 && success14 && success23);
     if(success == 1)
         printf("All matrices are equal.\n");
     else
     {
-        printf("G1:\n");
-        utils_print_matrix(G1, size, size, 'R', 'F');
+        if(success12 == 0)
+            printf("G1 != G2\n");
+        if(success13 == 0)
+            printf("G1 != G3\n");
+        if(success14 == 0)
+            printf("G1 != G4\n");
+        if(success23 == 0)
+            printf("G2 != G3\n");
 
-        printf("\nG2:\n");
-        utils_print_matrix(G2, size, size, 'R', 'F');
+        // printf("G1:\n");
+        // utils_print_matrix(G1, size, size, 'R', 'F');
 
-        printf("\nG3:\n");
-        utils_print_matrix(G3, size, size, 'R', 'F');
+        // printf("\nG2:\n");
+        // utils_print_matrix(G2, size, size, 'R', 'F');
 
-        printf("\nG4:\n");
-        utils_print_matrix(G4, size, size, 'R', 'F');
+        // printf("\nG3:\n");
+        // utils_print_matrix(G3, size, size, 'R', 'F');
+
+        // printf("\nG4:\n");
+        // utils_print_matrix(G4, size, size, 'R', 'F');
     }
 
     free(G1);
@@ -92,7 +104,7 @@ int init_matrix(double complex * A, int size)
     {
         for(j = 0; j < size; j++)
         {
-            *(A + RTC(i,j,size)) = 0.2*(i + 0.34*j) + 0.3*I*(-0.254*i + 0.52*j);
+            *(A + RTC(i,j,size)) = 1.67*(i + 0.34*j) + 3.42*I*(-0.254*i + 0.52*j);
         }
     }
     return(0);
@@ -103,13 +115,14 @@ int check_matrix_colmajor(double * A, double * B, int m,
 {
     int i, j;
     int success = 1;
-    double diff; 
+    double diff, relerr; 
     for(i = 0; i < m; i++)
     {
         for(j = 0; j < n; j++)
         {
             diff = *(A + i + j*n) - *(B + i + j*n);
-            if(fabs(diff) > tol)
+            relerr = fabs(diff) * 2 / (*(A + i + j*n) + *(B + i + j*n));
+            if(fabs(diff) > tol && relerr > tol)
             {
                 printf("Issue at (%d,%d)! ", i, j);
                 printf("Diff = %12.5e\n", diff);
@@ -120,7 +133,7 @@ int check_matrix_colmajor(double * A, double * B, int m,
     return(success);
 }
 
-int the_right_way(double * G, double complex * A, int size)
+int the_right_way(double * G, const double complex * A, int size)
 {
     int i, j, k;
     double mod1, mod2, sum = 0;
@@ -150,7 +163,7 @@ int the_right_way(double * G, double complex * A, int size)
     return(0);
 }
 
-int the_easier_way(double * G, double complex * A, int size)
+int the_easier_way(double * G, const double complex * A, int size)
 {
     double * Asq = calloc(size*size, sizeof(double));
     int i, j, n;
@@ -175,7 +188,7 @@ int the_easier_way(double * G, double complex * A, int size)
 
     free(Asq);
 
-    printf("Hello\n");
+    // printf("Hello\n");
 
     double complex * B = calloc(size*size/2, sizeof(double complex));
     double complex * BBh = calloc(size*size, sizeof(double complex));
@@ -189,7 +202,7 @@ int the_easier_way(double * G, double complex * A, int size)
     }
     cblas_zherk(CblasColMajor, CblasUpper, CblasNoTrans,
                 size, size/2, 1.0, B, size, 0.0, BBh, size);
-    printf("Bello\n");
+    // printf("Bello\n");
     for(i = 0; i < size; i++)
     {
         for(j = i; j < size; j++)
@@ -213,7 +226,7 @@ int the_easier_way(double * G, double complex * A, int size)
     return(0);
 }
 
-int the_reference_way(CDTYPE * eigenvectors, int size,
+int the_reference_way(const CDTYPE * eigenvectors, int size,
                             DTYPE * green_func, int degeneracy)
 {
 
@@ -237,7 +250,7 @@ int the_reference_way(CDTYPE * eigenvectors, int size,
     Computes the (i,j)th element of the Green's function
     squared in the long time limit.
 */
-DTYPE reference_way_elem(int i, int j, CDTYPE * eigenvectors,
+DTYPE reference_way_elem(int i, int j, const CDTYPE * eigenvectors,
                             int size, int degeneracy)
 {
     DTYPE sum = 0.0;
