@@ -141,7 +141,7 @@ def plotData(fit_vals, data, params, spin=None):
     axes.plot(data_x, data_y, label=label)
     # axes.plot(x, y)
     axes.set_yscale("log")
-    axes.set_xscale("log")
+    # axes.set_xscale("log")
     axes.set_xlabel(r"$r$")
     axes.set_ylabel(r"$G_R^2(r)$")
 

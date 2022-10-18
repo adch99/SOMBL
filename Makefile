@@ -35,7 +35,7 @@ build/%.o: src/%.c
 $(EXECS): build/%: src/%.c $(OBJ)
 	$(CC) -o $@  $^ $(CFLAGS) $(LFLAGS)
 
-build/run_diag_params_c$(COUP): build/%: src/run_diag_params.c $(OBJ)
+$(wildcard build/run_diag_params_c*): build/%: src/%.c $(OBJ)
 	$(CC) -o $@  $^ $(CFLAGS) $(LFLAGS)
 
 build/tests/%: tests/%.c $(OBJ)
