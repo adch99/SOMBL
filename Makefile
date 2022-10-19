@@ -15,7 +15,7 @@ DEPS = $(patsubst %,src/%,$(_DEPS))
 
 OBJ = $(patsubst %.c,build/%.o,$(_DEPS))
 
-_EXECS = exact_diag_simulation calculate_dist_vs_gfuncsq \
+_EXECS = exact_diag_chunks exact_diag_simulation calculate_dist_vs_gfuncsq \
 calculate_imbalance output_hamiltonian gfunc_complexity_test gfunc_complexity_test_2
 EXECS = $(patsubst %,build/%,$(_EXECS))
 
