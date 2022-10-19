@@ -47,7 +47,7 @@ run_basic()
 {
     echo "Running -c $1 -w $2"
     build/exact_diag_simulation -c $1 -w $2 \
-        -s $size -u $hopup -d $hopdn -n $numruns
+        -s $size -u $hopup -d $hopdn -n $runs
 }
 
 export -f run_basic
