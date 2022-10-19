@@ -114,7 +114,7 @@ def checkData(data):
 def plotData(fit_vals, data, params, spin=None):
     exp, mant, resid, cutoff = fit_vals
     dists, gfuncsq, errors = data
-    x = np.linspace(dists[cutoff], dists[-1], 100)
+    x = np.linspace(dists[0], dists[-1], 100)
     y = mant * np.exp(exp*x)
     fig, axes = plt.subplots(figsize=(12, 8))
 
@@ -139,7 +139,7 @@ def plotData(fit_vals, data, params, spin=None):
     # axes.errorbar(x=data_x, y=data_y, yerr=data_yerr,
     #             label=label, **style_args)
     axes.plot(data_x, data_y, label=label)
-    # axes.plot(x, y)
+    axes.plot(x, y)
     axes.set_yscale("log")
     # axes.set_xscale("log")
     axes.set_xlabel(r"$r$")
