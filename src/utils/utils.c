@@ -4,8 +4,9 @@
 #include <math.h>
 #include <float.h>
 #include <complex.h>
-#include <cblas.h>
-#include <omp.h>
+#include "mkl.h"
+// #include <cblas.h>
+// #include <omp.h>
 #include "utils.h"
 #include "../constants.h"
 

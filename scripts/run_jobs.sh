@@ -22,13 +22,13 @@ runs=100
 hopup=1.0
 hopdn=1.0
 
-dis_high=18.5
-dis_low=15.0
-dis_step=1.5
+dis_high=18
+dis_low=8.0
+dis_step=1.0
 
-coup_high=20.0
-coup_low=16.0
-coup_step=2.0
+coup_high=2.0
+coup_low=0.0
+coup_step=0.1
 
 couplings=$(seq $coup_low $coup_step $coup_high)
 disorders=$(seq $dis_high -$dis_step $dis_low)
@@ -47,14 +47,12 @@ nproc=4
 procnum=1
 for coupling in $couplings; do
     for disorder in $disorders; do
-        for chunkidx in $(seq 1 $numchunks); do
-            simple "./build/exact_diag_chunk -k $chunkidx -n $chunksize -c $coupling -w $disorder -s $size -u $hopup -d $hopdn" 5 &
-            rem=$((procnum % nproc))
-            if [ "$rem" = "0" ]; then
-                wait
-            fi
-            procnum=$((procnum+1))
-        done
+        ./build/exact_diag_simulation -n $runs -c $coupling -w $disorder -s $size -u $hopup -d $hopdn" &
+        # rem=$((procnum % nproc))
+        # if [ "$rem" = "0" ]; then
+        #     wait
+        # fi
+        procnum=$((procnum+1))
     done
 done
 wait
