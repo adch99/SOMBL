@@ -1,22 +1,5 @@
 #!/bin/bash
 
-function run_chunked
-{
-    # $1 = number of runs
-    # $2 = chunk size
-    # $3 = coupling strength
-    # $4 = disorder
-    numchunks=$(($1 / $2))
-    if [ "$(($1 % $2))" != 0 ]; then
-        echo "We need the chunksize to be a multiple of number of runs!"
-        echo "$1 is not a multiple of $2"
-        exit 1
-    fi
-    for chunkidx in $(seq 1 $numchunks); do
-        simple "./build/exact_diag_chunk -k $chunkidx -n $2 -c $3 -w $4 -s $size -u $hopup -d $hopdn" 5 &
-    done
-}
-
 size=40
 runs=100
 hopup=1.0
@@ -43,17 +26,36 @@ fi
 
 
 
-nproc=4
-procnum=1
+# nproc=4
+# procnum=1
 for coupling in $couplings; do
     for disorder in $disorders; do
-        ./build/exact_diag_simulation -n $runs -c $coupling -w $disorder -s $size -u $hopup -d $hopdn" &
+        jobfilename="jobs/mbl_${size}x${size}_W${disorder}_C${coupling}_TU${hopup}_TD${hopdn}_N${runs}.pbs"
+        qsub $jobfilename
+        # ./build/exact_diag_simulation -n $runs -c $coupling -w $disorder -s $size -u $hopup -d $hopdn &
         # rem=$((procnum % nproc))
         # if [ "$rem" = "0" ]; then
         #     wait
         # fi
-        procnum=$((procnum+1))
+        # procnum=$((procnum+1))
     done
 done
 wait
 
+
+function run_chunked
+# {
+#     # $1 = number of runs
+#     # $2 = chunk size
+#     # $3 = coupling strength
+#     # $4 = disorder
+#     numchunks=$(($1 / $2))
+#     if [ "$(($1 % $2))" != 0 ]; then
+#         echo "We need the chunksize to be a multiple of number of runs!"
+#         echo "$1 is not a multiple of $2"
+#         exit 1
+#     fi
+#     for chunkidx in $(seq 1 $numchunks); do
+#         simple "./build/exact_diag_chunk -k $chunkidx -n $2 -c $3 -w $4 -s $size -u $hopup -d $hopdn" 5 &
+#     done
+# }
