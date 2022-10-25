@@ -3,8 +3,6 @@ Functions to create Spin-Orbit coupled Hamiltonians
 for a 2d spin lattice
 */
 #include <stdio.h>
-#include <lapacke.h>
-#include <omp.h>
 #include "ham_gen.h"
 #include "../utils/utils.h"
 

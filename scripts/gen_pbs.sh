@@ -35,8 +35,6 @@ for coupling in $couplings; do
 # The following line specifies the maximum cpu utilization
 # in terms of wall time (3 days)
 #PBS -l walltime=72:00:00
-# Set the output log file for the job
-#PBS -o ${logfile}
 # The following line merges the stdout and stderr together
 #PBS -j oe
 #PBS -l mem=8gb
@@ -46,18 +44,16 @@ for coupling in $couplings; do
 cd \${PBS_O_WORKDIR}
 #########################################################################
 
-hostname
-date
-time ./build/exact_diag_simulation -n \$runs -c \$coupling -w \$disorder -s \$size -u \$hopup -d \$hopdn
-date
+echo \`hostname\` \`date\` \`pwd\` >> ./trial\$job
+(time ./build/exact_diag_simulation -n \$runs -c \$coupling -w \$disorder -s \$size -u \$hopup -d \$hopdn) >> ./trial\$job
+echo \`date\` >> ./trial\$job
 
 cd \${PBS_O_WORKDIR}
-date
-echo Job ended at \`date\`
+date >> ./trial\$job
+echo Job ended at \`date\` >> ./trial\$job
 exit 0
 
 END_OF_PROGRAM
 
     done
 done
-wait

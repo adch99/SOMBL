@@ -8,6 +8,7 @@ plots/
 .vscode/
 ahana/
 notebooks/
+jobs/
 
 # Prerequisites
 *.d
