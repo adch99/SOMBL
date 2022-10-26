@@ -27,6 +27,8 @@ for coupling in $couplings; do
         jobname="mbl_${size}x${size}_W${disorder}_C${coupling}_TU${hopup}_TD${hopdn}_N${runs}"
         pbs_filename="jobs/${jobname}.pbs"
         log_filename="logs/${jobname}.log"
+        execname="${jobname}.out"
+        cp build/exact_diag_simulation $execname
         cat <<END_OF_PROGRAM > ${pbs_filename}
 #!/bin/sh
 # The following line specifies the maximum cpu utilization
@@ -45,7 +47,7 @@ cd \${PBS_O_WORKDIR}
 #########################################################################
 
 echo \`hostname\` \`date\` \`pwd\` >> ./trial\$job
-(time ./build/exact_diag_simulation -n \$runs -c \$coupling -w \$disorder -s \$size -u \$hopup -d \$hopdn) >> ./trial\$job
+(time ${execname} -n $runs -c $coupling -w $disorder -s $size -u $hopup -d $hopdn) >> ./trial\$job
 echo \`date\` >> ./trial\$job
 
 cd \${PBS_O_WORKDIR}
