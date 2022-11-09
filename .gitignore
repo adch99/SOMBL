@@ -1,6 +1,8 @@
 # Temporary directories
 build/
 logs/
+docs/build
+scripts/__pycache__
 
 # Offline only directories
 data/
@@ -8,6 +10,7 @@ plots/
 .vscode/
 ahana/
 notebooks/
+jobs/
 
 # Prerequisites
 *.d

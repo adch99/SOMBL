@@ -81,10 +81,10 @@ def fitData(data, params):
         last_cost = cost
         x = dists[cutoff:]
         y = np.log(gfuncsq[cutoff:])
-        series, extras = poly.fit(x, y, deg=1, full=True)#, w=1/errors)
-        
+        series, extras = poly.fit(x, y, deg=1, full=True)  # , w=1/errors)
+
         used_points = num_points - cutoff
-        cost = extras[0][0] / used_points #+ alpha*used_points
+        cost = extras[0][0] / used_points  # + alpha*used_points
         diff = cost - last_cost
 
     c0, c1 = series.convert().coef
@@ -120,7 +120,7 @@ def plotData(fit_vals, data, params, spin=None):
 
     style_args = {
         "marker": "o",
-        "capsize": 5,
+        # "capsize": 5,
         "linestyle": "none"
     }
 
@@ -129,8 +129,9 @@ def plotData(fit_vals, data, params, spin=None):
         data_y = gfuncsq[:cutoff]
         data_yerr = errors[:cutoff]
         label = "Excluded"
-        axes.errorbar(x=data_x, y=data_y, yerr=data_yerr,
-                    label=label, **style_args)
+        # axes.errorbar(x=data_x, y=data_y, yerr=data_yerr,
+        #             label=label, **style_args)
+        axes.plot(data_x, data_y, label=label, **style_args)
 
     data_x = dists[cutoff:]
     data_y = gfuncsq[cutoff:]
@@ -138,7 +139,7 @@ def plotData(fit_vals, data, params, spin=None):
     label = "Main Data"
     # axes.errorbar(x=data_x, y=data_y, yerr=data_yerr,
     #             label=label, **style_args)
-    axes.plot(data_x, data_y, label=label)
+    axes.plot(data_x, data_y, label=label, **style_args)
     axes.plot(x, y)
     axes.set_yscale("log")
     # axes.set_xscale("log")
@@ -153,9 +154,9 @@ def plotData(fit_vals, data, params, spin=None):
     axes.set_title(title)
     axes.legend()
 
-    filename = "plots/" + getFilename(params, spin=spin)
-    fig.savefig(filename + ".pdf")
-    fig.savefig(filename + ".png")
+    filename = getFilename(params, spin=spin)
+    fig.savefig("plots/PDFs/" + filename + ".pdf")
+    fig.savefig("plots/PNGs/" + filename + ".png")
 
 
 def getParams():
