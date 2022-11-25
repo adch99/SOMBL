@@ -96,7 +96,7 @@ def cleanData(data, tol=1e-10):
     return dists[cond], gfuncsq[cond], errors[cond]
 
 
-def fitData(data, params, minFraction=0.6):
+def fitData(data, params, minFraction=0.6, cov=False):
     poly = np.polynomial.polynomial.Polynomial
     dists, gfuncsq, errors = data
     num_points = dists.shape[0]
@@ -121,6 +121,11 @@ def fitData(data, params, minFraction=0.6):
     c0, c1 = series.convert().coef
     exponent = c1
     mantissa = np.exp(c0)
+
+
+    if cov:
+        p, V = np.polyfit(x, y, deg=1, cov=True)
+        return exponent, mantissa, cost, cutoff, V[0, 0] 
     return exponent, mantissa, cost, cutoff
 
 

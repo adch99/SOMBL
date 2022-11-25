@@ -32,6 +32,15 @@
 
 \section{Introduction}
 \begin{frame}{Introduction}
+    \begin{itemize}
+        \item Disorder is almost always present in any
+        material we can produce.
+        \item Localization-Delocalization results in
+        Metal-Insulator Transition
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Introduction}
 \begin{itemize}
     \item 2D Lattice
     \item Random onsite potential
@@ -43,39 +52,25 @@
 
 \begin{frame}{Why This Topic?}
     \begin{itemize}
-        \item For most disordered systems, the particle's
-        spin is irrelevant to the problem.
-        \item Adding spin introduces additional degrees of
-        freedom, allows diverse phenomena
-        \item Spin-orbit coupling (SOC) creates additional
-        ways for the particle to move in and these new
-        channels are dependent on the spin and direction of
+        \item Spin adds degrees of freedom
+        \item Spin-orbit coupling (SOC) adds ways to move
+        that are dependent on the spin and direction of
         motion.
-        \item Recent developments in cold atom experiments
-        have brought the capability to setup a tunable
-        spin-orbit coupling
+        \item Experimentally realizable - Cold atom
+        experiments with tunable spin-orbit coupling
         \cite{orsoAndersonTransitionCold2017,
         huangExperimentalRealizationTwodimensional2016}.
-        So this is experimentally realizable.
     \end{itemize}
 \end{frame}
 
 \begin{frame}{But Still Why?}
-    In the presence of SOC, we have two independent
-    densities that are now linked dynamically:
+    2 independent, dynamically linked densities:
     $\rho_{charge} \rightleftharpoons \rho_{spin}$
     
-    The imbalance of one of the densities across the lattice
-    sites can lead to imbalances in the other density. So we
-    can use one to influence the other. 
-
+    Imbalance in $\rho_{c/s} \implies$ Imbalance in $\rho_{s/c}$
     \begin{itemize}
-        \item If certain spin patterns always lead to
-        localization, we can control the particle density
-        through this.
-        \item If certain configurations of charge density
-        can lead to imbalance in spin density, then we can
-        use it to create spin patterns.
+        \item Spin Patterns $\implies$ Control Particle Density.
+        \item Charge Density Configuration $\implies$ Create Spin Patterns
     \end{itemize}
 \end{frame}
 
@@ -145,49 +140,50 @@
 \end{frame}
 
 \begin{frame}{Base Case \texorpdfstring{$\alpha = 0$}{α = 0}}
-    \begin{itemize}
-        \item At $\alpha = 0$, the system shows Anderson localization \cite{abrahamsScalingTheoryLocalization1979}.
-        \item From single parameter scaling theory, we know
-        that $\xi_{loc} \propto e^{a \cdot kl}$ $a \approx
-        \pi/2$ is some constant, $k$ is the wavenumber of
-        the propogating particle ($k=2\pi/\lambda$) and $l$
-        is the transport mean free path. $kl ~ 1$ for
-        localization to be observed in the system. But in
-        many cases $kl > 1$, so it is hard to observe the
-        localization in finite size systems with weak
-        disorder.
-        \item We also require the weak localization
-        correction in 2D to predict the localization length
-        with scaling theory.
-    \end{itemize}
+    \begin{columns}
+        \column{0.64\textwidth}
+            \begin{itemize}
+                \item $\alpha = 0 \implies$ Anderson Localization \cite{abrahamsScalingTheoryLocalization1979}
+                \pause
+                \item Scaling Theory\footnotemark $\implies \xi_{loc} \propto e^{a \cdot kl}$
+                \item Strong Disorder $\implies kl \sim 1 \implies$ Localization observable
+                \item $kl > 1$ in many cases, especially Weak Disorder
+                \pause
+                \item Weak Localization Correction needed in 2D
+                \pause
+                \item Memories of initial states retained by system \cite{chakrabortyMemoriesInitialStates2020}
+            \end{itemize}    
+        \column{0.33\textwidth}
+            \begin{figure}[l]
+                % \centering
+                \includegraphics[width=\textwidth]{ahana_memories_2d_anderson_graph_crop.pdf}
+                \caption{2D Anderson model (taken from \cite{chakrabortyMemoriesInitialStates2020})}
+            \end{figure}    
+    \end{columns}
+    \footnotetext[1]{$a \approx \pi/2$, $k = 2\pi/\lambda$,
+        $l$ is transport mean free path}
 \end{frame}
 
 \begin{frame}{What Will The Perturbations Do?}
     \begin{itemize}
-        \item Adds additional degree of freedom: A new way
-        for the particle to move. Therefore, naively, we
-        expect a push towards delocalization.
-        \item Weak localization correction is no longer
-        valid as time reversed path of any closed path has
-        opposite spins. So backscattering is no longer
-        amplified and therefore, it will promote
-        delocalization.
+        \item Naively, New Way to Move $\implies$ Delocalization
+        \item Time-reversed Closed Paths have Opposite Spin $\implies$
+        Weak Localization Correction Not Valid
     \end{itemize}
 \end{frame}
 
-\begin{frame}{Literature Review}
-    Placeholder text
-\end{frame}
+% \begin{frame}{Literature Review}
+%     Placeholder text
+% \end{frame}
 
 \section{Methodology}
 \begin{frame}{Big Picture}
     \begin{itemize}
-        \item We want to probe the phase space of the system
-        i.e. the $W-\alpha$ plane. So we need to calculate
-        the localization length for each $(W,\alpha)$ pair.
-        \item We use exact diagonalization to do this.
-        \item We use the lattice site position basis product
-        with the $S_z$ eigenbasis on each site.
+        \item Probe Phase Space ($W-\alpha$ plane)
+        $\implies$ Calculate $\xi$ for each $(W,\alpha)$
+        \item Exact Diagonalization
+        \item Basis: Lattice site position basis $\times S_z$
+        eigenbasis on each site 
     \end{itemize}
 
 \end{frame}
@@ -216,24 +212,21 @@
     \begin{itemize}
         \item Each disorder realization is not
         translationally invariant.
-        \item PBCs have a problems in terms of defining a
-        localization length threshold we can reliably
-        measure. There's no good way to define localization
-        length on a 2-torus if $\frac{\xi}{2\pi r}$ is
+        \item For PBC, $\xi_{max} := ?$
+        \item No good way to define $\xi$ on 2-torus if
+        $\frac{\xi}{2\pi r}$ is
         non-negligible.
         \item With PBCs, the range of $r$ for our function
-        $|G_R|^2(r,\sigma,\sigma')$ is halved. This is not
-        good as the exponential decay nature only holds for
-        large $r$, so we need a significant fraction of our
-        points away from $r = 0$.
+        $|G_R|^2(r,\sigma,\sigma')$ is halved. 
+        \item Exp Decay only for large $r \implies$ We need
+        points away from $r = 0$. 
         \item So we use open boundary conditions.
     \end{itemize}
 \end{frame}
 
 \begin{frame}{Kramer's Degeneracy}
-    Our system is fermionic and time reversal invariant, therefore
-    the system shows Kramer's degeneracy. Consequently, we need to include terms
-    for each of the degenerate subspaces.
+    Fermionic + Time-reversal Invariant $\implies$ Kramer's Degeneracy
+    $\implies$ Terms for each Degenerate Subspace
     \begin{align*}
         |G_R|^2(i,\sigma;j,\sigma') &= \sum_n |\psi_n(i,\sigma)^* \psi_n(j,\sigma')|^2\\
         &+ \sum_{E_m = E_n} \psi_n(i,\sigma)^*\psi_n(j,\sigma')\psi_m(j,\sigma')^*\psi_m(i,\sigma)
@@ -242,17 +235,12 @@
 
 \begin{frame}{Complexity}
     \begin{itemize}
-        \item The summation for $|G_R|^2$ is problematic
-        because it constitutes an $O(L^6)$ procedure for
-        calculating the whole matrix.
-        \item This is the costliest step in our procedure
-        but there's no real way around the complexity. We
-        managed to reduce it to a series of matrix
-        multiplications in order to use prebuilt routines
-        and optimizations.
-        \item Let us combined pos and spin indices
-        $i\equiv(i,\sigma)$ and write the eigenfunctions as
-        a matrix: $\psi_k(i) = \psi_{ik}$
+        \item Summation for $|G_R|^2 \implies O(L^6)$ procedure
+        \item Costliest step but no way around
+        \item Decomposed as series of matrix multiplications
+        \item Combine pos and spin indices $i \equiv
+        (i,\sigma)$ and write eigenfunctions as a matrix:
+        $\psi_k(i) = \psi_{ik}$
     \end{itemize}
 \end{frame}
 
@@ -283,7 +271,6 @@
     \end{figure}    
 \end{frame}
 
-\section{Results}
 \begin{frame}{Phase Space}
     \begin{figure}
         \centering
@@ -292,7 +279,6 @@
     \end{figure}    
 \end{frame}
 
-\section{Results}
 \begin{frame}{Phase Space}
     \begin{figure}
         \centering
@@ -328,6 +314,32 @@
     \end{figure}        
 \end{frame}
 
+\begin{frame}{Qualitative Differences}
+    \begin{figure}
+        \centering
+        \includegraphics[width=\textwidth]{../plots/PDFs/qualitative_diffs_updn_W13_C0.3n1.0n1.5_em0.3.pdf}
+        \caption{Localized phase of $|G_{\uparrow\downarrow}|^2(r)$ vs $r$ for $W = 13$ on a $40\times40$
+                lattice with 100 disorder realizations.}
+    \end{figure}        
+\end{frame}
+
+\begin{frame}{Qualitative Differences}
+    \begin{figure}
+        \centering
+        \includegraphics[width=\textwidth]{../plots/PDFs/qualitative_diffs_updn_W13_C0.3n1.0n1.5_em1.0.pdf}
+        \caption{Critical phase of $|G_{\uparrow\downarrow}|^2(r)$ vs $r$ for $W = 13$ on a $40\times40$
+                lattice with 100 disorder realizations.}
+    \end{figure}        
+\end{frame}
+
+\begin{frame}{Qualitative Differences}
+    \begin{figure}
+        \centering
+        \includegraphics[width=\textwidth]{../plots/PDFs/qualitative_diffs_updn_W13_C0.3n1.0n1.5_em1.5.pdf}
+        \caption{Delocalized phase of $|G_{\uparrow\downarrow}|^2(r)$ vs $r$ for $W = 13$ on a $40\times40$
+                lattice with 100 disorder realizations.}
+    \end{figure}        
+\end{frame}
 
 \begin{frame}{Problems with Fitting}
     \begin{figure}
@@ -361,6 +373,38 @@
     \end{figure}        
 \end{frame}
 
+\begin{frame}{Problems with Fitting}
+    \begin{figure}
+        \centering
+        \includegraphics[width=\textwidth]{../plots/PDFs/fitting_diffs_W10_C0.2to0.5_upup_em0.2.pdf}
+        \caption{$|G_{\uparrow\downarrow}|^2(r)$ vs $r$ for $W = 10$ on a $40\times40$ lattice with 100 disorder realizations.}
+    \end{figure}        
+\end{frame}
+
+\begin{frame}{Problems with Fitting}
+    \begin{figure}
+        \centering
+        \includegraphics[width=\textwidth]{../plots/PDFs/fitting_diffs_W10_C0.2to0.5_upup_em0.3.pdf}
+        \caption{$|G_{\uparrow\uparrow}|^2(r)$ vs $r$ for $W = 10$ on a $40\times40$ lattice with 100 disorder realizations.}
+    \end{figure}        
+\end{frame}
+
+\begin{frame}{Problems with Fitting}
+    \begin{figure}
+        \centering
+        \includegraphics[width=\textwidth]{../plots/PDFs/fitting_diffs_W10_C0.2to0.5_upup_em0.4.pdf}
+        \caption{$|G_{\uparrow\uparrow}|^2(r)$ vs $r$ for $W = 10$ on a $40\times40$ lattice with 100 disorder realizations.}
+    \end{figure}        
+\end{frame}
+
+\begin{frame}{Problems with Fitting}
+    \begin{figure}
+        \centering
+        \includegraphics[width=\textwidth]{../plots/PDFs/fitting_diffs_W10_C0.2to0.5_upup_em0.5.pdf}
+        \caption{$|G_{\uparrow\uparrow}|^2(r)$ vs $r$ for $W = 10$ on a $40\times40$ lattice with 100 disorder realizations.}
+    \end{figure}        
+\end{frame}
+
 
 \begin{frame}[allowframebreaks]{Bibliography}
     % \bibliographystyle{authoryear}
@@ -368,7 +412,6 @@
 \end{frame}
 
 \appendix
-
 \section{Weak Localization}
 \begin{frame}{Coherent Backscattering}
     The particle intensity propogator $\Phi = \braket{G^R

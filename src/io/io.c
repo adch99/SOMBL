@@ -136,6 +136,100 @@ int io_get_array_from_file(int * array, int length, FILE * ifile)
     return(0);
 }
 
+int io_read_until_char(char stopchar, FILE * ifile)
+{
+    char row[MAXCHAR];
+    int offset, read_len;
+    while (!feof(ifile))
+    {
+        if(fgets(row, MAXCHAR, ifile) == NULL)
+            break;
+        read_len = strlen(row);
+        // printf("Row: %s", row);
+        char * loc = strchr(row, stopchar);
+        if(loc == NULL)
+            continue;
+        else
+        {
+            offset = -read_len + (int)(loc - row);
+            fseek(ifile, offset, SEEK_CUR);
+            break;
+        }
+    }
+    if(feof(ifile))
+        return(-1);
+    else
+        return(0);
+}
+
+/*
+    Reads 2d real array of size m x n from given file
+    into the array.
+*/
+int io_dread_2d(DTYPE * array, int m, int n, FILE * ifile)
+{
+    int i, j, match;
+    DTYPE elem;
+    for(i = 0; i < m; i++)
+    {
+        for(j = 0; j < n; j++)
+        {
+            match = fscanf(ifile, "%le", &elem);
+            if(match == 0)
+            {
+                printf("An error occured while parsing the file!\n");
+                return(-1);
+            }
+            *(array + RTC(i, j, m)) = elem;
+        }
+        io_read_until_char('\n', ifile);
+        fseek(ifile, 1, SEEK_CUR);
+        // printf("\n");
+    }
+    // printf("\n");
+    return(0);
+}
+
+/*
+    Reads 2d complex array of size m x n from given file
+    into the array.
+*/
+int io_zread_2d(CDTYPE * array, int m, int n, FILE * ifile)
+{
+    int i, j, found;
+    DTYPE zreal, zimag;
+    // printf("Beginning\n");
+    for(i = 0; i < m; i++)
+    {
+        for(j = 0; j < n; j++)
+        {
+            // printf("Pointer at %d\n", ftell(ifile));
+            found = io_read_until_char('(', ifile);
+            if(found != 0)
+            {
+                printf("Something is wrong! Cannot parse file!");
+                return(-1);
+            }
+            // printf("Pointer at %d\n", ftell(ifile));
+            fseek(ifile, 1, SEEK_CUR);
+            // printf("Pointer at %d\n", ftell(ifile));
+            fscanf(ifile, "%le", &zreal);
+            // printf("Pointer at %d\n", ftell(ifile));
+            fscanf(ifile, "%le", &zimag);
+            // printf("Pointer at %d\n\n", ftell(ifile));
+            // printf("z = %le+%lej\n", zreal, zimag);
+
+            *(array + RTC(i, j, m)) = zreal + I*zimag;
+        }
+        io_read_until_char('\n', ifile);
+        // printf("Pointer at %d\n", ftell(ifile));
+        fseek(ifile, 1, SEEK_CUR);
+        // printf("Pointer at %d\n-------\n", ftell(ifile));
+    }
+    return(0);
+}
+
+
 int io_output_function_data(DTYPE * dists, DTYPE * gfuncsq,
                         DTYPE * errors, char * filename,
                         int data_len)

@@ -2,6 +2,7 @@
 build/
 logs/
 docs/build
+docs/images
 scripts/__pycache__
 
 # Offline only directories
