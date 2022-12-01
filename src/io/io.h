@@ -2,6 +2,8 @@
 #define MBL_IO_H
 
 #include "../constants.h"
+#include "../params/params.h"
+
 
 int io_get_gfuncsq_from_file(DTYPE * matrix, struct OutStream outfiles,
                     struct SystemParams params);

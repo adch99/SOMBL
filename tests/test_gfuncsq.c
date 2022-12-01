@@ -213,6 +213,181 @@ void test_utils_gfuncsq_sigma_matrix_deg()
     free(gfuncsq);
 }
 
+void test_utils_gfuncsq_sigma_coeff_nondeg()
+{
+    int L = 4;
+    int Lsq = L * L;
+    int i, j;
+    CDTYPE elem;
+
+    CDTYPE *sigma = calloc(2 * 2, sizeof(CDTYPE));
+    CDTYPE *eigvecs = calloc(2 * Lsq * 2 * Lsq, sizeof(CDTYPE));
+    DTYPE *exp_gfuncsq = calloc(Lsq * Lsq, sizeof(DTYPE));
+    DTYPE *gfuncsq = calloc(Lsq * Lsq, sizeof(DTYPE));
+
+    *(sigma + RTC(0, 0, 2)) = 1.1 + 0*I;
+    *(sigma + RTC(0, 1, 2)) = 0.2 + 0*I;
+    *(sigma + RTC(1, 0, 2)) = -0.1 + 0*I;
+    *(sigma + RTC(1, 1, 2)) = 0.6 + 0*I;
+
+    // printf("Sigma:\n");
+    // for (i = 0; i < 2; i++)
+    // {
+    //     for (j = 0; j < 2; j++)
+    //     {
+    //         elem = *(sigma + RTC(i, j, 2));
+    //         printf("%.2g+%.2gj  ", creal(elem), cimag(elem));
+    //     }
+    //     printf("\n");
+    // }
+    // printf("\n");
+
+    FILE *eigfile = fopen("data/fake_eigenvectors_4x4.dat", "r");
+    io_zread_2d(eigvecs, 2 * Lsq, 2 * Lsq, eigfile);
+    fclose(eigfile);
+
+    // printf("First few values of eigvecs:\n");
+    // for (i = 0; i < 4; i++)
+    // {
+    //     for (j = 0; j < 4; j++)
+    //     {
+    //         elem = *(eigvecs + RTC(i, j, 2 * Lsq));
+    //         printf("(%7.2e+%7.2ej) ", creal(elem), cimag(elem));
+    //     }
+    //     printf("\n");
+    // }
+    // printf("\n");
+
+    FILE *gfuncfile = fopen("data/nondeg_sigma_coeff_gfuncsq_python_4x4.dat", "r");
+    io_dread_2d(exp_gfuncsq, Lsq, Lsq, gfuncfile);
+    fclose(gfuncfile);
+
+    // printf("First few values of EXPECTED gfuncsq:\n");
+    // for (i = 0; i < 4; i++)
+    // {
+    //     for (j = 0; j < 4; j++)
+    //     {
+    //         printf("%.3g ", *(exp_gfuncsq + RTC(i, j, Lsq)));
+    //     }
+    //     printf("\n");
+    // }
+    // printf("\n");
+
+    utils_gfuncsq_sigma_coeff_nondeg(gfuncsq, sigma, eigvecs, L);
+
+    // printf("First few values of ACTUAL gfuncsq:\n");
+    // for (i = 0; i < 4; i++)
+    // {
+    //     for (j = 0; j < 4; j++)
+    //     {
+    //         printf("%.3g ", *(gfuncsq + RTC(i, j, Lsq)));
+    //     }
+    //     printf("\n");
+    // }
+    // printf("\n");
+
+    // DTYPE diff = 0;
+    // for (i = 0; i < Lsq * Lsq; i++)
+    //     diff += fabs(*(gfuncsq + i) - *(exp_gfuncsq + i));
+
+    // printf("Diff = %.2g\n", diff);
+
+    TEST_ASSERT_EQUAL_DOUBLE_ARRAY(exp_gfuncsq, gfuncsq, Lsq * Lsq);
+
+    free(sigma);
+    free(eigvecs);
+    free(exp_gfuncsq);
+    free(gfuncsq);
+}
+
+void test_utils_gfuncsq_sigma_coeff_deg()
+{
+    int L = 4;
+    int Lsq = L * L;
+    int i, j;
+    CDTYPE elem;
+
+    CDTYPE *sigma = calloc(2 * 2, sizeof(CDTYPE));
+    CDTYPE *eigvecs = calloc(2 * Lsq * 2 * Lsq, sizeof(CDTYPE));
+    DTYPE *exp_gfuncsq = calloc(Lsq * Lsq, sizeof(DTYPE));
+    DTYPE *gfuncsq = calloc(Lsq * Lsq, sizeof(DTYPE));
+
+    *(sigma + RTC(0, 0, 2)) = 1.1 + 0*I;
+    *(sigma + RTC(0, 1, 2)) = 0.2 + 0*I;
+    *(sigma + RTC(1, 0, 2)) = -0.1 + 0*I;
+    *(sigma + RTC(1, 1, 2)) = 0.6 + 0*I;
+
+    // printf("Sigma:\n");
+    // for (i = 0; i < 2; i++)
+    // {
+    //     for (j = 0; j < 2; j++)
+    //     {
+    //         elem = *(sigma + RTC(i, j, 2));
+    //         printf("%.2g+%.2gj  ", creal(elem), cimag(elem));
+    //     }
+    //     printf("\n");
+    // }
+    // printf("\n");
+
+    FILE *eigfile = fopen("data/fake_eigenvectors_4x4.dat", "r");
+    io_zread_2d(eigvecs, 2 * Lsq, 2 * Lsq, eigfile);
+    fclose(eigfile);
+
+    // printf("First few values of eigvecs:\n");
+    // for (i = 0; i < 4; i++)
+    // {
+    //     for (j = 0; j < 4; j++)
+    //     {
+    //         elem = *(eigvecs + RTC(i, j, 2 * Lsq));
+    //         printf("(%7.2e+%7.2ej) ", creal(elem), cimag(elem));
+    //     }
+    //     printf("\n");
+    // }
+    // printf("\n");
+
+    FILE *gfuncfile = fopen("data/deg_sigma_coeff_gfuncsq_python_4x4.dat", "r");
+    io_dread_2d(exp_gfuncsq, Lsq, Lsq, gfuncfile);
+    fclose(gfuncfile);
+
+    // printf("First few values of EXPECTED gfuncsq:\n");
+    // for (i = 0; i < 4; i++)
+    // {
+    //     for (j = 0; j < 4; j++)
+    //     {
+    //         printf("%.3g ", *(exp_gfuncsq + RTC(i, j, Lsq)));
+    //     }
+    //     printf("\n");
+    // }
+    // printf("\n");
+
+    utils_gfuncsq_sigma_coeff_deg(gfuncsq, sigma, eigvecs, L);
+
+    // printf("First few values of ACTUAL gfuncsq:\n");
+    // for (i = 0; i < 4; i++)
+    // {
+    //     for (j = 0; j < 4; j++)
+    //     {
+    //         printf("%.3g ", *(gfuncsq + RTC(i, j, Lsq)));
+    //     }
+    //     printf("\n");
+    // }
+    // printf("\n");
+
+    // DTYPE diff = 0;
+    // for (i = 0; i < Lsq * Lsq; i++)
+    //     diff += fabs(*(gfuncsq + i) - *(exp_gfuncsq + i));
+
+    // printf("Diff = %.2g\n", diff);
+
+    TEST_ASSERT_EQUAL_DOUBLE_ARRAY(exp_gfuncsq, gfuncsq, Lsq * Lsq);
+
+    free(sigma);
+    free(eigvecs);
+    free(exp_gfuncsq);
+    free(gfuncsq);
+}
+
+
 void test_utils_multiply_restricted(void)
 {
     CDTYPE A[25] = {(-3+5*I), (-5-4*I), (-7+1*I), (7-9*I), (9-10*I),
@@ -248,11 +423,30 @@ void test_utils_multiply_restricted(void)
     free(actual_C);
 }
 
+void test_utils_bin_energy_range(void)
+{
+    DTYPE energies[100];
+    int num_bins = 12;
+    int actual_bin_edges[12];
+    int exp_bin_edges[12] = {0, 20, 26, 32, 38, 44, 50, 56, 62, 68, 74, 80};
+    int i;
+    
+    for(i = 0; i < 100; i++)
+        energies[i] = 0.01 * i;
+
+    utils_bin_energy_range(energies, 100, num_bins, 0.20, 0.80, actual_bin_edges);
+    TEST_ASSERT_INT_ARRAY_WITHIN(1, exp_bin_edges, actual_bin_edges, 12);
+}
+
+
 int main(void)
 {
     UNITY_BEGIN();
     RUN_TEST(test_utils_gfuncsq_sigma_matrix_nondeg);
     RUN_TEST(test_utils_gfuncsq_sigma_matrix_deg);
+    RUN_TEST(test_utils_gfuncsq_sigma_coeff_nondeg);
+    RUN_TEST(test_utils_gfuncsq_sigma_coeff_deg);
     RUN_TEST(test_utils_multiply_restricted);
+    RUN_TEST(test_utils_bin_energy_range);
     return (UNITY_END());
 }

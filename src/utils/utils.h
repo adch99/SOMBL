@@ -25,6 +25,14 @@ int utils_gfuncsq_sigma_matrix_nondeg(DTYPE * gfuncsq, CDTYPE * sigma,
                                 CDTYPE * eigvecs, int length);
 int utils_gfuncsq_sigma_matrix_deg(DTYPE * gfuncsq, CDTYPE * sigma,
                                 CDTYPE * eigvecs, int length);
+int utils_gfuncsq_sigma_matrix_nondeg_restr(DTYPE * gfuncsq, CDTYPE * sigma,
+                                CDTYPE * eigvecs, int length, int nmin, int nmax);
+int utils_gfuncsq_sigma_matrix_deg_restr(DTYPE * gfuncsq, CDTYPE * sigma,
+                                CDTYPE * eigvecs, int length, int nmin, int nmax);
+int utils_gfuncsq_sigma_coeff_nondeg(DTYPE * gfuncsq, CDTYPE * sigma,
+                                CDTYPE * eigvecs, int length);
+int utils_gfuncsq_sigma_coeff_deg(DTYPE * gfuncsq, CDTYPE * sigma,
+                                CDTYPE * eigvecs, int length);
 int utils_multiply_restricted(CDTYPE * mat1, int m1, int n1min, int n1max,
                             CDTYPE * mat2, int m2, int n2min, int n2max,
                             CDTYPE * prod);
@@ -44,6 +52,8 @@ DTYPE utils_get_charge_imbalance(DTYPE * gfuncsq, int * occupied_set_up,
 DTYPE utils_pbc_chord_length_sq(int index1, int length1,
                                 int index2, int length2);
 int utils_reflect_upper_to_lower(DTYPE * matrix, int n);
+int utils_bin_energy_range(DTYPE * energies, int len, int num_bins,
+                        DTYPE core_min, DTYPE core_max, int * bin_edges);
 
 // Bitwise manipulations
 // From SO community wiki post
