@@ -261,9 +261,9 @@ DTYPE utils_compute_gfsq_elem(int i, int j, CDTYPE * eigenvectors,
     DTYPE sum = 0.0;
     int k, l;
 
-    // int index1, index2;
-    // index1 = RTC(i, 0, size);
-    // index2 = RTC(j, 0, size);
+    int index1, index2;
+    index1 = RTC(i, 0, size);
+    index2 = RTC(j, 0, size);
     // // We can eliminate some operations
     // // by adding 'size' to index1
     // // rather than calling RTC each time.
@@ -277,23 +277,20 @@ DTYPE utils_compute_gfsq_elem(int i, int j, CDTYPE * eigenvectors,
     // // index1 = RTC(i, k, size);
     // // index2 = RTC(j, k, size);
 
-    // CDTYPE psi1, psi2;
-    // DTYPE mod1, mod2;
-
-    // // CDTYPE * ptr1 = eigenvectors + RTC(i, 0, size);
-    // // CDTYPE * ptr2 = eigenvectors + RTC(j, 0, size);
+    CDTYPE psi1, psi2;
+    DTYPE mod1, mod2;
 
     // // #pragma omp parallel for reduction (+:sum) schedule(auto)
-    // for(k = 0; k < size; k++)
-    // {
-    //     psi1 = *(eigenvectors + index1);
-    //     psi2 = *(eigenvectors + index2);
-    //     mod1 = creal(psi1)*creal(psi1) + cimag(psi1)*cimag(psi1);
-    //     mod2 = creal(psi2)*creal(psi2) + cimag(psi2)*cimag(psi2);
-    //     sum += mod1 * mod2;
-    //     index1 += size;
-    //     index2 += size;
-    // }
+    for(k = 0; k < size; k++)
+    {
+        psi1 = *(eigenvectors + index1);
+        psi2 = *(eigenvectors + index2);
+        mod1 = creal(psi1)*creal(psi1) + cimag(psi1)*cimag(psi1);
+        mod2 = creal(psi2)*creal(psi2) + cimag(psi2)*cimag(psi2);
+        sum += mod1 * mod2;
+        index1 += size;
+        index2 += size;
+    }
 
     if(degeneracy == DEGEN_EIGVALS)
     {
@@ -301,50 +298,28 @@ DTYPE utils_compute_gfsq_elem(int i, int j, CDTYPE * eigenvectors,
         // pairs and that we have all the eigenvalues
         // being degenerate (Kramer degeneracy).
         
-        // int index_ik, index_il, index_jk, index_jl;
-        // index_ik = RTC(i, 0, size);
-        // index_il = RTC(i, 1, size);
-        // index_jk = RTC(j, 0, size);
-        // index_jl = RTC(j, 1, size);
+        int index_ik, index_il, index_jk, index_jl;
 
-        CDTYPE * ptr_ik = eigenvectors + RTC(i, 0, size);
-        CDTYPE * ptr_il = eigenvectors + RTC(i, 1, size);
-        CDTYPE * ptr_jk = eigenvectors + RTC(j, 0, size);
-        CDTYPE * ptr_jl = eigenvectors + RTC(j, 1, size);
-
-
-        // CDTYPE psi_k_i, psi_l_i;
-        // CDTYPE psi_k_j, psi_l_j;
+        CDTYPE psi_k_i, psi_l_i;
+        CDTYPE psi_k_j, psi_l_j;
         CDTYPE term;
 
         // #pragma omp parallel for reduction (+:sum) schedule(auto)
         for(k = 0; k < size; k += 2)
         {
             // l = k + 1;
-            // index_ik = RTC(i, k, size);
-            // index_il = RTC(i, l, size);
-            // index_jk = RTC(j, k, size);
-            // index_jl = RTC(j, l, size);
+            index_ik = RTC(i, k, size);
+            index_il = RTC(i, l, size);
+            index_jk = RTC(j, k, size);
+            index_jl = RTC(j, l, size);
 
-            // psi_k_i = *(eigenvectors + index_ik);
-            // psi_l_i = *(eigenvectors + index_il);
-            // psi_k_j = *(eigenvectors + index_jk);
-            // psi_l_j = *(eigenvectors + index_jl);
+            psi_k_i = *(eigenvectors + index_ik);
+            psi_l_i = *(eigenvectors + index_il);
+            psi_k_j = *(eigenvectors + index_jk);
+            psi_l_j = *(eigenvectors + index_jl);
 
-            // term = psi_k_i * conj(psi_l_i) * conj(psi_k_j) * psi_l_j;
-            // term = *(eigenvectors + index_ik) * conj(*(eigenvectors + index_il)) \ 
-            //         * conj(*(eigenvectors + index_jk)) * (*(eigenvectors + index_jl));
-            term = (*ptr_ik) * conj(*ptr_il) * conj(*ptr_jk) * (*ptr_jl);
+            term = psi_k_i * conj(psi_l_i) * conj(psi_k_j) * psi_l_j;
             sum += term + conj(term);
-
-            ptr_ik += 2*size;            
-            ptr_il += 2*size;            
-            ptr_jk += 2*size;            
-            ptr_jl += 2*size;            
-            // index_ik += 2*size;
-            // index_il += 2*size;
-            // index_jk += 2*size;
-            // index_jl += 2*size;
         }
     }
     return(sum);
@@ -353,7 +328,7 @@ DTYPE utils_compute_gfsq_elem(int i, int j, CDTYPE * eigenvectors,
 /*
     Computes the pauli-generalized green's function square
     matrix and adds it to gfuncsq.
-    |G(i,j)|^2 = lim t to infty |Sum_{alpha,beta} <i,alpha| sigma_{alpha,beta} exp(-iHt)|j,beta>|^2
+    |G(i,j)|^2 = lim t to infty |Sum_{alpha,beta} <i,alpha| sigma exp(-iHt)|j,beta>|^2
 */
 int utils_gfuncsq_sigma_matrix(DTYPE * gfuncsq, CDTYPE * sigma,
                                 CDTYPE * eigvecs, int length)
@@ -1374,5 +1349,18 @@ int utils_gfuncsq_sigma_coeff_deg(DTYPE * gfuncsq, CDTYPE * sigma,
     }
 
 
+    return(0);
+}
+
+/*
+    Computes the pauli-generalized green's function square
+    matrix and adds it to gfuncsq.
+    |G(i,j)|^2 = lim t to infty |Sum_{alpha,beta} sigma_{alpha,beta} <i,alpha| exp(-iHt)|j,beta>|^2
+*/
+int utils_gfuncsq_sigma_coeff(DTYPE * gfuncsq, CDTYPE * sigma,
+                                CDTYPE * eigvecs, int length)
+{
+    utils_gfuncsq_sigma_coeff_nondeg(gfuncsq, sigma, eigvecs, length);
+    utils_gfuncsq_sigma_coeff_deg(gfuncsq, sigma, eigvecs, length);
     return(0);
 }

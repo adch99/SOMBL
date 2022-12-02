@@ -17,7 +17,7 @@
 
 /* Function Declarations */ 
 int run(struct SystemParams * params, int create_neighbours,
-            DTYPE * gfunc);
+            DTYPE * gfunc, CDTYPE * sigma);
 int output_gfuncsq_matrix(int runs_done, DTYPE * gfuncsq,
                 struct SystemParams params, struct OutStream outfiles);
 DTYPE post_process(struct SystemParams params, struct OutStream outfiles,
@@ -26,13 +26,13 @@ DTYPE post_process(struct SystemParams params, struct OutStream outfiles,
 
 /* Constant Declarations */
 const char *argp_program_version =
-    "exact_diag_simulation 1.0";
+  "sigma_exact_diag 1.0";
 const char *argp_program_bug_address =
-    "<aditya.chincholi@students.iiserpune.ac.in>";
+  "<aditya.chincholi@students.iiserpune.ac.in>";
 // Program documentation.
 static char doc[] =
-    "exact_diag_simulation -- a simulation of spin-orbit coupled" 
-    "2d many-body localized systems.";
+  "sigma_exact_diag -- a simulation of spin-orbit coupled" 
+  "2d many-body localized systems.";
 // A description of the arguments we accept.
 static char args_doc[] = "-s <size> -c <coupling_const>"
                         "-w <disorder_strength>"
@@ -40,15 +40,16 @@ static char args_doc[] = "-s <size> -c <coupling_const>"
                         " [-p]";
 // The options we understand.
 static struct argp_option options[] = {
-    {"size",     's', "SIZE",     0, "Length and width of the lattice",        0},
-    {"coupling", 'c', "COUPLING", 0, "Spin-orbit coupling constant",           0},
-    {"disorder", 'w', "DISORDER", 0, "Strength of the disorder",               0},
-    {"hopping",  't', "HOPPING",  0, "Strength of the hopping",                0},
-    {"hopup",    'u', "HOPUP",    0, "Strength of the hopping for up spins",   0},
-    {"hopdn",    'd', "HOPDN",    0, "Strength of the hopping for down spins", 0},
-    {"runs",     'n', "NUMRUNS",  0, "Number of runs in the disorder average", 0},
-    {"nospin",   'p', 0,          0, "Use a spinless model hamiltonian.",      0},
-    { 0 }
+  {"size",     's', "SIZE",     0, "Length and width of the lattice",        0},
+  {"coupling", 'c', "COUPLING", 0, "Spin-orbit coupling constant",           0},
+  {"disorder", 'w', "DISORDER", 0, "Strength of the disorder",               0},
+  {"hopping",  't', "HOPPING",  0, "Strength of the hopping",                0},
+  {"hopup",    'u', "HOPUP",    0, "Strength of the hopping for up spins",   0},
+  {"hopdn",    'd', "HOPDN",    0, "Strength of the hopping for down spins", 0},
+  {"runs",     'n', "NUMRUNS",  0, "Number of runs in the disorder average", 0},
+  {"nospin",   'p', 0,          0, "Use a spinless model hamiltonian.",      0},
+  {"batch",    'b', "BATCHNUM", 0, "Batch number of the total runs.",        0},
+  { 0 }
 };
 // Our argp parser.
 static struct argp argp = { options, params_parse_opt, args_doc, doc, 0, 0, 0};
@@ -63,7 +64,7 @@ int main(int argc, char ** argv)
     struct SystemParams params;
     struct OutStream outfiles;
 
-    params_setup(argc, argv, &params, &outfiles, &argp, 0);
+    params_setup(argc, argv, &params, &outfiles, &argp, 1);
 
     // printf("Exact Diagonalization\n");
     // printf("---------------------\n");
@@ -86,7 +87,14 @@ int main(int argc, char ** argv)
 
     // Allocate Green's Function Matrix
     // Represents long time limit of the green's function squared.
-    DTYPE * gfunc = calloc(params.num_states*params.num_states, sizeof(DTYPE));
+    DTYPE * gfunc = calloc(params.num_sites*params.num_sites, sizeof(DTYPE));
+
+    CDTYPE * sigma = calloc(2*2, sizeof(CDTYPE));
+    *(sigma + RTC(0, 0, 2)) = 1;
+    *(sigma + RTC(0, 1, 2)) = 0;
+    *(sigma + RTC(1, 0, 2)) = 0;
+    *(sigma + RTC(1, 1, 2)) = 0;
+
 
     if(gfunc == NULL)
     {
@@ -94,13 +102,13 @@ int main(int argc, char ** argv)
         return(1);
     }
 
-    printf("Starting Simulation for Exact Diagonalization...\n");
+    printf("Starting Exact Diagonalization...\n");
     for(ctr = 1; ctr <= params.numRuns; ctr++)
     {
         // printf("Run %d started...", ctr);
         // fflush(stdout);
         /* Call run */
-        run(&params, create_neighbours, gfunc);
+        run(&params, create_neighbours, gfunc, sigma);
         create_neighbours = 0;
         output_gfuncsq_matrix(ctr, gfunc, params, outfiles);
         // printf("Done\n");
@@ -118,13 +126,13 @@ int main(int argc, char ** argv)
 /*
     Creates a hamiltonian based on params, calculates the
     long time green's function squared and ADDS it to gfunc.
-    Please ensure gfunc is initialized properly for your
+    Please ensure gfuncsq is initialized properly for your
     purpose.
 */
 int run(struct SystemParams * params, int create_neighbours,
-            DTYPE * gfunc)
+            DTYPE * gfuncsq, CDTYPE * sigma)
 {
-    int num_sites = params->len * params->width;
+    int num_sites = params->num_sites;
     int num_states = params->num_states;
 
     // Create neighbour list if not present
@@ -164,14 +172,7 @@ int run(struct SystemParams * params, int create_neighbours,
     // Calculate and add green's function long time limit squared
     // printf("Gfunc...");
     // fflush(stdout);
-    int degeneracy;
-    if(params->nospin == 0)
-        degeneracy = DEGEN_EIGVALS;
-    else
-        degeneracy = NONDEGEN_EIGVALS;
-    utils_get_green_func_lim(ham, num_states, gfunc, degeneracy);
-    // printf("Wrapping up...");
-    // fflush(stdout);
+    utils_gfuncsq_sigma_coeff(gfuncsq, sigma, ham, params->len);
 
     free(eigvals);
     free(ham);
@@ -194,11 +195,11 @@ int output_gfuncsq_matrix(int runs_done, DTYPE * gfuncsq,
         return(-1);
     }
     // Divide the gfunc matrix to get disorder avged Green's function
-    for(i = 0; i < params.num_states; i++)
+    for(i = 0; i < params.num_sites; i++)
     {
-        for(j = 0; j < params.num_states; j++)
+        for(j = 0; j < params.num_sites; j++)
         {
-            elem = *(gfuncsq + RTC(i, j, params.num_states)) / (DTYPE) runs_done;
+            elem = *(gfuncsq + RTC(i, j, params.num_sites)) / (DTYPE) runs_done;
             fprintf(ofile, "%e ", elem);
             // if(isnan(elem))
             // {

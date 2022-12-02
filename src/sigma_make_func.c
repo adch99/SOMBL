@@ -9,7 +9,7 @@
 
 /* Constant Declarations */
 const char *argp_program_version =
-    "calculate_dist_vs_gfuncsq 1.0";
+    "sigma_make_func 1.0";
 const char *argp_program_bug_address =
     "<aditya.chincholi@students.iiserpune.ac.in>";
 // Program documentation.
@@ -43,7 +43,7 @@ int main(int argc, char ** argv)
     struct SystemParams params;
     struct OutStream outfiles;
 
-    params_setup(argc, argv, &params, &outfiles, &argp, 0);
+    params_setup(argc, argv, &params, &outfiles, &argp, 1);
 
     printf("Calculate G^2(r)\n");
     printf("----------------\n");
@@ -55,8 +55,8 @@ int main(int argc, char ** argv)
 
 
     // Get the gfuncsq matrix from the data file
-    DTYPE * matrix = malloc(params.num_states*params.num_states*sizeof(DTYPE));
-    io_get_gfuncsq_from_file(matrix, outfiles, params, 0);
+    DTYPE * matrix = malloc(params.num_sites*params.num_sites*sizeof(DTYPE));
+    io_get_gfuncsq_from_file(matrix, outfiles, params, 1);
     // utils_print_matrix(matrix, params.num_states, params.num_states, 'R', 'F');
     // Bin the gfunsq matrix and create a function of
     // distance G^2(|r_i - r_j|)
@@ -70,25 +70,12 @@ int main(int argc, char ** argv)
     int bins = params.len;
     printf("Bins: %d\n", bins);
     // int bins = 30;
-    data_len = utils_construct_data_vs_dist(matrix, params.num_states, params.len,
+    data_len = utils_construct_data_vs_dist(matrix, params.num_sites, params.len,
                                         bins, &dists, &gfuncsq, &gfuncsq_err);
 
-    if(params.nospin == 1)
-    {
-        io_output_function_data(dists, gfuncsq, gfuncsq_err,
+    io_output_function_data(dists, gfuncsq, gfuncsq_err,
                                 outfiles.dist_vs_gfuncsq, data_len);
-    }        
-    else
-    {
-        int i;
-        for(i = 0; i < 4; i++)
-        {
-            char * fname = outfiles.dist_vs_gfuncsq_spin[i];
-            printf("Outputting to %s\n", fname);
-            io_output_function_data(dists, gfuncsq + i*bins,
-                                    gfuncsq_err + i*bins, fname, data_len);
-        }
-    }
+
     params_cleanup(&params, &outfiles);
     free(matrix);
     free(dists);

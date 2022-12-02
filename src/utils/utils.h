@@ -33,6 +33,8 @@ int utils_gfuncsq_sigma_coeff_nondeg(DTYPE * gfuncsq, CDTYPE * sigma,
                                 CDTYPE * eigvecs, int length);
 int utils_gfuncsq_sigma_coeff_deg(DTYPE * gfuncsq, CDTYPE * sigma,
                                 CDTYPE * eigvecs, int length);
+int utils_gfuncsq_sigma_coeff(DTYPE * gfuncsq, CDTYPE * sigma,
+                                CDTYPE * eigvecs, int length);
 int utils_multiply_restricted(CDTYPE * mat1, int m1, int n1min, int n1max,
                             CDTYPE * mat2, int m2, int n2min, int n2max,
                             CDTYPE * prod);

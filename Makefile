@@ -32,7 +32,8 @@ OBJ = $(patsubst %.c,build/%.o,$(_DEPS))
 EXTDEPS = extern/unity/unity.c
 
 _EXECS = exact_diag_simulation calculate_dist_vs_gfuncsq \
-calculate_imbalance output_hamiltonian gfunc_complexity_test gfunc_complexity_test_2 check_sigma_gfuncsq
+calculate_imbalance output_hamiltonian sigma_exact_diag sigma_make_func \
+exact_diag_batch
 EXECS = $(patsubst %,build/%,$(_EXECS))
 
 # TESTS = $(wildcard tests/*.c)
@@ -64,6 +65,6 @@ build/tests/%: tests/%.c $(OBJ)
 tests: $(patsubst tests/%.c,build/tests/%,$(TESTS))
 
 clean:
-	rm -rf build/*/*.o build/exact_diag_simulation
+	rm -rf build/*/*.o $(EXECS)
 	find data -size 0 -print -delete
 

@@ -1,17 +1,239 @@
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include "../constants.h"
 #include "../params/params.h"
 #include "../utils/utils.h"
+#include "io.h"
 
 #define MAXCHAR 1000
 
-int io_read_until(char * stopstr, FILE * ifile);
-int io_get_array_from_file(int * array, int length, FILE * ifile);
+
+/*
+    Opens the file for the given purpose (must be either 'r'
+    or 'w') and checks for errors while opening.
+*/
+FILE * io_safely_open(char purpose, char * filename)
+{
+    FILE * openfile;
+    if(purpose == 'w')
+    {
+        openfile = fopen(filename, "w");
+        if (openfile == NULL)
+        {
+            printf("Error in opening file %s: %s\n",
+                    filename, strerror(errno));
+            fclose(openfile);
+            exit(EXIT_FAILURE);
+        }
+        return(openfile);
+    }
+
+    if(purpose == 'r')
+    {
+        openfile = fopen(filename, "r");
+        if (openfile == NULL)
+        {
+            printf("Error in opening file %s: %s\n",
+                    filename, strerror(errno));
+            fclose(openfile);
+            exit(EXIT_FAILURE);
+        }
+        return(openfile);
+    }
+    else
+    {
+        printf("Argument 'purpose' must be either 'r' or 'w'\n");
+        exit(EXIT_FAILURE);
+    }
+}
+
+/*
+    Reads the array of the given type from the file and
+    stores it in the array in the given ordering. type must
+    be 'R' for real, 'C' for complex and 'I' for int.
+    ordering must be 'R' for row major and 'C' for column
+    major.
+*/
+int io_read_array(char type, char ordering, void * array,
+                int m, int n, char * filename)
+{
+    FILE * ifile = io_safely_open('r', filename);
+    int info;
+
+    if(ordering != 'C' && ordering != 'R')
+    {
+        printf("Error: ordering must be eiher 'C' for"
+                "column major or 'R' for row major.");
+        exit(EXIT_FAILURE);
+    }
+
+    if(type == 'C')
+    {
+        info = io_read_array_complex(ordering, (CDTYPE *) array,
+                                    m, n, ifile);
+    }
+    else if(type == 'R')
+    {        
+        info = io_read_array_real(ordering, (DTYPE *) array,
+                                    m, n, ifile);
+    }
+    else if(type == 'I')
+    {
+        info = io_read_array_int(ordering, (int *) array,
+                                    m, n, ifile);
+    }
+    else
+    {
+        printf("ERROR: type given to io_read_array must be one of "
+                "the following: 'C', 'R' or 'I'!\n");
+        exit(EXIT_FAILURE);
+    }
+    
+    fclose(ifile);
+    return(info);
+}
+
+/*
+    Reads the complex array from the file and stores it in
+    the array in the given ordering. ordering must be
+    'R' for row major and 'C' for column major.
+*/
+int io_read_array_complex(char ordering, CDTYPE * array,
+                        int m, int n, FILE * ifile)
+{
+    int i, j, found;
+    DTYPE zreal, zimag;
+    // printf("Beginning\n");
+    for(i = 0; i < m; i++)
+    {
+        for(j = 0; j < n; j++)
+        {
+            // printf("Pointer at %d\n", ftell(ifile));
+            found = io_read_until_char('(', ifile);
+            if(found != 0)
+            {
+                printf("Something is wrong! Cannot parse file!\n");
+                return(-1);
+            }
+            // printf("Pointer at %d\n", ftell(ifile));
+            fseek(ifile, 1, SEEK_CUR);
+            // printf("Pointer at %d\n", ftell(ifile));
+            fscanf(ifile, "%le", &zreal);
+            // printf("Pointer at %d\n", ftell(ifile));
+            fscanf(ifile, "%le", &zimag);
+            // printf("Pointer at %d\n\n", ftell(ifile));
+            // printf("z = %le+%lej\n", zreal, zimag);
+
+            if (ordering == 'C')
+                *(array + RTC(i, j, m)) = zreal + I*zimag;
+            else if (ordering == 'R')
+                *(array + i*n + j) = zreal + I*zimag;
+            else
+                return(-1);
+        }
+        io_read_until_char('\n', ifile);
+        // printf("Pointer at %d\n", ftell(ifile));
+        fseek(ifile, 1, SEEK_CUR);
+        // printf("Pointer at %d\n-------\n", ftell(ifile));
+    }
+    return(0);
+}
+
+/*
+    Reads the real array from the file and stores it in
+    the array in the given ordering. ordering must be
+    'R' for row major and 'C' for column major.
+*/
+int io_read_array_real(char ordering, DTYPE * array,
+                        int m, int n, FILE * ifile)
+{
+    int i, j, match;
+    DTYPE elem;
+    for(i = 0; i < m; i++)
+    {
+        for(j = 0; j < n; j++)
+        {
+            match = fscanf(ifile, "%le", &elem);
+            if(match == 0)
+            {
+                printf("An error occured while parsing the file!\n");
+                return(-1);
+            }
+            if (ordering == 'C')
+                *(array + RTC(i, j, m)) = elem;
+            else if (ordering == 'R')
+                *(array + i*n + j) = elem;
+            else
+                return(-1);
+        }
+        io_read_until_char('\n', ifile);
+        fseek(ifile, 1, SEEK_CUR);
+        // printf("\n");
+    }
+    // printf("\n");
+    return(0);
+}
+
+
+/*
+    Reads the int array from the file and stores it in
+    the array in the given ordering. ordering must be
+    'R' for row major and 'C' for column major.
+*/
+int io_read_array_int(char ordering, int * array,
+                        int m, int n, FILE * ifile)
+{
+    return(0);
+}
+
+int io_write_array(char type, char ordering, void * array,
+                    int m, int n, char * filename)
+{
+    FILE * ofile = io_safely_open('w', filename);
+    int i, j, index;
+    DTYPE elemr;
+    CDTYPE elemc;
+
+
+    if(type != 'C' && type != 'R')
+    {
+        printf("Invalid type passed to io_write_array.\n");
+        printf("type must be either 'C' or 'R'.\n");
+    }
+
+
+    if(ordering != 'C' && ordering != 'F')
+    {
+        printf("Invalid ordering passed to io_write_array.\n");
+        printf("ordering must be either 'C' or 'F'.\n");
+    }
+
+
+    for(i = 0; i < m; i++)
+    {
+        for(j = 0; j < n; j++)
+        {
+            index = (ordering=='C')?(i*n + j):RTC(i, j, m);
+            if(type == 'C')
+            {
+                elemc = *((CDTYPE*)array + index);
+                fprintf(ofile, "(%le%+lej) ", creal(elemc), cimag(elemc));
+            }
+            else
+            {
+                elemr = *((DTYPE*)array + index);
+                fprintf(ofile, "%le ", elemr);
+            }
+        }
+        fprintf(ofile, "\n");
+    }
+    return 0;
+}
 
 
 int io_get_gfuncsq_from_file(DTYPE * matrix, struct OutStream outfiles,
-                    struct SystemParams params)
+                    struct SystemParams params, int sigma)
 {
     FILE * datafile = fopen(outfiles.gfuncsq, "r");
 
@@ -22,12 +244,18 @@ int io_get_gfuncsq_from_file(DTYPE * matrix, struct OutStream outfiles,
     }
 
     int i, j, index;
+    int size;
+    if (sigma == 0)
+        size = params.num_states;
+    else
+        size = params.num_sites;
     DTYPE elem;
-    for(i = 0; i < params.num_states; i++)
+    
+    for(i = 0; i < size; i++)
     {
-        for(j = 0; j < params.num_states; j++)
+        for(j = 0; j < size; j++)
         {
-            index = RTC(i, j, params.num_states);
+            index = RTC(i, j, size);
             fscanf(datafile, "%lf", &elem);
             *(matrix + index) = elem;
         }
@@ -235,12 +463,7 @@ int io_output_function_data(DTYPE * dists, DTYPE * gfuncsq,
                         int data_len)
 {
     // Write the values to a file
-    FILE * ofile = fopen(filename, "w");
-    if (ofile == NULL)
-    {
-        printf("Cannot open file %s!", filename);
-        return(-1);
-    }
+    FILE * ofile = io_safely_open('w', filename);
     int i;
     for(i = 0; i < data_len; i++)
     {

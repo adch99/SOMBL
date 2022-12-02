@@ -17,6 +17,10 @@ struct SystemParams {
     // to have it here.
     int nospin;
     int num_states;
+    int num_sites;
+    int batch_num;
+    int batch_size;
+    int seed;
 };
 
 
@@ -28,9 +32,8 @@ struct OutStream {
 
 error_t params_parse_opt(int key, char *arg, struct argp_state *state);
 int params_setup(int argc, char ** argv, struct SystemParams * params,
-        struct OutStream * outfiles, struct argp * argp);
+        struct OutStream * outfiles, struct argp * argp, int sigma);
 int params_set_up_datastream(struct SystemParams params,
-                            struct OutStream * outfiles);
+                            struct OutStream * outfiles, int sigma);
 int params_cleanup(struct SystemParams * params, struct OutStream * outfiles);
-
 #endif
