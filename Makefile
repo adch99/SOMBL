@@ -7,25 +7,25 @@ LDIRS=
 # -----------------
 
 # On cluster use these lines
-# MKLROOT=/apps/intel_2018/mkl
-# CMKL=
-# LMKL=-Wl,--start-group $(MKLROOT)/lib/intel64/libmkl_intel_lp64.a $(MKLROOT)/lib/intel64/libmkl_intel_thread.a $(MKLROOT)/lib/intel64/libmkl_core.a -Wl,--end-group
+MKLROOT=/apps/intel_2018/mkl
+CMKL=
+LMKL=-Wl,--start-group $(MKLROOT)/lib/intel64/libmkl_intel_lp64.a $(MKLROOT)/lib/intel64/libmkl_intel_thread.a $(MKLROOT)/lib/intel64/libmkl_core.a -Wl,--end-group
 
 # On local machine use these lines
-# MKLROOT=/opt/intel/mkl
-CMKL=-DMKL_ILP64 
-CMKL += -m64
-CMKL += -I"${MKLROOT}/include"
-# LMKL += -L${MKLROOT}/lib/intel64
-LMKL=
-# Static
-LMKL += -Wl,--start-group
-LMKL += ${MKLROOT}/lib/intel64/libmkl_intel_ilp64.a
-# LMKL += ${MKLROOT}/lib/intel64/libmkl_gnu_thread.a
-LMKL += ${MKLROOT}/lib/intel64/libmkl_intel_thread.a
-LMKL += ${MKLROOT}/lib/intel64/libmkl_core.a
-LMKL += ${MKLROOT}/lib/intel64/libmkl_blacs_intelmpi_ilp64.a
-LMKL += -Wl,--end-group
+# # MKLROOT=/opt/intel/mkl
+# CMKL=-DMKL_ILP64 
+# CMKL += -m64
+# CMKL += -I"${MKLROOT}/include"
+# # LMKL += -L${MKLROOT}/lib/intel64
+# LMKL=
+# # Static
+# LMKL += -Wl,--start-group
+# LMKL += ${MKLROOT}/lib/intel64/libmkl_intel_ilp64.a
+# # LMKL += ${MKLROOT}/lib/intel64/libmkl_gnu_thread.a
+# LMKL += ${MKLROOT}/lib/intel64/libmkl_intel_thread.a
+# LMKL += ${MKLROOT}/lib/intel64/libmkl_core.a
+# LMKL += ${MKLROOT}/lib/intel64/libmkl_blacs_intelmpi_ilp64.a
+# LMKL += -Wl,--end-group
 # Common lines
 # LMKL += -lgomp
 LMKL += -liomp5

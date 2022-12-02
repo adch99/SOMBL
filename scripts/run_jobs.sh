@@ -19,11 +19,18 @@ couplings=$(seq $coup_low $coup_step $coup_high)
 disorders=$(seq $dis_high -$dis_step $dis_low)
 batchnums=$(seq 1 1 $numbatches)
 
-for coupling in $couplings; do
-    for disorder in $disorders; do
-        for batchnum in $batchnums; do
-            jobfilename="jobs/mbl_${size}x${size}_W${disorder}_C${coupling}_TU${hopup}_TD${hopdn}_N${runs}_BS${batchsize}_B${batchnum}.pbs"
-            qsub $jobfilename
-        done
-    done
+start=0
+stop=230 # = 231-1
+
+for index in {$start..$stop}; do
+    $coupling = 
 done
+
+# for coupling in $couplings; do
+#     for disorder in $disorders; do
+#         for batchnum in $batchnums; do
+#             jobfilename="jobs/mbl_${size}x${size}_W${disorder}_C${coupling}_TU${hopup}_TD${hopdn}_N${runs}_BS${batchsize}_B${batchnum}.pbs"
+#             # qsub $jobfilename
+#         done
+#     done
+# done
