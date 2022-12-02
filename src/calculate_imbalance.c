@@ -43,7 +43,7 @@ int main(int argc, char ** argv)
     struct SystemParams params;
     struct OutStream outfiles;
 
-    params_setup(argc, argv, &params, &outfiles, &argp);
+    params_setup(argc, argv, &params, &outfiles, &argp, 0);
 
     printf("Calculate Imbalance\n");
     printf("-------------------\n");
@@ -74,7 +74,7 @@ int main(int argc, char ** argv)
         printf("%d ", *(occupied_set_dn + i));
     printf("\n");
 
-    io_get_gfuncsq_from_file(gfuncsq, outfiles, params);
+    io_get_gfuncsq_from_file(gfuncsq, outfiles, params, 0);
 
     charge_imb = utils_get_charge_imbalance(gfuncsq, occupied_set_up,
                         set_length_up, occupied_set_dn, set_length_dn,

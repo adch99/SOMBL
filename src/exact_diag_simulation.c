@@ -26,13 +26,13 @@ DTYPE post_process(struct SystemParams params, struct OutStream outfiles,
 
 /* Constant Declarations */
 const char *argp_program_version =
-  "exact_diag_simulation 1.0";
+    "exact_diag_simulation 1.0";
 const char *argp_program_bug_address =
-  "<aditya.chincholi@students.iiserpune.ac.in>";
+    "<aditya.chincholi@students.iiserpune.ac.in>";
 // Program documentation.
 static char doc[] =
-  "exact_diag_simulation -- a simulation of spin-orbit coupled" 
-  "2d many-body localized systems.";
+    "exact_diag_simulation -- a simulation of spin-orbit coupled" 
+    "2d many-body localized systems.";
 // A description of the arguments we accept.
 static char args_doc[] = "-s <size> -c <coupling_const>"
                         "-w <disorder_strength>"
@@ -40,15 +40,15 @@ static char args_doc[] = "-s <size> -c <coupling_const>"
                         " [-p]";
 // The options we understand.
 static struct argp_option options[] = {
-  {"size",     's', "SIZE",     0, "Length and width of the lattice",        0},
-  {"coupling", 'c', "COUPLING", 0, "Spin-orbit coupling constant",           0},
-  {"disorder", 'w', "DISORDER", 0, "Strength of the disorder",               0},
-  {"hopping",  't', "HOPPING",  0, "Strength of the hopping",                0},
-  {"hopup",    'u', "HOPUP",    0, "Strength of the hopping for up spins",   0},
-  {"hopdn",    'd', "HOPDN",    0, "Strength of the hopping for down spins", 0},
-  {"runs",     'n', "NUMRUNS",  0, "Number of runs in the disorder average", 0},
-  {"nospin",   'p', 0,          0, "Use a spinless model hamiltonian.",      0},
-  { 0 }
+    {"size",     's', "SIZE",     0, "Length and width of the lattice",        0},
+    {"coupling", 'c', "COUPLING", 0, "Spin-orbit coupling constant",           0},
+    {"disorder", 'w', "DISORDER", 0, "Strength of the disorder",               0},
+    {"hopping",  't', "HOPPING",  0, "Strength of the hopping",                0},
+    {"hopup",    'u', "HOPUP",    0, "Strength of the hopping for up spins",   0},
+    {"hopdn",    'd', "HOPDN",    0, "Strength of the hopping for down spins", 0},
+    {"runs",     'n', "NUMRUNS",  0, "Number of runs in the disorder average", 0},
+    {"nospin",   'p', 0,          0, "Use a spinless model hamiltonian.",      0},
+    { 0 }
 };
 // Our argp parser.
 static struct argp argp = { options, params_parse_opt, args_doc, doc, 0, 0, 0};
@@ -63,7 +63,7 @@ int main(int argc, char ** argv)
     struct SystemParams params;
     struct OutStream outfiles;
 
-    params_setup(argc, argv, &params, &outfiles, &argp);
+    params_setup(argc, argv, &params, &outfiles, &argp, 0);
 
     // printf("Exact Diagonalization\n");
     // printf("---------------------\n");

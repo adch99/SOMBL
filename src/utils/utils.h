@@ -17,6 +17,27 @@ int utils_get_green_func_lim(CDTYPE * eigenvectors, int size,
                             DTYPE * green_func, int degeneracy);
 DTYPE utils_compute_gfsq_elem(int i, int j, CDTYPE * eigenvectors,
                             int size, int degeneracy);
+DTYPE utils_gfuncsq_sigma(int i, uint alpha, int j, uint beta,
+                        CDTYPE * sigma, CDTYPE * eigvecs, int num_states);
+int utils_gfuncsq_sigma_matrix(DTYPE * gfuncsq, CDTYPE * sigma,
+                                CDTYPE * eigvecs, int length);
+int utils_gfuncsq_sigma_matrix_nondeg(DTYPE * gfuncsq, CDTYPE * sigma,
+                                CDTYPE * eigvecs, int length);
+int utils_gfuncsq_sigma_matrix_deg(DTYPE * gfuncsq, CDTYPE * sigma,
+                                CDTYPE * eigvecs, int length);
+int utils_gfuncsq_sigma_matrix_nondeg_restr(DTYPE * gfuncsq, CDTYPE * sigma,
+                                CDTYPE * eigvecs, int length, int nmin, int nmax);
+int utils_gfuncsq_sigma_matrix_deg_restr(DTYPE * gfuncsq, CDTYPE * sigma,
+                                CDTYPE * eigvecs, int length, int nmin, int nmax);
+int utils_gfuncsq_sigma_coeff_nondeg(DTYPE * gfuncsq, CDTYPE * sigma,
+                                CDTYPE * eigvecs, int length);
+int utils_gfuncsq_sigma_coeff_deg(DTYPE * gfuncsq, CDTYPE * sigma,
+                                CDTYPE * eigvecs, int length);
+int utils_gfuncsq_sigma_coeff(DTYPE * gfuncsq, CDTYPE * sigma,
+                                CDTYPE * eigvecs, int length);
+int utils_multiply_restricted(CDTYPE * mat1, int m1, int n1min, int n1max,
+                            CDTYPE * mat2, int m2, int n2min, int n2max,
+                            CDTYPE * prod);
 int utils_get_lattice_index(int index, int length, int nospin,
                         int * x, int * y, unsigned int * spin);
 int utils_get_matrix_index(int x, int y, unsigned int spin,
@@ -33,6 +54,8 @@ DTYPE utils_get_charge_imbalance(DTYPE * gfuncsq, int * occupied_set_up,
 DTYPE utils_pbc_chord_length_sq(int index1, int length1,
                                 int index2, int length2);
 int utils_reflect_upper_to_lower(DTYPE * matrix, int n);
+int utils_bin_energy_range(DTYPE * energies, int len, int num_bins,
+                        DTYPE core_min, DTYPE core_max, int * bin_edges);
 
 // Bitwise manipulations
 // From SO community wiki post

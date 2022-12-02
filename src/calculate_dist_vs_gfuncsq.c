@@ -43,7 +43,7 @@ int main(int argc, char ** argv)
     struct SystemParams params;
     struct OutStream outfiles;
 
-    params_setup(argc, argv, &params, &outfiles, &argp);
+    params_setup(argc, argv, &params, &outfiles, &argp, 0);
 
     printf("Calculate G^2(r)\n");
     printf("----------------\n");
@@ -56,7 +56,7 @@ int main(int argc, char ** argv)
 
     // Get the gfuncsq matrix from the data file
     DTYPE * matrix = malloc(params.num_states*params.num_states*sizeof(DTYPE));
-    io_get_gfuncsq_from_file(matrix, outfiles, params);
+    io_get_gfuncsq_from_file(matrix, outfiles, params, 0);
     // utils_print_matrix(matrix, params.num_states, params.num_states, 'R', 'F');
     // Bin the gfunsq matrix and create a function of
     // distance G^2(|r_i - r_j|)

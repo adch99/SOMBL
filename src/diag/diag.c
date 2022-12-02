@@ -46,14 +46,13 @@ int diag_get_eigh(CDTYPE * matrix, int size, DTYPE * eigvals)
 
     lda = size;
     n = size;
+
     info = LAPACKE_zheev(LAPACK_COL_MAJOR, 'V', 'U', n,
                         matrix, lda, eigvals);
-    
     if (info != 0)
     {
-        printf("LAPACKE_zheev error! Code: %d", info);
+        printf("LAPACKE_zheev error! Code: %lld", info);
         return(info); // Some error has occured.
     }
-
     return(0);
 }
