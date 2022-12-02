@@ -21,7 +21,7 @@ numDis = 11
 numRuns = numCoups * numDis
 
 start = 0
-stop = 480
+stop = 80
 
 for index in range(start, stop):
     coupIdx = index // numDis
@@ -30,5 +30,6 @@ for index in range(start, stop):
     disorder = disLow + disStep*disIdx
 
     for batchnum in range(1, numbatches+1):
-        jobfilename = f"jobs/mbl_{size}x{size}_W{disorder:.1f}_C{coupling:.1f}_TU{hopup:.1f}_TD{hopdn:.1f}_N{runs}_BS{batchsize}_B{batchnum}.pbs"
-        os.system(f"qsub {jobfilename}")
+        jobfilename = "jobs/mbl_%dx%d_W%.1f_C%.1f_TU%.1f_TD%.1f_N%d_BS%d_B%d.pbs" % (size,size,disorder,coupling,hopup,hopdn,runs,batchsize,batchnum)
+        os.system(f"echo {jobfilename}")
+        # os.system(f"qsub {jobfilename}")
