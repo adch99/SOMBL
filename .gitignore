@@ -1,6 +1,7 @@
 # Temporary directories
 build/
 logs/
+oldlogdata/
 docs/build
 docs/images
 scripts/__pycache__
@@ -12,6 +13,7 @@ plots/
 ahana/
 notebooks/
 jobs/
+jobs_zeal/
 
 # Prerequisites
 *.d

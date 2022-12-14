@@ -4,7 +4,9 @@
 # All rights reserved.
 
 # Script to generate a PBS file for input
-# in the cluster
+# in the cluster.
+# Average the green's functions from the
+# different batches.
 
 size=100
 runs=90
@@ -27,14 +29,11 @@ batchnums=$(seq 1 1 $numbatches)
 
 for coupling in $couplings; do
     for disorder in $disorders; do
-        for batchnum in $batchnums; do
-            jobname="mbl_${size}x${size}_W${disorder}_C${coupling}_TU${hopup}_TD${hopdn}_N${runs}_BS${batchsize}_B${batchnum}"
-            pbs_filename="jobs/${jobname}.pbs"
-            log_filename="logs/${jobname}.log"
-            execname="build/exact_diag_batch"
-            # execname="${jobname}.out"
-            # cp build/exact_diag_batch $execname
-            cat <<END_OF_PROGRAM > ${pbs_filename}
+        jobname="mbl_average_${size}x${size}_W${disorder}_C${coupling}_TU${hopup}_TD${hopdn}_N${runs}_BS${batchsize}"
+        pbs_filename="jobs/${jobname}.pbs"
+        log_filename="logs/${jobname}.log"
+        execname="build/batch_average"
+        cat <<END_OF_PROGRAM > ${pbs_filename}
 #!/bin/bash
 # The following line specifies the maximum cpu utilization
 # in terms of cpu time (3 days)
@@ -45,7 +44,7 @@ for coupling in $couplings; do
 # The following line merges the stdout and stderr together
 #PBS -j oe
 #PBS -o ${log_filename}
-#PBS -l mem=20gb
+#PBS -l mem=8gb
 # The following line specifies the name of the job
 #PBS -N ${jobname}
 #########################################################################
@@ -56,7 +55,7 @@ hostname
 date
 echo "Running job ${jobname}"
 pwd
-time ${execname} -n $runs --batchsize $batchsize --batch $batchnum -c $coupling -w $disorder -s $size -u $hopup -d $hopdn
+time ${execname} -n $runs --batchsize $batchsize -c $coupling -w $disorder -s $size -u $hopup -d $hopdn
 date
 
 cd \${PBS_O_WORKDIR}
@@ -66,6 +65,5 @@ rm ${execname}
 exit 0
 
 END_OF_PROGRAM
-        done
     done
 done

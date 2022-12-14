@@ -56,6 +56,11 @@ DTYPE utils_pbc_chord_length_sq(int index1, int length1,
 int utils_reflect_upper_to_lower(DTYPE * matrix, int n);
 int utils_bin_energy_range(DTYPE * energies, int len, int num_bins,
                         DTYPE core_min, DTYPE core_max, int * bin_edges);
+int utils_add_to_matrix_real(DTYPE * matrix1, DTYPE * matrix2,
+                            int m, int n);
+int utils_add_to_matrix_complex(CDTYPE * matrix1, CDTYPE * matrix2,
+                            int m, int n);
+
 
 // Bitwise manipulations
 // From SO community wiki post

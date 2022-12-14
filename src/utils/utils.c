@@ -1365,3 +1365,41 @@ int utils_gfuncsq_sigma_coeff(DTYPE * gfuncsq, CDTYPE * sigma,
     utils_gfuncsq_sigma_coeff_deg(gfuncsq, sigma, eigvecs, length);
     return(0);
 }
+
+/*
+    Adds matrix2 to matrix1 and stores the result back
+    in matrix1. Matrices should be real (DTYPE).
+    Assumes column major format.
+*/
+int utils_add_to_matrix_real(DTYPE * matrix1, DTYPE * matrix2, int m, int n)
+{
+    int i, j, index;
+    for(i = 0; i < m; i++)
+    {
+        for(j = 0; j < n; j++)
+        {
+            index = RTC(i, j, m);
+            *(matrix1 + index) = *(matrix1 + index) + *(matrix2 + index);
+        }
+    }
+    return(0);
+}
+
+/*
+    Adds matrix2 to matrix1 and stores the result back
+    in matrix1. Matrices should be complex (CDTYPE)
+    Assumes column major format.
+*/
+int utils_add_to_matrix_complex(CDTYPE * matrix1, CDTYPE * matrix2, int m, int n)
+{
+    int i, j, index;
+    for(i = 0; i < m; i++)
+    {
+        for(j = 0; j < n; j++)
+        {
+            index = RTC(i, j, m);
+            *(matrix1 + index) = *(matrix1 + index) + *(matrix2 + index);
+        }
+    }
+    return(0);
+}

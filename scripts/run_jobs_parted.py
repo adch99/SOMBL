@@ -31,5 +31,5 @@ for index in range(start, stop):
 
     for batchnum in range(1, numbatches+1):
         jobfilename = "jobs/mbl_%dx%d_W%.1f_C%.1f_TU%.1f_TD%.1f_N%d_BS%d_B%d.pbs" % (size,size,disorder,coupling,hopup,hopdn,runs,batchsize,batchnum)
-        os.system(f"echo {jobfilename}")
-        # os.system(f"qsub {jobfilename}")
+        os.system("echo %s" % jobfilename)
+        # os.system("qsub %s" % jobfilename)
