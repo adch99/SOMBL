@@ -61,7 +61,9 @@ date
 cd \${PBS_O_WORKDIR}
 date
 echo Job ended at \`date\`
-rm ${execname}
+# Use this only if there's a separate executable
+# for each job.
+# rm ${execname}
 exit 0
 
 END_OF_PROGRAM
