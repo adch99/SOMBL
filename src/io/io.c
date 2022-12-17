@@ -472,8 +472,8 @@ int io_output_function_data(DTYPE * dists, DTYPE * gfuncsq,
 
         fprintf(ofile, "%e %e %e\n",
                 *(dists + i), *(gfuncsq + i), *(errors + i));
-        printf("%e %e %e\n",
-                *(dists + i), *(gfuncsq + i), *(errors + i));
+        // printf("%e %e %e\n",
+        //         *(dists + i), *(gfuncsq + i), *(errors + i));
 
     }
     fclose(ofile);

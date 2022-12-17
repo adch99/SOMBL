@@ -950,11 +950,11 @@ int utils_bin_data(DTYPE index, DTYPE value, int bins, int * counts,
 
     int bin_num = (int) floor((index - lowest) / bin_width);
 
-    if (bin_num >= bins || bin_num < 0)
-    {
-        printf("Value %e doesn't lie in range: 0 - %e\n", index, bin_width*bins);
-        return(-1);
-    }
+    // if (bin_num >= bins || bin_num < 0)
+    // {
+    //     printf("Value %e doesn't lie in range: 0 - %e\n", index, bin_width*bins);
+    //     return(-1);
+    // }
 
     *(counts + bin_num) += 1;
     *(value_hist + bin_num) += value;
