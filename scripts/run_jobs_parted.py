@@ -23,6 +23,8 @@ numRuns = numCoups * numDis
 start = 0
 stop = 80
 
+basename = "mbl_distvsgfuncsq"
+
 for index in range(start, stop):
     coupIdx = index // numDis
     disIdx = index % numDis
@@ -30,6 +32,10 @@ for index in range(start, stop):
     disorder = disLow + disStep*disIdx
 
     for batchnum in range(1, numbatches+1):
-        jobfilename = "jobs/mbl_%dx%d_W%.1f_C%.1f_TU%.1f_TD%.1f_N%d_BS%d_B%d.pbs" % (size,size,disorder,coupling,hopup,hopdn,runs,batchsize,batchnum)
+        subs = (basename, size, size,
+                disorder, coupling,
+                hopup, hopdn, runs,
+                batchsize, batchnum)
+        jobfilename = "jobs/%s_%dx%d_W%.1f_C%.1f_TU%.1f_TD%.1f_N%d_BS%d_B%d.pbs" % subs
         os.system("echo %s" % jobfilename)
         # os.system("qsub %s" % jobfilename)
