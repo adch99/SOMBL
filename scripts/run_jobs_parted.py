@@ -20,10 +20,10 @@ numCoups = 21
 numDis = 11
 numRuns = numCoups * numDis
 
-start = 0
-stop = 80
+start = 80
+stop = 120
 
-basename = "mbl_distvsgfuncsq"
+basename = "mbl"
 
 for index in range(start, stop):
     coupIdx = index // numDis

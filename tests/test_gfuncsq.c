@@ -438,6 +438,37 @@ void test_utils_bin_energy_range(void)
     TEST_ASSERT_INT_ARRAY_WITHIN(1, exp_bin_edges, actual_bin_edges, 12);
 }
 
+int test_gfuncsq_sym_GR_GRstar(void)
+{
+    int L = 4;
+    int Lsq = L * L;
+    int i, j;
+    CDTYPE elem;
+
+    CDTYPE *eigvecs = calloc(2 * Lsq * 2 * Lsq, sizeof(CDTYPE));
+    DTYPE *exp_gfuncsq = calloc(Lsq * Lsq, sizeof(DTYPE));
+    DTYPE *gfuncsq = calloc(Lsq * Lsq, sizeof(DTYPE));
+
+    // Get eigenvectors
+    FILE *eigfile = fopen("data/fake_eigenvectors_4x4.dat", "r");
+    io_zread_2d(eigvecs, 2 * Lsq, 2 * Lsq, eigfile);
+    fclose(eigfile);
+    // Get expected value from file
+    FILE *gfuncfile = fopen("data/deg_sigma_coeff_gfuncsq_python_4x4.dat", "r");
+    io_dread_2d(exp_gfuncsq, Lsq, Lsq, gfuncfile);
+    fclose(gfuncfile);
+
+    gfuncsq_sym_GR_GRstar(eigvecs, gfuncsq, length,
+                        nmin, nmax, alpha, gamma);
+    
+    TEST_ASSERT_EQUAL_DOUBLE_ARRAY(exp_gfuncsq, gfuncsq, Lsq * Lsq);
+
+    free(sigma);
+    free(eigvecs);
+    free(exp_gfuncsq);
+    free(gfuncsq);
+
+}
 
 int main(void)
 {

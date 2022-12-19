@@ -7,7 +7,10 @@ LDIRS=
 # -----------------
 
 # On cluster use these lines
+# On flock
 # MKLROOT=/apps/intel_2018/mkl
+# On leap
+# MKLROOT=/apps/intel/oneapi/mkl/latest
 # CMKL=
 # LMKL=-Wl,--start-group $(MKLROOT)/lib/intel64/libmkl_intel_lp64.a $(MKLROOT)/lib/intel64/libmkl_intel_thread.a $(MKLROOT)/lib/intel64/libmkl_core.a -Wl,--end-group
 
@@ -96,7 +99,7 @@ LFLAGS += $(LMKL)
 # -----------------
 
 # Function Files
-_DEPS = utils/utils.c ham_gen/ham_gen.c params/params.c io/io.c diag/diag.c
+_DEPS = utils/utils.c ham_gen/ham_gen.c params/params.c io/io.c diag/diag.c gfunc/gfunc.c
 DEPS = $(patsubst %,src/%,$(_DEPS))
 OBJ = $(patsubst %.c,build/%.o,$(_DEPS))
 

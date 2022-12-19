@@ -35,7 +35,7 @@ static struct argp_option options[] = {
     { 0 }
 };
 // Our argp parser.
-static struct argp argp = { options, params_parse_opt, args_doc, doc, 0, 0, 0};
+static struct argp argp = {options, params_parse_opt, args_doc, doc, 0, 0, 0};
 
 int main(int argc, char ** argv)
 {

@@ -1,9 +1,12 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include <complex.h>
-#include <cblas.h>
+// #include <cblas.h>
+#include "mkl.h"
 #include "../constants.h"
 #include "../utils/utils.h"
+#include "gfunc.h"
 
 #define TOL 1e-6
 
@@ -89,7 +92,8 @@ DTYPE gfuncsq_std_elem(int i, int j, CDTYPE * eigenvectors,
                             int size, int degeneracy)
 {
     DTYPE sum = 0.0;
-    int k, l;
+    int k;
+    int l;
 
     int index1, index2;
     index1 = RTC(i, 0, size);
@@ -249,7 +253,7 @@ int gfuncsq_restr_sigma_op_nondeg(DTYPE * gfuncsq, CDTYPE * sigma,
     |G(i,j)|^2 = lim t to infty |Sum_{alpha,beta}
     <i,alpha| sigma exp(-iHt)|j,beta>|^2
 */
-int gfuncsq_sigma_op_deg_restr(DTYPE * gfuncsq, CDTYPE * sigma,
+int gfuncsq_restr_sigma_op_deg(DTYPE * gfuncsq, CDTYPE * sigma,
                                 CDTYPE * eigvecs, int length,
                                 int nmin, int nmax)
 {
@@ -478,3 +482,115 @@ int gfuncsq_sigma_op_deg(DTYPE * gfuncsq, CDTYPE * sigma,
     free(product);
     return(0);
 }
+
+int gfuncsq_sym_GR_GRstar(CDTYPE * eigvecs, DTYPE * gfuncsq, int length,
+                        int nmin, int nmax, uint alpha, uint gamma)
+{
+    int num_sites = length * length;
+    int num_states = 2*num_sites;
+    int nwindow = nmax - nmin;
+    // Case where alpha = beta
+    int i, k; // Positional index
+    int n, m; // Pos+Spin index
+    uint beta = alpha;
+    CDTYPE elem;
+
+    DTYPE * Z = calloc(num_states * nwindow, sizeof(DTYPE));
+    DTYPE * A = calloc(num_sites * nwindow, sizeof(DTYPE));
+
+    // Create Z_{2i+alpha,n} = |psi_n(i,alpha)|^2
+    for(m = 0; m < num_states; m++)
+    {
+        for(n = nmin; n < nmax; n++)
+        {
+            elem = *(eigvecs + RTC(m, n, num_states));
+            *(Z + RTC(m, n, num_states)) = creal(elem)*creal(elem)
+                                        + cimag(elem)*cimag(elem);            
+        }
+    }
+
+    // Create A_{alpha,alpha} =     
+    for(i = 0; i < num_sites; i++)
+    {
+        for(n = nmin; n < nmax; n++)
+        {
+            *(A + RTC(i, n, num_states)) = *(Z + RTC(2*i+alpha, n, num_states));
+        }
+    }
+
+    MKL_INT M = num_sites;
+    MKL_INT N = num_states;
+    MKL_INT K = nwindow;
+    cblas_dgemm(CblasColMajor, CblasNoTrans, CblasTrans,
+                M, N, K, 1.0, A, M, Z, N, 0.0, gfuncsq, M);
+    free(Z);
+    free(A);
+
+    return(0);
+}
+
+// int gfuncsq_gfunc_gfuncstar(uint alpha, uint beta, uint gamma, void * gfuncsq)
+// {
+
+//     // First we check if alpha, beta and gamma are actually either
+//     // SPINUP or SPINDN (0 or 1).
+
+//     bool cond_alpha = (alpha != SPINUP && alpha != SPINDN);
+//     bool cond_beta = (beta != SPINUP && beta != SPINDN);
+//     bool cond_gamma = (gamma != SPINUP && gamma != SPINDN);
+//     CDTYPE sigma[4];
+
+//     if(cond_alpha && cond_beta && cond_gamma)
+//     {
+//         printf("Something is wrong!\n");
+//         printf("alpha, beta and gamma should be %d or %d.\n",
+//                 SPINUP, SPINDN);
+//         printf("Given values of alpha = %d beta = %d gamma = %d\n",
+//                 alpha, beta, gamma);
+//         return(-1);
+//     }
+
+//     if(alpha == beta)
+//     {
+//         if(alpha == SPINUP && gamma == SPINUP)
+//         {
+//             sigma[RTC(0,0,2)] = 1;
+//             sigma[RTC(0,1,2)] = 0;
+//             sigma[RTC(1,0,2)] = 0;
+//             sigma[RTC(1,1,2)] = 0;
+
+//         }
+//         else if(alpha == SPINUP && gamma == SPINDN)
+//         {
+
+//         }
+//         else if(alpha == SPINDN && gamma == SPINUP)
+//         {
+
+//         }
+//         else if(alpha == SPINDN && gamma == SPINDN)
+//         {
+
+//         }
+//     }
+//     else
+//     {
+//         if(alpha == SPINUP && beta == SPINDN && gamma == SPINUP)
+//         {
+//         }
+//         else if(alpha == SPINUP && beta == SPINDN && gamma == SPINDN)
+//         {
+
+//         }
+//         else if(alpha == SPINDN && beta == SPINUP && gamma == SPINUP)
+//         {
+
+//         }
+//         else if(alpha == SPINDN && beta == SPINUP && gamma == SPINDN)
+//         {
+
+//         }
+//     }
+
+//     return(0);
+// }
