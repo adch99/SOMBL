@@ -6,12 +6,13 @@
 # Script to generate a PBS file for input
 # in the cluster
 
-size=100
-runs=90
-batchsize=15
-numbatches=6
+size=40
+runs=100
+batchsize=10
+numbatches=10
 hopup=1.0
 hopdn=1.0
+bins=50
 
 dis_high=18
 dis_low=8.0
@@ -31,7 +32,7 @@ for coupling in $couplings; do
             jobname="mbl_${size}x${size}_W${disorder}_C${coupling}_TU${hopup}_TD${hopdn}_N${runs}_BS${batchsize}_B${batchnum}"
             pbs_filename="jobs/${jobname}.pbs"
             log_filename="logs/${jobname}.log"
-            execname="build/exact_diag_batch"
+            execname="build/keldysh_window_batch"
             # execname="${jobname}.out"
             # cp build/exact_diag_batch $execname
             cat <<END_OF_PROGRAM > ${pbs_filename}
@@ -45,7 +46,7 @@ for coupling in $couplings; do
 # The following line merges the stdout and stderr together
 #PBS -j oe
 #PBS -o ${log_filename}
-#PBS -l mem=20gb
+#PBS -l mem=3gb
 # The following line specifies the name of the job
 #PBS -N ${jobname}
 #########################################################################
@@ -56,7 +57,7 @@ hostname
 date
 echo "Running job ${jobname}"
 pwd
-time ${execname} -n $runs --batchsize $batchsize --batch $batchnum -c $coupling -w $disorder -s $size -u $hopup -d $hopdn
+time ${execname} -n $runs --bins $bins --batchsize $batchsize --batch $batchnum -c $coupling -w $disorder -s $size -u $hopup -d $hopdn
 date
 
 cd \${PBS_O_WORKDIR}

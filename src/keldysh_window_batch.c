@@ -64,9 +64,9 @@ static struct argp argp = { options, params_parse_opt, args_doc, doc, 0, 0, 0};
 //  --------------------
 // | Relevant Constants |
 //  --------------------
-#define ENERGYCOREMIN (-1.0)
-#define ENERGYCOREMAX (1.0)
-#define NUMBINS (5)
+#define ENERGYCOREMIN (-8.0)
+#define ENERGYCOREMAX (8.0)
+#define NUMBINS (50)
 
 //------------------------------------------------------------------------
 

@@ -1,27 +1,27 @@
 import os
 
-size = 100
-runs = 90
-batchsize = 15
-numbatches = 6
+size = 40
+runs = 100
+batchsize = 10
+numbatches = 10
 hopup = 1.0
 hopdn = 1.0
 
 
-coupLow = 0
-coupHigh = 2
+coupLow = 0.3
+coupHigh = 0.5
 coupStep = 0.1
 
-disLow = 8
-disHigh = 18
+disLow = 13
+disHigh = 15
 disStep = 1
 
-numCoups = 21
-numDis = 11
+numCoups = 3
+numDis = 3
 numRuns = numCoups * numDis
 
-start = 80
-stop = 120
+start = 0
+stop = 9
 
 basename = "mbl"
 
