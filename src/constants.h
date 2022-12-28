@@ -6,6 +6,8 @@
 #define DTYPE double
 #define CDTYPE complex double
 // #define lapack_complex_double CDTYPE
+typedef unsigned int uint;
+
 #define NEIGHS 4
 
 #define SPINUP 0

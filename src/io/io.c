@@ -6,8 +6,18 @@
 #include "../utils/utils.h"
 #include "io.h"
 
-#define MAXCHAR 1000
+#define MAXCHAR 1024
 
+int check_terminated(const char * str, int max_len)
+{
+    int i;
+    for(i = 0; i < max_len; i++)
+    {
+        if(*(str + i) == '\0')
+            return(1);
+    }
+    return(0);
+}
 
 /*
     Opens the file for the given purpose (must be either 'r'
@@ -15,37 +25,26 @@
 */
 FILE * io_safely_open(char purpose, char * filename)
 {
-    FILE * openfile;
-    if(purpose == 'w')
+    if(purpose != 'w' && purpose != 'r' && purpose != 'a')
     {
-        openfile = fopen(filename, "w");
-        if (openfile == NULL)
-        {
-            printf("Error in opening file %s: %s\n",
-                    filename, strerror(errno));
-            fclose(openfile);
-            exit(EXIT_FAILURE);
-        }
-        return(openfile);
-    }
-
-    if(purpose == 'r')
-    {
-        openfile = fopen(filename, "r");
-        if (openfile == NULL)
-        {
-            printf("Error in opening file %s: %s\n",
-                    filename, strerror(errno));
-            fclose(openfile);
-            exit(EXIT_FAILURE);
-        }
-        return(openfile);
-    }
-    else
-    {
-        printf("Argument 'purpose' must be either 'r' or 'w'\n");
+        printf("\nArgument 'purpose' must be either 'r' or 'w' or 'a'\n");
+        printf("purpose = %c\n", purpose);
         exit(EXIT_FAILURE);
     }
+
+    FILE * openfile;
+    char mode[3];
+    sprintf(mode, "%c", purpose);
+    // printf("Opening %s in mode %s\n", filename, mode);
+    openfile = fopen(filename, mode);
+    if (openfile == NULL)
+    {
+        printf("Error in opening file %s: %s\n",
+                filename, strerror(errno));
+        fclose(openfile);
+        exit(EXIT_FAILURE);
+    }
+    return(openfile);
 }
 
 /*
@@ -70,6 +69,7 @@ int io_read_array(char type, char ordering, void * array,
 
     if(type == 'C')
     {
+        // printf("io_read_array: m = %d n = %d\n", m, n);
         info = io_read_array_complex(ordering, (CDTYPE *) array,
                                     m, n, ifile);
     }
@@ -91,6 +91,12 @@ int io_read_array(char type, char ordering, void * array,
     }
     
     fclose(ifile);
+    if(info != 0)
+    {
+        printf("Erring Filename: %s\n", filename);
+        exit(EXIT_FAILURE);
+    }
+
     return(info);
 }
 
@@ -102,29 +108,24 @@ int io_read_array(char type, char ordering, void * array,
 int io_read_array_complex(char ordering, CDTYPE * array,
                         int m, int n, FILE * ifile)
 {
-    int i, j, found;
+    int i, j, info;
     DTYPE zreal, zimag;
-    // printf("Beginning\n");
     for(i = 0; i < m; i++)
     {
         for(j = 0; j < n; j++)
         {
-            // printf("Pointer at %d\n", ftell(ifile));
-            found = io_read_until_char('(', ifile);
-            if(found != 0)
+            info = fscanf(ifile, " (%le%lej) ", &zreal, &zimag);
+            if(info != 2)
             {
-                printf("Something is wrong! Cannot parse file!\n");
+                fprintf(stderr, "Input file in wrong format at (%d,%d) info = %d!\nstrerror: %s\n",
+                        i, j, info, strerror(errno));
+                char line[32];
+                fgets(line, 32, ifile);
+                fprintf(stderr, "Error line: '%s'\n", line);
+                fprintf(stderr, "feof: %d ferror: %d\n", feof(ifile), ferror(ifile));
+                fprintf(stderr, "m: %d n: %d\n", m, n);
                 return(-1);
             }
-            // printf("Pointer at %d\n", ftell(ifile));
-            fseek(ifile, 1, SEEK_CUR);
-            // printf("Pointer at %d\n", ftell(ifile));
-            fscanf(ifile, "%le", &zreal);
-            // printf("Pointer at %d\n", ftell(ifile));
-            fscanf(ifile, "%le", &zimag);
-            // printf("Pointer at %d\n\n", ftell(ifile));
-            // printf("z = %le+%lej\n", zreal, zimag);
-
             if (ordering == 'C')
                 *(array + RTC(i, j, m)) = zreal + I*zimag;
             else if (ordering == 'R')
@@ -132,10 +133,6 @@ int io_read_array_complex(char ordering, CDTYPE * array,
             else
                 return(-1);
         }
-        io_read_until_char('\n', ifile);
-        // printf("Pointer at %d\n", ftell(ifile));
-        fseek(ifile, 1, SEEK_CUR);
-        // printf("Pointer at %d\n-------\n", ftell(ifile));
     }
     return(0);
 }
@@ -167,8 +164,8 @@ int io_read_array_real(char ordering, DTYPE * array,
             else
                 return(-1);
         }
-        io_read_until_char('\n', ifile);
-        fseek(ifile, 1, SEEK_CUR);
+        // io_read_until_char('\n', ifile);
+        // fseek(ifile, 1, SEEK_CUR);
         // printf("\n");
     }
     // printf("\n");
@@ -184,6 +181,30 @@ int io_read_array_real(char ordering, DTYPE * array,
 int io_read_array_int(char ordering, int * array,
                         int m, int n, FILE * ifile)
 {
+    int i, j, match;
+    int elem;
+    for(i = 0; i < m; i++)
+    {
+        for(j = 0; j < n; j++)
+        {
+            match = fscanf(ifile, "%d", &elem);
+            if(match == 0)
+            {
+                printf("An error occured while parsing the file!\n");
+                return(-1);
+            }
+            if (ordering == 'C')
+                *(array + RTC(i, j, m)) = elem;
+            else if (ordering == 'R')
+                *(array + i*n + j) = elem;
+            else
+                return(-1);
+        }
+        io_read_until_char('\n', ifile);
+        fseek(ifile, 1, SEEK_CUR);
+        // printf("\n");
+    }
+    // printf("\n");
     return(0);
 }
 
@@ -203,22 +224,22 @@ int io_write_array(char type, char ordering, void * array,
     }
 
 
-    if(ordering != 'C' && ordering != 'F')
+    if(ordering != 'C' && ordering != 'R')
     {
         printf("Invalid ordering passed to io_write_array.\n");
-        printf("ordering must be either 'C' or 'F'.\n");
+        printf("ordering must be either 'C' or 'R'.\n");
     }
 
-
+    // printf("Writing %dx%d\n", m, n);
     for(i = 0; i < m; i++)
     {
         for(j = 0; j < n; j++)
         {
-            index = (ordering=='C')?(i*n + j):RTC(i, j, m);
+            index = (ordering=='R') ? (i*n + j) : RTC(i, j, m);
             if(type == 'C')
             {
                 elemc = *((CDTYPE*)array + index);
-                fprintf(ofile, "(%le%+lej) ", creal(elemc), cimag(elemc));
+                fprintf(ofile, " (%le%+lej) ", creal(elemc), cimag(elemc));
             }
             else
             {
@@ -228,6 +249,7 @@ int io_write_array(char type, char ordering, void * array,
         }
         fprintf(ofile, "\n");
     }
+    fclose(ofile);
     return 0;
 }
 
@@ -366,28 +388,83 @@ int io_get_array_from_file(int * array, int length, FILE * ifile)
 
 int io_read_until_char(char stopchar, FILE * ifile)
 {
-    char row[MAXCHAR];
-    int offset, read_len;
-    while (!feof(ifile))
-    {
-        if(fgets(row, MAXCHAR, ifile) == NULL)
-            break;
-        read_len = strlen(row);
-        // printf("Row: %s", row);
-        char * loc = strchr(row, stopchar);
-        if(loc == NULL)
-            continue;
-        else
+    char value;
+    int found = 0;
+    do {
+        value = fgetc(ifile);
+        if(feof(ifile))
         {
-            offset = -read_len + (int)(loc - row);
-            fseek(ifile, offset, SEEK_CUR);
+            printf("Reached EOF!\n");
+            return(-1);
+        }
+        else if(ferror(ifile))
+        {
+            fprintf(stderr, strerror(errno));
+            printf("File Reading Error!\n");
+            return(-1);
+        }
+        else if(value == stopchar)
+        {
+            found = 1;
             break;
         }
-    }
-    if(feof(ifile))
+    } while(found == 0);
+
+    
+    fseek(ifile, -1, SEEK_CUR);
+    // clearerr(ifile);
+    
+    if(found != 1)
+    {
+        printf("Not found! Last value = %c\n", value);
         return(-1);
-    else
-        return(0);
+    }
+    
+    return(0);
+}
+
+
+int io_old_read_until_char(char stopchar, FILE * ifile)
+{
+    // char row[MAXCHAR];
+    // int offset, read_len;
+    // char * loc = NULL;
+    // int passes = 0;
+
+    // while (fgets(row, MAXCHAR, ifile) != NULL)
+    // {
+    //     passes += 1;
+    //     if(check_terminated(row, MAXCHAR) == 0)
+    //     {
+    //         printf("Something is wrong!\nstring not terminated!\n");
+    //         return(-1);
+    //     }
+    //     read_len = strlen(row);
+    //     loc = strchr(row, stopchar);
+    //     if(loc == NULL)
+    //         continue;
+    //     else
+    //     {
+    //         offset = -read_len + (int)(loc - row);
+    //         fseek(ifile, offset, SEEK_CUR);
+    //         break;
+    //     }
+    // }
+    // if(ferror(ifile))
+    // {
+    //     perror("Ferror in reading file!\n");
+    //     return(-1);
+    // }
+    // else if(feof(ifile) && loc == NULL)
+    // {
+    //     if(stopchar != '\n')
+    //         printf("Finding %c in Row: %s FAILED len = %d passes = %d\n", stopchar, row, read_len, passes);
+    //     fflush(stdout);
+    //     return(-1);
+    // }
+    // else
+    //     return(0);
+    return(0);
 }
 
 /*
@@ -478,4 +555,40 @@ int io_output_function_data(DTYPE * dists, DTYPE * gfuncsq,
     }
     fclose(ofile);
     return 0;
+}
+
+/*
+    Appends the given array to the end of the given file
+    in a single line, ending with a newline.
+    `type` must be either 'R' for real or 'C' for complex.
+    `array` must be a 1D array.
+*/
+int io_append_array(char type, void * array, int n, char * filename)
+{
+    if(type != 'C' && type != 'R')
+    {
+        printf("Invalid type passed to io_write_array.\n");
+        printf("type must be either 'C' or 'R'.\n");
+    }
+
+    FILE * ofile = io_safely_open('a', filename);
+    int i;
+    CDTYPE elemc;
+    DTYPE elemr;
+    for(i = 0; i < n; i++)
+    {
+        if(type == 'C')
+        {
+            elemc = *((CDTYPE*)array + i);
+            fprintf(ofile, "(%le%+lej) ", creal(elemc), cimag(elemc));
+        }
+        else
+        {
+            elemr = *((DTYPE*)array + i);
+            fprintf(ofile, "%le ", elemr);
+        }
+    }
+    fprintf(ofile, "\n");
+    fclose(ofile);
+    return(0);
 }

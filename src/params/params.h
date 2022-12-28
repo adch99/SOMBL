@@ -21,6 +21,7 @@ struct SystemParams {
     int batch_num;
     int batch_size;
     int seed;
+    int energybins;
 };
 
 
@@ -36,4 +37,8 @@ int params_setup(int argc, char ** argv, struct SystemParams * params,
 int params_set_up_datastream(struct SystemParams params,
                             struct OutStream * outfiles, int sigma);
 int params_cleanup(struct SystemParams * params, struct OutStream * outfiles);
+int params_basefilename(struct SystemParams params, const char * prefix, 
+                        char * suffix, char * filename);
+int params_gr_grstar_filename(char * filename, struct SystemParams params,
+                            int bin, uint alpha, uint beta);
 #endif

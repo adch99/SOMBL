@@ -3,18 +3,46 @@
 #include <string.h>
 #include "../extern/unity/unity.h"
 #include "../src/utils/utils.h"
+#include "../src/gfunc/gfunc.h"
 #include "../src/io/io.h"
+#include "../src/constants.h"
+
+// For NaN detection
+// #define _GNU_SOURCE
+// #include <fenv.h>
+
 
 void setUp(void) {}
 
 void tearDown(void) {}
 
+void assert_equal_complex_double_array(const double complex * expected,
+                                        const double complex * actual,
+                                        int length)
+{
+    int i;
+    double complex elem1, elem2;
+    char template[] = "Element %d %s Part";
+    char message[40];
+    for(i = 0; i < length; i++)
+    {
+        elem1 = *(actual + i);
+        elem2 = *(expected + i);
+        snprintf(message, 40, template, i, "Real");
+        TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(creal(elem2), creal(elem1), message);
+        snprintf(message, 40, template, i, "Imag");
+        TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(cimag(elem2), cimag(elem1), message);
+
+    }
+}
+
+
 void test_utils_gfuncsq_sigma_matrix_nondeg()
 {
     int L = 4;
     int Lsq = L * L;
-    int i, j;
-    CDTYPE elem;
+    // int i, j;
+    // CDTYPE elem;
 
     CDTYPE *sigma = calloc(2 * 2, sizeof(CDTYPE));
     CDTYPE *eigvecs = calloc(2 * Lsq * 2 * Lsq, sizeof(CDTYPE));
@@ -115,8 +143,8 @@ void test_utils_gfuncsq_sigma_matrix_deg()
 {
     int L = 4;
     int Lsq = L * L;
-    int i, j;
-    CDTYPE elem;
+    // int i, j;
+    // CDTYPE elem;
 
     CDTYPE *sigma = calloc(2 * 2, sizeof(CDTYPE));
     CDTYPE *eigvecs = calloc(2 * Lsq * 2 * Lsq, sizeof(CDTYPE));
@@ -217,8 +245,8 @@ void test_utils_gfuncsq_sigma_coeff_nondeg()
 {
     int L = 4;
     int Lsq = L * L;
-    int i, j;
-    CDTYPE elem;
+    // int i, j;
+    // CDTYPE elem;
 
     CDTYPE *sigma = calloc(2 * 2, sizeof(CDTYPE));
     CDTYPE *eigvecs = calloc(2 * Lsq * 2 * Lsq, sizeof(CDTYPE));
@@ -304,8 +332,8 @@ void test_utils_gfuncsq_sigma_coeff_deg()
 {
     int L = 4;
     int Lsq = L * L;
-    int i, j;
-    CDTYPE elem;
+    // int i, j;
+    // CDTYPE elem;
 
     CDTYPE *sigma = calloc(2 * 2, sizeof(CDTYPE));
     CDTYPE *eigvecs = calloc(2 * Lsq * 2 * Lsq, sizeof(CDTYPE));
@@ -433,45 +461,304 @@ void test_utils_bin_energy_range(void)
     
     for(i = 0; i < 100; i++)
         energies[i] = 0.01 * i;
+        // energies[i] = 0.01 * (i / 2) + 0.001;
 
     utils_bin_energy_range(energies, 100, num_bins, 0.20, 0.80, actual_bin_edges);
+    // utils_bin_energy_range(energies, 100, num_bins, 0.10, 0.40, actual_bin_edges);
+    // printf("\n");
+    // for(i = 0; i < 12; i++)
+    //     printf("%d ", actual_bin_edges[i]);
+    // printf("\n");
     TEST_ASSERT_INT_ARRAY_WITHIN(1, exp_bin_edges, actual_bin_edges, 12);
 }
 
-int test_gfuncsq_sym_GR_GRstar(void)
+void test_gfuncsq_GR_GRstar_nondeg(void)
 {
     int L = 4;
     int Lsq = L * L;
-    int i, j;
-    CDTYPE elem;
+    uint alpha, beta;
+    int i;
+    // int i, j;
+    // CDTYPE elem;
 
-    CDTYPE *eigvecs = calloc(2 * Lsq * 2 * Lsq, sizeof(CDTYPE));
-    DTYPE *exp_gfuncsq = calloc(Lsq * Lsq, sizeof(DTYPE));
-    DTYPE *gfuncsq = calloc(Lsq * Lsq, sizeof(DTYPE));
+    CDTYPE *eigvecs = calloc(2*Lsq * 2*Lsq, sizeof(CDTYPE));
 
     // Get eigenvectors
-    FILE *eigfile = fopen("data/fake_eigenvectors_4x4.dat", "r");
-    io_zread_2d(eigvecs, 2 * Lsq, 2 * Lsq, eigfile);
-    fclose(eigfile);
-    // Get expected value from file
-    FILE *gfuncfile = fopen("data/deg_sigma_coeff_gfuncsq_python_4x4.dat", "r");
-    io_dread_2d(exp_gfuncsq, Lsq, Lsq, gfuncfile);
-    fclose(gfuncfile);
+    io_read_array('C', 'C', eigvecs, 2*Lsq, 2*Lsq,
+                "data/fake_eigenvectors_4x4.dat");
 
-    gfuncsq_sym_GR_GRstar(eigvecs, gfuncsq, length,
-                        nmin, nmax, alpha, gamma);
-    
-    TEST_ASSERT_EQUAL_DOUBLE_ARRAY(exp_gfuncsq, gfuncsq, Lsq * Lsq);
+    char message[32];
+    for(alpha = 0; alpha < 2; alpha++)
+    {
+        for(beta = 0; beta < 2; beta++)
+        {
+            // Get expected value from file
+            char filename[50];
+            snprintf(filename, 50,
+                    "data/nondeg_gfunc_gfuncstar_a%d_b%d_python_4x4.dat",
+                    alpha, beta);
+            if(alpha == beta)
+            {
+                DTYPE *exp_gfuncsq = calloc(Lsq * 2*Lsq, sizeof(DTYPE));
+                DTYPE *gfuncsq = calloc(Lsq * 2*Lsq, sizeof(DTYPE));
 
-    free(sigma);
+                io_read_array('R', 'C', exp_gfuncsq, Lsq, 2*Lsq, filename);
+                // Zero out the gfuncsq for the run.
+                for(i = 0; i < Lsq*2*Lsq; i++)
+                    *(gfuncsq + i) = 0;
+                gfuncsq_sym_GR_GRstar_nondeg(eigvecs, gfuncsq, L,
+                                        0, 2*Lsq, alpha);
+                snprintf(message, 32, "alpha = %d beta = %d", alpha, beta);
+                TEST_ASSERT_EQUAL_DOUBLE_ARRAY_MESSAGE(exp_gfuncsq, gfuncsq,
+                                                        Lsq*2*Lsq, message);
+                free(exp_gfuncsq);
+                free(gfuncsq);
+
+            }
+            else
+            {
+                CDTYPE * exp_gfuncsq = calloc(Lsq * 2*Lsq, sizeof(CDTYPE));
+                CDTYPE * gfuncsq = calloc(Lsq * 2*Lsq, sizeof(CDTYPE));
+                io_read_array('C', 'C', exp_gfuncsq, Lsq, 2*Lsq, filename);
+                gfuncsq_asym_GR_GRstar_nondeg(eigvecs, gfuncsq, L,
+                                        0, 2*Lsq, alpha, beta);
+                // snprintf(message, 40, "alpha = %d beta = %d gamma = %d",
+                //         alpha, beta, gamma);
+                assert_equal_complex_double_array(exp_gfuncsq, gfuncsq, Lsq*2*Lsq);
+                free(exp_gfuncsq);
+                free(gfuncsq);
+            }
+        }
+    }
     free(eigvecs);
-    free(exp_gfuncsq);
-    free(gfuncsq);
-
 }
+
+void test_gfuncsq_GR_GRstar_deg(void)
+{
+    int L = 4;
+    int Lsq = L * L;
+    uint alpha, beta;
+    // int i, j;
+    // CDTYPE elem;
+
+    CDTYPE *eigvecs = calloc(2*Lsq * 2*Lsq, sizeof(CDTYPE));
+
+    // Get eigenvectors
+    io_read_array('C', 'C', eigvecs, 2*Lsq, 2*Lsq,
+                "data/fake_eigenvectors_4x4.dat");
+
+    char message[40];
+    for(alpha = 0; alpha < 2; alpha++)
+    {
+        for(beta = 0; beta < 2; beta++)
+        {
+            // Get expected value from file
+            char filename[60];
+            snprintf(filename, 60,
+                    "data/deg_gfunc_gfuncstar_a%d_b%d_python_4x4.dat",
+                    alpha, beta);
+            if(alpha == beta)
+            {
+                DTYPE * exp_gfuncsq = calloc(Lsq * 2*Lsq, sizeof(DTYPE));
+                DTYPE * gfuncsq = calloc(Lsq * 2*Lsq, sizeof(DTYPE));
+                io_read_array('R', 'C', exp_gfuncsq, Lsq, 2*Lsq, filename);
+                gfuncsq_sym_GR_GRstar_deg(eigvecs, gfuncsq, L,
+                                        0, 2*Lsq, alpha);
+                // printf("alpha = %d beta = %d\n", alpha, beta);
+                // printf("Expected:\n");
+                // for(i = 0; i < 4; i++)
+                // {
+                //     for(j = 0; j < 4; j++)
+                //     {
+                //         printf("%12.3e ", *(exp_gfuncsq + RTC(i, j, Lsq)));
+                //     }
+                //     printf("\n");
+                // }
+                // printf("\n");
+                // printf("Actual:\n");
+                // for(i = 0; i < 4; i++)
+                // {
+                //     for(j = 0; j < 4; j++)
+                //     {
+                //         printf("%12.3e ", *(gfuncsq + RTC(i, j, Lsq)));
+                //     }
+                //     printf("\n");
+                // }
+                // printf("\n");
+
+                snprintf(message, 40, "alpha = %d beta = %d",
+                        alpha, beta);
+                TEST_ASSERT_EQUAL_DOUBLE_ARRAY_MESSAGE(exp_gfuncsq, gfuncsq,
+                                                        Lsq*2*Lsq, message);
+                free(exp_gfuncsq);
+                free(gfuncsq);
+            }
+            else
+            {
+                CDTYPE * exp_gfuncsq = calloc(Lsq * 2*Lsq, sizeof(CDTYPE));
+                CDTYPE * gfuncsq = calloc(Lsq * 2*Lsq, sizeof(CDTYPE));
+                io_read_array('C', 'C', exp_gfuncsq, Lsq, 2*Lsq, filename);
+                gfuncsq_asym_GR_GRstar_deg(eigvecs, gfuncsq, L,
+                                        0, 2*Lsq, alpha, beta);
+                // snprintf(message, 40, "alpha = %d beta = %d gamma = %d",
+                //         alpha, beta, gamma);
+                // printf("alpha = %d beta = %d\n", alpha, beta);
+                // printf("Expected:\n");
+                // for(i = 0; i < 4; i++)
+                // {
+                //     for(j = 0; j < 4; j++)
+                //     {
+                //         elem = *(exp_gfuncsq + RTC(i, j, Lsq));
+                //         printf("(%10.3e%+10.3ej) ",creal(elem), cimag(elem));
+                //     }
+                //     printf("\n");
+                // }
+                // printf("\n");
+                // printf("Actual:\n");
+                // for(i = 0; i < 4; i++)
+                // {
+                //     for(j = 0; j < 4; j++)
+                //     {
+                //         elem = *(gfuncsq + RTC(i, j, Lsq));
+                //         printf("(%10.3e%+10.3ej) ",creal(elem), cimag(elem));
+                //     }
+                //     printf("\n");
+                // }
+
+                assert_equal_complex_double_array(exp_gfuncsq, gfuncsq, Lsq*2*Lsq);
+                free(exp_gfuncsq);
+                free(gfuncsq);
+            }
+        }
+    }
+
+    free(eigvecs);
+}
+
+void test_gfuncsq_GR_GRstar_nondeg_restr(void)
+{
+    int L = 4;
+    int nmin = 8;
+    int nmax = 16;
+    int Lsq = L * L;
+    uint alpha, beta;
+    int i;
+    // int i, j;
+    // CDTYPE elem;
+
+    CDTYPE *eigvecs = calloc(2*Lsq * 2*Lsq, sizeof(CDTYPE));
+    
+    // Get eigenvectors
+    io_read_array('C', 'C', eigvecs, 2*Lsq, 2*Lsq,
+                "data/fake_eigenvectors_4x4.dat");
+
+    char message[32];
+    for(alpha = 0; alpha < 2; alpha++)
+    {
+        for(beta = 0; beta < 2; beta++)
+        {
+            // Get expected value from file
+            char filename[70];
+            snprintf(filename, 70,
+                    "data/nondeg_gfunc_gfuncstar_restr_a%d_b%d_min%d_max%d_python_4x4.dat",
+                    alpha, beta, nmin, nmax);
+            if(alpha == beta)
+            {
+                DTYPE *exp_gfuncsq = calloc(Lsq * 2*Lsq, sizeof(DTYPE));
+                DTYPE *gfuncsq = calloc(Lsq * 2*Lsq, sizeof(DTYPE));
+
+                io_read_array('R', 'C', exp_gfuncsq, Lsq, 2*Lsq, filename);
+                // Zero out the gfuncsq for the run.
+                for(i = 0; i < Lsq*2*Lsq; i++)
+                    *(gfuncsq + i) = 0;
+                gfuncsq_sym_GR_GRstar_nondeg(eigvecs, gfuncsq, L,
+                                        nmin, nmax, alpha);
+                snprintf(message, 32, "alpha = %d beta = %d", alpha, beta);
+                TEST_ASSERT_EQUAL_DOUBLE_ARRAY_MESSAGE(exp_gfuncsq, gfuncsq,
+                                                        Lsq*2*Lsq, message);
+                free(exp_gfuncsq);
+                free(gfuncsq);
+            }
+            else
+            {
+                CDTYPE * exp_gfuncsq = calloc(Lsq * 2*Lsq, sizeof(CDTYPE));
+                CDTYPE * gfuncsq = calloc(Lsq * 2*Lsq, sizeof(CDTYPE));
+                io_read_array('C', 'C', exp_gfuncsq, Lsq, 2*Lsq, filename);
+                gfuncsq_asym_GR_GRstar_nondeg(eigvecs, gfuncsq, L,
+                                        nmin, nmax, alpha, beta);
+                // snprintf(message, 40, "alpha = %d beta = %d gamma = %d",
+                //         alpha, beta, gamma);
+                assert_equal_complex_double_array(exp_gfuncsq, gfuncsq, Lsq*2*Lsq);
+                free(exp_gfuncsq);
+                free(gfuncsq);
+            }
+        }
+    }
+    free(eigvecs);
+}
+
+
+void test_gfuncsq_GR_GRstar_deg_restr(void)
+{
+    int L = 4;
+    int nmin = 8;
+    int nmax = 16;
+    int Lsq = L * L;
+    uint alpha, beta;
+    // int i, j;
+    // CDTYPE elem;
+
+    CDTYPE *eigvecs = calloc(2*Lsq * 2*Lsq, sizeof(CDTYPE));
+
+    // Get eigenvectors
+    io_read_array('C', 'C', eigvecs, 2*Lsq, 2*Lsq,
+                "data/fake_eigenvectors_4x4.dat");
+
+    char message[40];
+    for(alpha = 0; alpha < 2; alpha++)
+    {
+        for(beta = 0; beta < 2; beta++)
+        {
+            // Get expected value from file
+            char filename[70];
+            snprintf(filename, 70,
+                    "data/deg_gfunc_gfuncstar_restr_a%d_b%d_min%d_max%d_python_4x4.dat",
+                    alpha, beta, nmin, nmax);
+            if(alpha == beta)
+            {
+                DTYPE * exp_gfuncsq = calloc(Lsq * 2*Lsq, sizeof(DTYPE));
+                DTYPE * gfuncsq = calloc(Lsq * 2*Lsq, sizeof(DTYPE));
+                io_read_array('R', 'C', exp_gfuncsq, Lsq, 2*Lsq, filename);
+                gfuncsq_sym_GR_GRstar_deg(eigvecs, gfuncsq, L,
+                                        nmin, nmax, alpha);
+                snprintf(message, 40, "alpha = %d beta = %d",
+                        alpha, beta);
+                TEST_ASSERT_EQUAL_DOUBLE_ARRAY_MESSAGE(exp_gfuncsq, gfuncsq,
+                                                        Lsq*2*Lsq, message);
+                free(exp_gfuncsq);
+                free(gfuncsq);
+            }
+            else
+            {
+                CDTYPE * exp_gfuncsq = calloc(Lsq * 2*Lsq, sizeof(CDTYPE));
+                CDTYPE * gfuncsq = calloc(Lsq * 2*Lsq, sizeof(CDTYPE));
+                io_read_array('C', 'C', exp_gfuncsq, Lsq, 2*Lsq, filename);
+                gfuncsq_asym_GR_GRstar_deg(eigvecs, gfuncsq, L,
+                                        nmin, nmax, alpha, beta);
+                assert_equal_complex_double_array(exp_gfuncsq, gfuncsq, Lsq*2*Lsq);
+                free(exp_gfuncsq);
+                free(gfuncsq);
+            }
+        }
+    }
+    free(eigvecs);
+}
+
 
 int main(void)
 {
+    // For NaN detection
+    // feenableexcept(FE_INVALID | FE_OVERFLOW);
     UNITY_BEGIN();
     RUN_TEST(test_utils_gfuncsq_sigma_matrix_nondeg);
     RUN_TEST(test_utils_gfuncsq_sigma_matrix_deg);
@@ -479,5 +766,9 @@ int main(void)
     RUN_TEST(test_utils_gfuncsq_sigma_coeff_deg);
     RUN_TEST(test_utils_multiply_restricted);
     RUN_TEST(test_utils_bin_energy_range);
+    RUN_TEST(test_gfuncsq_GR_GRstar_nondeg);
+    RUN_TEST(test_gfuncsq_GR_GRstar_deg);
+    RUN_TEST(test_gfuncsq_GR_GRstar_nondeg_restr);
+    RUN_TEST(test_gfuncsq_GR_GRstar_deg_restr);
     return (UNITY_END());
 }

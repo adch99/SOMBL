@@ -95,10 +95,10 @@ int utils_print_matrix(void * matrix, int m, int n,
     }
 
 
-    if(ordering != 'C' && ordering != 'F')
+    if(ordering != 'R' && ordering != 'C')
     {
         printf("Invalid ordering passed to utils_print_matrix.\n");
-        printf("ordering must be either 'C' or 'F'.\n");
+        printf("ordering must be either 'C' or 'R'.\n");
     }
 
 
@@ -106,17 +106,17 @@ int utils_print_matrix(void * matrix, int m, int n,
     {
         for(j = 0; j < n; j++)
         {
-            index = (ordering=='C')?(i*n + j):RTC(i, j, m);
+            index = (ordering=='R')?(i*n + j):RTC(i, j, m);
             if(type == 'C')
             {
                 elemc = *((CDTYPE*)matrix + index);
-                printf("%08.4lf+%08.4lfj\t", creal(elemc),
+                printf("%10.4lg%+11.4lgj ", creal(elemc),
                         cimag(elemc));
             }
             else
             {
                 elemr = *((DTYPE*)matrix + index);
-                printf("%08.4lf\t", elemr);
+                printf("%10.4lg\t", elemr);
             }
         }
         printf("\n");
@@ -308,7 +308,7 @@ DTYPE utils_compute_gfsq_elem(int i, int j, CDTYPE * eigenvectors,
         // #pragma omp parallel for reduction (+:sum) schedule(auto)
         for(k = 0; k < size; k += 2)
         {
-            // l = k + 1;
+            l = k + 1;
             index_ik = RTC(i, k, size);
             index_il = RTC(i, l, size);
             index_jk = RTC(j, k, size);
@@ -542,154 +542,154 @@ int utils_bin_energy_range(DTYPE * energies, int len, int num_bins,
     matrix and adds it to gfuncsq.
     |G(i,j)|^2 = lim t to infty |Sum_{alpha,beta} <i,alpha| sigma_{alpha,beta} exp(-iHt)|j,beta>|^2
 */
-int utils_gfuncsq_sigma_matrix_restr(DTYPE * gfuncsq, CDTYPE * sigma,
-                                CDTYPE * eigvecs, int length, int nmin, int nmax)
-{
-    utils_gfuncsq_sigma_matrix_nondeg_restr(gfuncsq, sigma, eigvecs, length, nmin, nmax);
-    utils_gfuncsq_sigma_matrix_deg_restr(gfuncsq, sigma, eigvecs, length, nmin, nmax);
-    return(0);
-}
+// int utils_gfuncsq_sigma_matrix_restr(DTYPE * gfuncsq, CDTYPE * sigma,
+//                                 CDTYPE * eigvecs, int length, int nmin, int nmax)
+// {
+//     utils_gfuncsq_sigma_matrix_nondeg_restr(gfuncsq, sigma, eigvecs, length, nmin, nmax);
+//     utils_gfuncsq_sigma_matrix_deg_restr(gfuncsq, sigma, eigvecs, length, nmin, nmax);
+//     return(0);
+// }
 
 /*
     Computes the non-degenerate terms of pauli-generalized green's
     function square matrix and adds it to gfuncsq.
     |G(i,j)|^2 = lim t to infty |Sum_{alpha,beta} <i,alpha| sigma_{alpha,beta} exp(-iHt)|j,beta>|^2
 */
-int utils_gfuncsq_sigma_matrix_nondeg_restr(DTYPE * gfuncsq, CDTYPE * sigma,
-                                    CDTYPE * eigvecs, int length, int nmin, int nmax)
-{
-    uint alpha, alpha_p, gamma, gamma_p;
-    CDTYPE coeff;
-    int Lsq = length*length; 
-    int i, n;
+// int utils_gfuncsq_sigma_matrix_nondeg_restr(DTYPE * gfuncsq, CDTYPE * sigma,
+//                                     CDTYPE * eigvecs, int length, int nmin, int nmax)
+// {
+//     uint alpha, alpha_p, gamma, gamma_p;
+//     CDTYPE coeff;
+//     int Lsq = length*length; 
+//     int i, n;
 
-    CDTYPE * matrix1 = calloc(Lsq*(2*Lsq), sizeof(CDTYPE));
-    CDTYPE * matrix2 = calloc(Lsq*(2*Lsq), sizeof(CDTYPE));
-    CDTYPE * product = calloc(Lsq*Lsq, sizeof(CDTYPE));
-    CDTYPE elem;
+//     CDTYPE * matrix1 = calloc(Lsq*(2*Lsq), sizeof(CDTYPE));
+//     CDTYPE * matrix2 = calloc(Lsq*(2*Lsq), sizeof(CDTYPE));
+//     CDTYPE * product = calloc(Lsq*Lsq, sizeof(CDTYPE));
+//     CDTYPE elem;
 
-    for(gamma = 0; gamma < 2; gamma++)
-    {
-        for(gamma_p = 0; gamma_p < 2; gamma_p++)
-        {
-            // First we create the coefficients
-            coeff = 0;
-            for(alpha = 0; alpha < 2; alpha++)
-            {
-                for(alpha_p = 0; alpha_p < 2; alpha_p++)
-                {
-                    coeff += conj(*(sigma + RTC(alpha_p,gamma,2))) * *(sigma + RTC(alpha,gamma_p,2));
-                }
-            }
-            // printf("g=%d,g'=%d  coeff=%e+%e\n", gamma, gamma_p, creal(coeff), cimag(coeff));
+//     for(gamma = 0; gamma < 2; gamma++)
+//     {
+//         for(gamma_p = 0; gamma_p < 2; gamma_p++)
+//         {
+//             // First we create the coefficients
+//             coeff = 0;
+//             for(alpha = 0; alpha < 2; alpha++)
+//             {
+//                 for(alpha_p = 0; alpha_p < 2; alpha_p++)
+//                 {
+//                     coeff += conj(*(sigma + RTC(alpha_p,gamma,2))) * *(sigma + RTC(alpha,gamma_p,2));
+//                 }
+//             }
+//             // printf("g=%d,g'=%d  coeff=%e+%e\n", gamma, gamma_p, creal(coeff), cimag(coeff));
             
-            // Check if coeff is zero
-            if(cabs(coeff) < TOL)
-                continue; // Just skip this matrix
+//             // Check if coeff is zero
+//             if(cabs(coeff) < TOL)
+//                 continue; // Just skip this matrix
 
-            // Adds the matrices with appropriate coeffs
-            for(i = 0; i < Lsq; i++)
-            {
-                for(n = 0; n < 2*Lsq; n++)
-                {
-                    elem = conj(*(eigvecs + RTC(2*i+gamma,n,2*Lsq))) * *(eigvecs + RTC(2*i+gamma_p,n,2*Lsq));
-                    *(matrix1 + RTC(i,n,Lsq)) += coeff * elem;
-                    *(matrix2 + RTC(i,n,Lsq)) += elem;
-                }
-            }
-        }
-    }
+//             // Adds the matrices with appropriate coeffs
+//             for(i = 0; i < Lsq; i++)
+//             {
+//                 for(n = 0; n < 2*Lsq; n++)
+//                 {
+//                     elem = conj(*(eigvecs + RTC(2*i+gamma,n,2*Lsq))) * *(eigvecs + RTC(2*i+gamma_p,n,2*Lsq));
+//                     *(matrix1 + RTC(i,n,Lsq)) += coeff * elem;
+//                     *(matrix2 + RTC(i,n,Lsq)) += elem;
+//                 }
+//             }
+//         }
+//     }
 
-    CDTYPE cblas_alpha = 1.0;
-    CDTYPE cblas_beta = 0.0;
+//     CDTYPE cblas_alpha = 1.0;
+//     CDTYPE cblas_beta = 0.0;
 
-    cblas_zgemm(CblasColMajor, CblasNoTrans, CblasConjTrans, Lsq,
-                Lsq, 2*Lsq, &cblas_alpha, matrix1, Lsq, matrix2,
-                Lsq, &cblas_beta, product, Lsq);
+//     cblas_zgemm(CblasColMajor, CblasNoTrans, CblasConjTrans, Lsq,
+//                 Lsq, 2*Lsq, &cblas_alpha, matrix1, Lsq, matrix2,
+//                 Lsq, &cblas_beta, product, Lsq);
 
-    for(i = 0; i < Lsq*Lsq; i++)
-    {
-        *(gfuncsq + i) += creal(*(product + i));
-    }
+//     for(i = 0; i < Lsq*Lsq; i++)
+//     {
+//         *(gfuncsq + i) += creal(*(product + i));
+//     }
 
-    free(matrix1);
-    free(matrix2);
-    free(product);
-    return(0);
-}
+//     free(matrix1);
+//     free(matrix2);
+//     free(product);
+//     return(0);
+// }
 
-/*
-    Computes the degenerate terms of pauli-generalized green's
-    function square matrix and adds it to gfuncsq.
-    |G(i,j)|^2 = lim t to infty |Sum_{alpha,beta} <i,alpha| sigma_{alpha,beta} exp(-iHt)|j,beta>|^2
-*/
-int utils_gfuncsq_sigma_matrix_deg_restr(DTYPE * gfuncsq, CDTYPE * sigma,
-                                CDTYPE * eigvecs, int length, int nmin, int nmax)
-{
-    uint alpha, alpha_p, gamma, gamma_p;
-    CDTYPE coeff;
-    int Lsq = length*length; 
-    int i, j, p;
+// /*
+//     Computes the degenerate terms of pauli-generalized green's
+//     function square matrix and adds it to gfuncsq.
+//     |G(i,j)|^2 = lim t to infty |Sum_{alpha,beta} <i,alpha| sigma_{alpha,beta} exp(-iHt)|j,beta>|^2
+// */
+// int utils_gfuncsq_sigma_matrix_deg_restr(DTYPE * gfuncsq, CDTYPE * sigma,
+//                                 CDTYPE * eigvecs, int length, int nmin, int nmax)
+// {
+//     uint alpha, alpha_p, gamma, gamma_p;
+//     CDTYPE coeff;
+//     int Lsq = length*length; 
+//     int i, j, p;
 
-    CDTYPE * matrix1 = calloc(Lsq*Lsq, sizeof(CDTYPE));
-    CDTYPE * matrix2 = calloc(Lsq*Lsq, sizeof(CDTYPE));
-    CDTYPE * product = calloc(Lsq*Lsq, sizeof(CDTYPE));
-    CDTYPE elem;
+//     CDTYPE * matrix1 = calloc(Lsq*Lsq, sizeof(CDTYPE));
+//     CDTYPE * matrix2 = calloc(Lsq*Lsq, sizeof(CDTYPE));
+//     CDTYPE * product = calloc(Lsq*Lsq, sizeof(CDTYPE));
+//     CDTYPE elem;
 
 
-    for(gamma = 0; gamma < 2; gamma++)
-    {
-        for(gamma_p = 0; gamma_p < 2; gamma_p++)
-        {
-            // First we create the coefficients
-            coeff = 0;
-            for(alpha = 0; alpha < 2; alpha++)
-            {
-                for(alpha_p = 0; alpha_p < 2; alpha_p++)
-                {
-                    coeff += conj(*(sigma + RTC(alpha_p,gamma,2))) * *(sigma + RTC(alpha,gamma_p,2));
-                }
-            }
-            // printf("g=%d,g'=%d  coeff=%e+%e\n", gamma, gamma_p, creal(coeff), cimag(coeff));
+//     for(gamma = 0; gamma < 2; gamma++)
+//     {
+//         for(gamma_p = 0; gamma_p < 2; gamma_p++)
+//         {
+//             // First we create the coefficients
+//             coeff = 0;
+//             for(alpha = 0; alpha < 2; alpha++)
+//             {
+//                 for(alpha_p = 0; alpha_p < 2; alpha_p++)
+//                 {
+//                     coeff += conj(*(sigma + RTC(alpha_p,gamma,2))) * *(sigma + RTC(alpha,gamma_p,2));
+//                 }
+//             }
+//             // printf("g=%d,g'=%d  coeff=%e+%e\n", gamma, gamma_p, creal(coeff), cimag(coeff));
             
-            // Check if coeff is zero
-            if(cabs(coeff) < TOL)
-                continue; // Just skip this matrix
+//             // Check if coeff is zero
+//             if(cabs(coeff) < TOL)
+//                 continue; // Just skip this matrix
 
-            // Adds the matrices with appropriate coeffs
-            for(i = 0; i < Lsq; i++)
-            {
-                for(p = 0; p < Lsq; p++)
-                {
-                    elem = conj(*(eigvecs + RTC(2*i+gamma,2*p,2*Lsq))) * *(eigvecs + RTC(2*i+gamma_p,2*p+1,2*Lsq));
-                    *(matrix1 + RTC(i,p,Lsq)) += coeff * elem;
-                    *(matrix2 + RTC(i,p,Lsq)) += elem;
-                }
-            }
-        }
-    }
+//             // Adds the matrices with appropriate coeffs
+//             for(i = 0; i < Lsq; i++)
+//             {
+//                 for(p = 0; p < Lsq; p++)
+//                 {
+//                     elem = conj(*(eigvecs + RTC(2*i+gamma,2*p,2*Lsq))) * *(eigvecs + RTC(2*i+gamma_p,2*p+1,2*Lsq));
+//                     *(matrix1 + RTC(i,p,Lsq)) += coeff * elem;
+//                     *(matrix2 + RTC(i,p,Lsq)) += elem;
+//                 }
+//             }
+//         }
+//     }
 
-    CDTYPE cblas_alpha = 1.0;
-    CDTYPE cblas_beta = 0.0;
+//     CDTYPE cblas_alpha = 1.0;
+//     CDTYPE cblas_beta = 0.0;
 
     
-    cblas_zgemm(CblasColMajor, CblasNoTrans, CblasConjTrans, Lsq,
-                Lsq, Lsq, &cblas_alpha, matrix1, Lsq, matrix2,
-                Lsq, &cblas_beta, product, Lsq);
+//     cblas_zgemm(CblasColMajor, CblasNoTrans, CblasConjTrans, Lsq,
+//                 Lsq, Lsq, &cblas_alpha, matrix1, Lsq, matrix2,
+//                 Lsq, &cblas_beta, product, Lsq);
 
-    for(i = 0; i < Lsq; i++)
-    {
-        for(j = 0; j < Lsq; j++)
-        {
-            *(gfuncsq + RTC(i, j, Lsq)) += 2 * creal(*(product + RTC(i, j, Lsq)));
-        }
-    }
+//     for(i = 0; i < Lsq; i++)
+//     {
+//         for(j = 0; j < Lsq; j++)
+//         {
+//             *(gfuncsq + RTC(i, j, Lsq)) += 2 * creal(*(product + RTC(i, j, Lsq)));
+//         }
+//     }
 
-    free(matrix1);
-    free(matrix2);
-    free(product);
-    return(0);
-}
+//     free(matrix1);
+//     free(matrix2);
+//     free(product);
+//     return(0);
+// }
 
 
 
@@ -950,6 +950,7 @@ int utils_bin_data(DTYPE index, DTYPE value, int bins, int * counts,
 
     int bin_num = (int) floor((index - lowest) / bin_width);
 
+    (void) bins;
     // if (bin_num >= bins || bin_num < 0)
     // {
     //     printf("Value %e doesn't lie in range: 0 - %e\n", index, bin_width*bins);

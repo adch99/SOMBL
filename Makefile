@@ -106,9 +106,10 @@ OBJ = $(patsubst %.c,build/%.o,$(_DEPS))
 # ERRORLOG=logs/compiler_error.log
 
 # Executables
-_EXECS = exact_diag_simulation calculate_dist_vs_gfuncsq \
-calculate_imbalance output_hamiltonian sigma_exact_diag sigma_make_func \
-exact_diag_batch batch_average
+# _EXECS = exact_diag_simulation calculate_dist_vs_gfuncsq \
+# calculate_imbalance output_hamiltonian sigma_exact_diag sigma_make_func \
+# exact_diag_batch batch_average keldysh_window_batch check_io
+_EXECS = keldysh_window_batch check_io
 EXECS = $(patsubst %,build/%,$(_EXECS))
 
 # External Dependencies
@@ -116,7 +117,7 @@ EXTDEPS = extern/unity/unity.c
 
 # Tests
 _SIMPLETESTS = test_utils test_ham_gen
-_UNITYTESTS = test_gfuncsq test_utils2
+_UNITYTESTS = test_gfuncsq test_utils2 test_io
 SIMPLETESTS = $(patsubst %,build/tests/%,$(_SIMPLETESTS))
 UNITYTESTS = $(patsubst %,build/tests/%,$(_UNITYTESTS))
 

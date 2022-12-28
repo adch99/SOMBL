@@ -48,6 +48,9 @@ error_t params_parse_opt(int key, char *arg, struct argp_state *state)
         case 'x':
             params->seed = atoi(arg);
             break;
+        case 'e':
+            params->energybins = atoi(arg);
+            break;
         default:
             return ARGP_ERR_UNKNOWN;
         }
@@ -68,6 +71,7 @@ int params_setup(int argc, char ** argv, struct SystemParams * params,
     params->batch_num = -1;
     params->batch_size = -1;
     params->seed = -1;
+    params->energybins = -1;
 
     /* Parse our arguments; every option seen by parse_opt will
         be reflected in params. */
@@ -170,4 +174,43 @@ int params_cleanup(struct SystemParams * params, struct OutStream * outfiles)
         free(outfiles->dist_vs_gfuncsq_spin[i]);
 
     return 0;
+}
+
+/*
+    The filename will be of the form
+    "<prefix>_<basename><suffix>".
+*/
+int params_basefilename(struct SystemParams params, const char * prefix, 
+                        char * suffix, char * filename)
+{
+    if(params.batch_num != -1 && params.batch_size != -1)
+    {   
+        sprintf(filename, "%s_%dx%d_W%.4g_C%.4g_TU%.4g_TD%.4g_N%d_BS%d_B%d%s",
+                prefix, params.len, params.width, params.disorder_strength,
+                params.coupling_const, params.hop_strength_upup,
+                params.hop_strength_dndn, params.numRuns, params.batch_size,
+                params.batch_num, suffix);
+    }
+    else
+    {
+        sprintf(filename, "%s_%dx%d_W%.4g_C%.4g_TU%.4g_TD%.4g_N%d%s",
+                prefix, params.len, params.width, params.disorder_strength,
+                params.coupling_const, params.hop_strength_upup,
+                params.hop_strength_dndn, params.numRuns, suffix);
+    }
+    return(strlen(filename));
+}
+
+int params_gr_grstar_filename(char * filename, struct SystemParams params,
+                            int bin, uint alpha, uint beta)
+{
+    char prefix[] = "data/mbl";
+    char suffix[36];
+    if (bin >= 0)
+        sprintf(suffix, "_grgrstar_a%d_b%d_bin%d.dat", alpha, beta, bin);
+    else
+        sprintf(suffix, "_grgrstar_a%d_b%d_full.dat", alpha, beta);
+
+    params_basefilename(params, prefix, suffix, filename);
+    return(strlen(filename));
 }
