@@ -1,6 +1,6 @@
 import os
 
-size = 40
+size = 60
 runs = 100
 batchsize = 10
 numbatches = 10
@@ -23,7 +23,7 @@ numRuns = numCoups * numDis
 start = 0
 stop = 9
 
-basename = "mbl"
+basename = "mbl_average"
 
 for index in range(start, stop):
     coupIdx = index // numDis
