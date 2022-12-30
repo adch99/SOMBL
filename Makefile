@@ -71,7 +71,7 @@ CFLAGS += -Wall
 CFLAGS += -Wextra
 CFLAGS += -g
 CFLAGS += -fdiagnostics-color=always
-# CFLAGS += -ffast-math
+CFLAGS += -ffast-math
 # CFLAGS += -ftrapv -fwrapv
 CFLAGS += -O2
 # CFLAGS += -Iextern/unity
@@ -109,7 +109,7 @@ OBJ = $(patsubst %.c,build/%.o,$(_DEPS))
 # _EXECS = exact_diag_simulation calculate_dist_vs_gfuncsq \
 # calculate_imbalance output_hamiltonian sigma_exact_diag sigma_make_func \
 # exact_diag_batch batch_average keldysh_window_batch check_io
-_EXECS = keldysh_window_batch check_io
+_EXECS = keldysh_window_batch check_io keldysh_energy_batch_average
 EXECS = $(patsubst %,build/%,$(_EXECS))
 
 # External Dependencies
