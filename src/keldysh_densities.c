@@ -55,6 +55,7 @@ int get_density(void * density, void * initial_cond,
                 struct SystemParams params, uint alpha, uint beta, int bin);
 int save_density(void * density, struct SystemParams params,
                 uint alpha, uint beta, int bin, char * basename);
+int create_initial_vector(void * initial_cond, char type, int num_states);
 
 int main(int argc, char ** argv)
 {
@@ -79,6 +80,7 @@ int main(int argc, char ** argv)
                     DTYPE * initial_cond = calloc(params.num_states, sizeof(DTYPE));
                     DTYPE * density = calloc(params.num_sites, sizeof(DTYPE));
                     get_initial_cond(initial_cond, 'R', filename);
+                    create_initial_vector(initial_cond, 'R', params.num_states);
                     get_density(density, initial_cond, params, alpha, beta, bin);
                     save_density(density, params, alpha, beta, bin, basename);
                     free(initial_cond);
@@ -89,6 +91,7 @@ int main(int argc, char ** argv)
                     CDTYPE * initial_cond = calloc(params.num_states, sizeof(CDTYPE));
                     CDTYPE * density = calloc(params.num_sites, sizeof(CDTYPE));
                     get_initial_cond(initial_cond, 'C', filename);
+                    create_initial_vector(initial_cond, 'C', params.num_states);
                     get_density(density, initial_cond, params, alpha, beta, bin);
                     save_density(density, params, alpha, beta, bin, basename);
                     free(initial_cond);
@@ -112,6 +115,7 @@ int get_initial_cond(void * initial_cond, char type, char * filename)
     io_get_initial_condition(&occupied_set_up, &set_length_up,
                             &occupied_set_down, &set_length_down,
                             filename);
+
     if(set_length_up > 0)
     {
         for(i = 0; i < set_length_up; i++)
@@ -145,6 +149,35 @@ int get_initial_cond(void * initial_cond, char type, char * filename)
             }
         }
         free(occupied_set_down);
+    }
+    return(0);
+}
+
+/*
+    Change v to 1-2*v[k,γ] for the initial vector v.
+*/
+int create_initial_vector(void * initial_cond, char type, int num_states)
+{
+    int i;
+    CDTYPE * ptr_c;
+    DTYPE *ptr_r;
+    for(i = 0; i < num_states; i++)
+    {
+        if(type == 'C')
+        {
+            ptr_c = (CDTYPE *) initial_cond + i;
+            *ptr_c = 1 - 2* (*ptr_c);
+        }
+        else if(type == 'R')
+        {
+            ptr_r = (DTYPE *) initial_cond + i;
+            *ptr_r = 1 - 2* (*ptr_r);
+        }
+        else
+        {
+            fprintf(stderr, "type should be 'R' or 'C'!\n");
+            exit(EXIT_FAILURE);
+        }
     }
     return(0);
 }
