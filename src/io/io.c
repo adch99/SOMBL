@@ -208,6 +208,11 @@ int io_read_array_int(char ordering, int * array,
     return(0);
 }
 
+/*
+    Writes the array given to the given file. type must be
+    'R' for real, 'C' for complex. ordering must be 'R' for
+    row major and 'C' for column major.
+*/
 int io_write_array(char type, char ordering, void * array,
                     int m, int n, char * filename)
 {

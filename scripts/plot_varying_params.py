@@ -5,6 +5,7 @@ import json
 import numpy as np
 import matplotlib.pyplot as plt
 
+
 def getParams(paramsFilename):
     params = {
         "coupling_const":   0.0,
@@ -18,6 +19,7 @@ def getParams(paramsFilename):
         "nospin":           False
     }
     return params
+
 
 def getFilename(params):
     W_min = params['disorder_low']

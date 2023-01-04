@@ -4,7 +4,9 @@ import pandas as pd
 
 class SystemParams(object):
     def __init__(self, size=20, coupling=0.0, disorder=10.0,
-                hopup=1.0, hopdn=1.0, runs=100, nospin=False):
+                hopup=1.0, hopdn=1.0, runs=100, nospin=False,
+                batch=None, batchsize=None, binnum=None,
+                alpha=None, beta=None):
         self.size = size
         self.coupling = coupling
         self.disorder = disorder
@@ -12,6 +14,11 @@ class SystemParams(object):
         self.hopdn = hopdn
         self.runs = runs
         self.nospin = nospin
+        self.batchsize = batchsize
+        self.batch = batch
+        self.binnum = binnum
+        self.alpha = alpha
+        self.beta = beta
 
 
 def createDataFrame(filename, minFraction=0.6):
@@ -66,11 +73,14 @@ def createDataFrame(filename, minFraction=0.6):
     return df
 
 
-def getFilename(params, spin=None, endname="distvsgfsq"):
+def getFilename(params, spin=None, endname="_distvsgfsq", prefix=None):
     allowedSpins = [None, "upup", "updn", "dnup", "dndn"]
     if spin not in allowedSpins:
         raise TypeError(f"spin must be one of {allowedSpins}")
-    basename = "mbl_nospin" if params.nospin else "mbl"
+    if prefix is not None:
+        basename = prefix
+    else:
+        basename = "mbl_nospin" if params.nospin else "mbl"
     basename += f"_{params.size}x{params.size}"
     basename += f"_W{params.disorder:.4g}"
     basename += f"_C{params.coupling:.4g}"
@@ -78,9 +88,21 @@ def getFilename(params, spin=None, endname="distvsgfsq"):
     basename += f"_TU{params.hopup:.4g}"
     basename += f"_TD{params.hopdn:.4g}"
     basename += f"_N{params.runs}"
+    if params.batch is not None and params.batchsize is not None:
+        basename += f"_BS{params.batchsize}"
+        basename += f"_B{params.batch}"
+    if params.alpha is not None:
+        basename += f"_a{params.alpha}"
+    if params.beta is not None:
+        basename += f"_b{params.beta}"
+    if params.binnum is not None:
+        if params.binnum == -1:
+            basename += "_full"
+        else:
+            basename += f"_bin{params.binnum}"
     if spin is not None:
         basename += f"_{spin}"
-    basename += f"_{endname}"
+    basename += f"{endname}"
     return basename
 
 
@@ -121,8 +143,6 @@ def fitData(data, params, minFraction=0.6, cov=False):
     c0, c1 = series.convert().coef
     exponent = c1
     mantissa = np.exp(c0)
-
-
     if cov:
         p, V = np.polyfit(x, y, deg=1, cov=True)
         return exponent, mantissa, cost, cutoff, V[0, 0] 

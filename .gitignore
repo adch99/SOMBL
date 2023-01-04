@@ -11,9 +11,9 @@ data/
 plots/
 .vscode/
 ahana/
-notebooks/
 jobs/
 jobs_zeal/
+*/.ipynb_checkpoints/
 
 # Prerequisites
 *.d
