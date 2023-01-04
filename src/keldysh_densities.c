@@ -63,10 +63,10 @@ int main(int argc, char ** argv)
     struct OutStream outfiles;
     uint alpha, beta;
     int bin;
-    char filename[64];
+    char filename[256];
     char basename[] = "alt_up_down";
     params_setup(argc, argv, &params, &outfiles, &argp, 0);
-    snprintf(filename, 64, "data/%s_L%d.dat", basename, params.len);
+    snprintf(filename, 256, "data/%s_L%d.dat", basename, params.len);
 
     // bin = -1 gives the full matrix.
     for(bin = -1; bin < params.energybins; bin++)
@@ -115,6 +115,7 @@ int get_initial_cond(void * initial_cond, char type, char * filename)
     io_get_initial_condition(&occupied_set_up, &set_length_up,
                             &occupied_set_down, &set_length_down,
                             filename);
+    printf("set_length_up: %d set_length_down: %d\n", set_length_up, set_length_down);
 
     if(set_length_up > 0)
     {
@@ -227,7 +228,7 @@ int get_density(void * density, void * initial_cond,
         // We need the conjugate value here.
         // G_R(i, α; k, γ)G_R^*(i, β; k, γ) = [G_R(i, β; k, γ)G_R^*(i, α; k, γ)]^*
         CDTYPE * gfuncsq = calloc(Lsq * 2*Lsq, sizeof(CDTYPE));
-        char filename[64];
+        char filename[128];
         params_gr_grstar_filename(filename, params, bin, beta, alpha);
         io_read_array('C', 'C', gfuncsq, Lsq, 2*Lsq, filename);
         // Take the conjugate of the initial_cond

@@ -88,7 +88,7 @@ def outputPattern(upList, downList, filename):
 
 
 def main():
-    length = 10
+    length = 60
     filename = f"data/alt_up_down_L{length}.dat"
     # filename = f"data/adj_up_L{length}.dat"
     upList, downList = alt_up_down(length)

@@ -363,30 +363,39 @@ int io_read_until(char * stopstr, FILE * ifile)
 
 int io_get_array_from_file(int * array, int length, FILE * ifile)
 {
-    char row[MAXCHAR];
-    char * token;
-    int counter = 0;
-    while (!feof(ifile) && counter < length)
+    fscanf(ifile, "%d", array);
+    int ctr = 1;
+    for(ctr = 1; ctr < length; ctr++)
     {
-        fgets(row, MAXCHAR, ifile);
-        // printf("Row: %s", row);
-
-        if(row[0] == '#')
-        {
-            fseek(ifile, -strlen(row), SEEK_CUR);
-            break;
-        }
-
-        token = strtok(row, ",");
-
-        while(token != NULL)
-        {
-            *(array + counter) = atoi(token);
-            counter += 1; 
-            // printf("Token: %s\n", token);
-            token = strtok(NULL, ",");
-        }
+        fscanf(ifile, ",%d", array + ctr);
     }
+
+
+
+    // char row[MAXCHAR];
+    // char * token;
+    // int counter = 0;
+    // while (!feof(ifile) && counter < length)
+    // {
+    //     fgets(row, MAXCHAR, ifile);
+    //     // printf("Row: %s", row);
+
+    //     if(row[0] == '#')
+    //     {
+    //         fseek(ifile, -strlen(row), SEEK_CUR);
+    //         break;
+    //     }
+
+    //     token = strtok(row, ",");
+
+    //     while(token != NULL)
+    //     {
+    //         *(array + counter) = atoi(token);
+    //         counter += 1; 
+    //         // printf("Token: %s\n", token);
+    //         token = strtok(NULL, ",");
+    //     }
+    // }
 
     return(0);
 }
