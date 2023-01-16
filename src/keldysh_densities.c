@@ -64,9 +64,10 @@ int main(int argc, char ** argv)
     uint alpha, beta;
     int bin;
     char filename[256];
-    char basename[] = "alt_up_down";
+    char basename[] = "alt_updown_empty";
     params_setup(argc, argv, &params, &outfiles, &argp, 0);
     snprintf(filename, 256, "data/%s_L%d.dat", basename, params.len);
+    printf("Initial Cond File: %s\n", filename);
 
     // bin = -1 gives the full matrix.
     for(bin = -1; bin < params.energybins; bin++)
@@ -256,12 +257,12 @@ int save_density(void * density, struct SystemParams params,
                 uint alpha, uint beta, int bin, char * basename)
 {
     char filename[128];
-    char suffix[32];
+    char suffix[64];
     int i;
     if(bin >= 0)
-        sprintf(suffix, "_a%d_b%d_bin%d_%s.dat", alpha, beta, bin, basename);
+        snprintf(suffix, 64, "_a%d_b%d_bin%d_%s.dat", alpha, beta, bin, basename);
     else
-        sprintf(suffix, "_a%d_b%d_full_%s.dat", alpha, beta, basename);
+        snprintf(suffix, 64, "_a%d_b%d_full_%s.dat", alpha, beta, basename);
     params_basefilename(params, "data/mbl_density", suffix, filename);
 
     printf("Writing density alpha=%d beta=%d bin=%d to %s\n",

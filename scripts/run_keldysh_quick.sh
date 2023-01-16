@@ -7,7 +7,7 @@ bins=10
 batchsize=10
 numbatches=10
 N=100
-logfile=/dev/null
+logfile=logs/output.log
 for i in $(seq 1 $numbatches); do
     echo "Batch $i"
     ./build/keldysh_window_batch -s $size -w $W -c $C --batch $i --batchsize $batchsize --bins $bins >> $logfile;

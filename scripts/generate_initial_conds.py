@@ -35,6 +35,25 @@ def alt_updown_empty(length):
     return np.array(upList), np.array(downList)
 
 
+def altn_up_empty(length):
+    upList = []
+    for x in range(length):
+        for y in range(length):
+            if ((x + y) % 2 == 0):
+                upList.append(get_index(x, y, length))
+    return upList, None
+
+def altn_updown_empty(length):
+    upList = []
+    downList = []
+    for x in range(length):
+        for y in range(length):
+            if ((x + y) % 2 == 0):
+                upList.append(get_index(x, y, length))
+                downList.append(get_index(x, y, length))
+    return np.array(upList), np.array(downList)
+
+
 def full_updown():
     pass
 
@@ -89,9 +108,9 @@ def outputPattern(upList, downList, filename):
 
 def main():
     length = 60
-    filename = f"data/alt_up_down_L{length}.dat"
+    filename = f"data/altn_updown_empty_L{length}.dat"
     # filename = f"data/adj_up_L{length}.dat"
-    upList, downList = alt_up_down(length)
+    upList, downList = altn_updown_empty(length)
     print(f"Up: {upList} Down: {downList}")
     outputPattern(upList, downList, filename)
 

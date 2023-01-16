@@ -39,7 +39,7 @@ FILE * io_safely_open(char purpose, char * filename)
     openfile = fopen(filename, mode);
     if (openfile == NULL)
     {
-        printf("Error in opening file %s: %s\n",
+        printf("Error in opening file '%s': %s\n",
                 filename, strerror(errno));
         fclose(openfile);
         exit(EXIT_FAILURE);

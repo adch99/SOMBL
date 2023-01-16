@@ -165,3 +165,22 @@ def checkData(data):
     else:
         print("probsum:", probsum)
         return False
+
+def get_initial_condition(pattern, length):
+    fname = f"data/{pattern}_L{length}.dat"
+    with open(fname, "r") as ifile:
+        lines = ifile.readlines()
+        # print(lines)
+        if lines[5] == "\n":
+            upList = []
+        else:
+            upList = [int(pointStr) for pointStr in lines[5].split(",")]
+
+        if lines[7] == "\n":
+            downList = []
+        else:
+            downList = [int(pointStr) for pointStr in lines[7].split(",")]
+
+    # print("Up:\t", upList)
+    # print("Down:\t", downList)
+    return upList, downList

@@ -100,8 +100,8 @@ int params_set_up_datastream(struct SystemParams params,
                             struct OutStream * outfiles,
                             int sigma)
 {
-    char base[16];
-    char basename[80];
+    char base[32];
+    char basename[128];
     int baselen, i;
     // int gfuncsq_check;
     // int dist_vs_gfuncsq_check;
