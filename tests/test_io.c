@@ -65,10 +65,27 @@ void test_io_read_array_complex()
     assert_equal_complex_double_array(expected, actual, 12);
 }
 
+void test_io_readwrite_array_complex()
+{
+    // int maxchar = MAXCHAR;
+    // printf("MAXCHAR: %d\n", maxchar);
+    CDTYPE expected[12] = { 0,     1.1,       2.2,
+                            0.1*I, 1.1-0.1*I, 2.2-0.1*I,
+                            0.2*I, 1.1+0.2*I, 2.2+0.2*I,
+                            0.3*I, 1.1+0.3*I, 2.2+0.3*I};
+    CDTYPE actual[12];
+    io_write_array_bin('C', expected, 3, 4, "data/test_matrix_bin.dat");
+    io_read_array_bin('C', actual, 3, 4, "data/test_matrix_bin.dat");
+    // utils_print_matrix(actual, 3, 4, 'C', 'C');
+    assert_equal_complex_double_array(expected, actual, 12);
+}
+
+
 int main(void)
 {
     UNITY_BEGIN();
     RUN_TEST(test_io_read_until_char);
     RUN_TEST(test_io_read_array_complex);
+    RUN_TEST(test_io_readwrite_array_complex);
     return(UNITY_END());
 }

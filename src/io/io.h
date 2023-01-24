@@ -6,7 +6,10 @@
 
 
 FILE * io_safely_open(char purpose, char * filename);
+FILE * io_safely_open_binary(char purpose, char * filename);
 int io_read_array(char type, char ordering, void * array,
+                int m, int n, char * filename);
+int io_read_array_bin(char type, void * array,
                 int m, int n, char * filename);
 int io_read_array_real(char ordering, DTYPE * array,
                         int m, int n, FILE * ifile);
@@ -15,6 +18,8 @@ int io_read_array_complex(char ordering, CDTYPE * array,
 int io_read_array_int(char ordering, int * array,
                         int m, int n, FILE * ifile);
 int io_write_array(char type, char ordering, void * array,
+                    int m, int n, char * filename);
+int io_write_array_bin(char type, void * array,
                     int m, int n, char * filename);
 
 int io_read_until(char * stopstr, FILE * ifile);

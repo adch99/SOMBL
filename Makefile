@@ -16,9 +16,9 @@ LDIRS=
 
 # On local machine use these lines
 # MKLROOT=/opt/intel/mkl
-CMKL=-DMKL_ILP64 
+CMKL=-DMKL_ILP64
 CMKL += -m64
-CMKL += -I"${MKLROOT}/include"
+# CMKL += -I"${MKLROOT}/include"
 # LMKL += -L${MKLROOT}/lib/intel64
 LMKL=
 # Static

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <time.h>
 #include <math.h>
 #include <argp.h>
@@ -17,14 +18,21 @@
 
 //------------------------------------------------------------------------
 
+struct GFunc {
+    DTYPE * gfunc_sym[2];
+    CDTYPE * gfunc_asym;
+};
+
 /* Function Declarations */ 
-int run(struct SystemParams * params, int run_num);
+int run(struct SystemParams * params, struct GFunc gfuncs,
+        int run_num, bool isLastRun);
 int output_gfuncsq_matrix(int runs_done, DTYPE * gfuncsq,
                 struct SystemParams params, struct OutStream outfiles);
 DTYPE post_process(struct SystemParams params, struct OutStream outfiles,
                 DTYPE * gfunc);
-int process_gr_grstar(struct SystemParams * params, CDTYPE * eigvecs,
-                    uint alpha, uint beta, int run_num);
+int process_gr_grstar(struct SystemParams * params, struct GFunc gfuncs, 
+                    CDTYPE * eigvecs, uint alpha, uint beta, int run_num,
+                    bool isLastRun);
 
 //------------------------------------------------------------------------
 
@@ -56,6 +64,7 @@ static struct argp_option options[] = {
     {"batchsize", 'j', "BATCHSIZE",  0, "Number of runs in each batch.",          0},
     {"seed",      'x', "SEED",       0, "Seed for random number generation.",     0},
     {"bins",      'e', "ENERGYBINS", 0, "Number of bins for energy binning.",     0},
+    {"start",     'f', "STARTFROM",  0, "Run number to start from.",              0},
     { 0 }
 };
 // Our argp parser.
@@ -70,6 +79,7 @@ static struct argp argp = { options, params_parse_opt, args_doc, doc, 0, 0, 0};
 
 //------------------------------------------------------------------------
 
+
 int main(int argc, char ** argv)
 {
     // For NaN detection
@@ -77,7 +87,7 @@ int main(int argc, char ** argv)
 
     struct SystemParams params;
     struct OutStream outfiles;
-
+    printf("Hello!\n");
     params_setup(argc, argv, &params, &outfiles, &argp, 0);
 
     int ctr, start, stop;
@@ -102,21 +112,28 @@ int main(int argc, char ** argv)
     // Set the iteration conditions for the runs
     if (params.batch_num == -1 || params.batch_size == -1)
     {
-        start = 1;
+        start = params.startfrom;
         stop = params.numRuns;
     }
     else
     {
-        start = 1 + params.batch_size * (params.batch_num - 1);
+        start = params.startfrom + params.batch_size * (params.batch_num - 1);
         stop = params.batch_size * params.batch_num;
     }
+
+    // Initialize the green functions
+    int Lsq = params.len * params.len;
+    struct GFunc gfuncs;
+    gfuncs.gfunc_sym[0] = calloc(Lsq * 2*Lsq, sizeof(DTYPE));
+    gfuncs.gfunc_sym[1] = calloc(Lsq * 2*Lsq, sizeof(DTYPE));
+    gfuncs.gfunc_asym = calloc(Lsq * 2*Lsq, sizeof(CDTYPE));
 
     printf("Starting Simulation for Exact Diagonalization...\n");
     for(ctr = start; ctr <= stop; ctr++)
     {
         printf("Run %d started...\n", ctr);
         fflush(stdout);
-        run(&params, ctr - start + 1);
+        run(&params, gfuncs, ctr - start + 1, (ctr == stop));
         printf("Run %d done\n", ctr);
     }
 
@@ -134,7 +151,8 @@ int main(int argc, char ** argv)
     Please ensure gfunc is initialized properly for your
     purpose.
 */
-int run(struct SystemParams * params, int run_num)
+int run(struct SystemParams * params, struct GFunc gfuncs,
+        int run_num, bool isLastRun)
 {
     // int num_sites = params->num_sites;
     int num_states = params->num_states;
@@ -176,27 +194,32 @@ int run(struct SystemParams * params, int run_num)
     uint alpha, beta;
     for(alpha = 0; alpha < 2; alpha++)
     {
-        process_gr_grstar(params, ham, alpha, alpha, run_num);
+        process_gr_grstar(params, gfuncs, ham, alpha, alpha,
+                        run_num, isLastRun);
     }
 
     // Now for the alpha != beta case
     // We only need one case
     alpha = 0;
     beta = 1;
-    process_gr_grstar(params, ham, alpha, beta, run_num);
+    process_gr_grstar(params, gfuncs, ham, alpha, beta,
+                    run_num, isLastRun);
 
     free(eigvals);
     free(ham);
     return(0);
 }
 
-int process_gr_grstar(struct SystemParams * params, CDTYPE * eigvecs,
-                    uint alpha, uint beta, int run_num)
+int process_gr_grstar(struct SystemParams * params, struct GFunc gfuncs, 
+                    CDTYPE * eigvecs, uint alpha, uint beta, int run_num,
+                    bool isLastRun)
 {
     int L = params->len;
     int Lsq = L*L;
     char filename[100];
     int nmin, nmax, i;
+    bool isCheckpoint, isFirst, startMiddle;
+    int runs_done = run_num - params->startfrom;
 
     // Now for the full set
     nmin = 0;
@@ -208,9 +231,11 @@ int process_gr_grstar(struct SystemParams * params, CDTYPE * eigvecs,
 
     if(alpha == beta)
     {
-        DTYPE * gfunc_sym = calloc(Lsq * 2*Lsq, sizeof(DTYPE));
-        if(run_num >= 2)
-        {            
+        DTYPE * gfunc_sym = gfuncs.gfunc_sym[alpha];
+        isFirst = (run_num == params->startfrom);
+        startMiddle = (params->startfrom > 1);
+        if(isFirst && startMiddle)
+        {
             // Get the matrix from the file
             io_read_array('R', 'C', gfunc_sym, Lsq, 2*Lsq, filename);
 
@@ -222,18 +247,31 @@ int process_gr_grstar(struct SystemParams * params, CDTYPE * eigvecs,
                                     nmin, nmax, alpha);
         gfuncsq_sym_GR_GRstar_deg(eigvecs, gfunc_sym, L,
                                 nmin, nmax, alpha);
-        
-        // Divide matrix by the number of runs already done
-        for(i = 0; i < Lsq * 2*Lsq; i++)
-            *(gfunc_sym + i) /= run_num;
-        
-        io_write_array('R', 'C', gfunc_sym, Lsq, 2*Lsq, filename);
-        free(gfunc_sym);
+
+        isCheckpoint = ((runs_done % 5 == 0) && (runs_done > 0));
+        if(isCheckpoint || isLastRun)
+        {
+            // Divide matrix by the number of runs already done
+            for(i = 0; i < Lsq * 2*Lsq; i++)
+                *(gfunc_sym + i) /= run_num;
+            
+            io_write_array_bin('R', gfunc_sym, Lsq, 2*Lsq, filename);
+
+            // Multiply matrix by the number of runs already done
+            for(i = 0; i < Lsq * 2*Lsq; i++)
+                *(gfunc_sym + i) *= (CDTYPE) run_num;
+
+        }
+
+
+        // free(gfunc_sym);
     }
     else // alpha != beta
     {
-        CDTYPE * gfunc_asym = calloc(Lsq * 2*Lsq, sizeof(CDTYPE));
-        if(run_num >= 2)
+        CDTYPE * gfunc_asym = gfuncs.gfunc_asym;
+        isFirst = (run_num == params->startfrom);
+        startMiddle = (params->startfrom > 1);
+        if(isFirst && startMiddle)
         {
             // Get the matrix from the file
             io_read_array('C', 'C', gfunc_asym, Lsq, 2*Lsq, filename);
@@ -247,13 +285,22 @@ int process_gr_grstar(struct SystemParams * params, CDTYPE * eigvecs,
         gfuncsq_asym_GR_GRstar_deg(eigvecs, gfunc_asym, L,
                                     nmin, nmax, alpha, beta);
         
-        // Divide matrix by the number of runs already done
-        for(i = 0; i < Lsq * 2*Lsq; i++)
-            *(gfunc_asym + i) /= (CDTYPE) run_num;
+        isCheckpoint = ((runs_done % 5 == 0) && (runs_done > 0));
+        if(isCheckpoint || isLastRun)
+        {
+            // Divide matrix by the number of runs already done
+            for(i = 0; i < Lsq * 2*Lsq; i++)
+                *(gfunc_asym + i) /= (CDTYPE) run_num;
 
-        // Write the new matrix back to the file.
-        io_write_array('C', 'C', gfunc_asym, Lsq, 2*Lsq, filename);
-        free(gfunc_asym);
+            // Write the new matrix back to the file.
+            io_write_array_bin('C', gfunc_asym, Lsq, 2*Lsq, filename);
+
+            // Multiply matrix by the number of runs already done
+            for(i = 0; i < Lsq * 2*Lsq; i++)
+                *(gfunc_asym + i) *= (CDTYPE) run_num;
+
+        }
+        // free(gfunc_asym);
     }
     return(0);
 }

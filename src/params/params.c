@@ -51,6 +51,9 @@ error_t params_parse_opt(int key, char *arg, struct argp_state *state)
         case 'e':
             params->energybins = atoi(arg);
             break;
+        case 'f':
+            params->startfrom = atoi(arg);
+            break;
         default:
             return ARGP_ERR_UNKNOWN;
         }
@@ -72,6 +75,7 @@ int params_setup(int argc, char ** argv, struct SystemParams * params,
     params->batch_size = -1;
     params->seed = -1;
     params->energybins = -1;
+    params->startfrom = 1;
 
     /* Parse our arguments; every option seen by parse_opt will
         be reflected in params. */

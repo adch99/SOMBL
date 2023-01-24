@@ -22,6 +22,7 @@ struct SystemParams {
     int batch_size;
     int seed;
     int energybins;
+    int startfrom;
 };
 
 

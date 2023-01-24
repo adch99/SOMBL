@@ -48,6 +48,35 @@ FILE * io_safely_open(char purpose, char * filename)
 }
 
 /*
+    Opens the binary file for the given purpose (must be either 'r'
+    or 'w') and checks for errors while opening.
+*/
+FILE * io_safely_open_binary(char purpose, char * filename)
+{
+    if(purpose != 'w' && purpose != 'r' && purpose != 'a')
+    {
+        printf("\nArgument 'purpose' must be either 'r' or 'w' or 'a'\n");
+        printf("purpose = %c\n", purpose);
+        exit(EXIT_FAILURE);
+    }
+
+    FILE * openfile;
+    char mode[3];
+    sprintf(mode, "%cb", purpose);
+    // printf("Opening %s in mode %s\n", filename, mode);
+    openfile = fopen(filename, mode);
+    if (openfile == NULL)
+    {
+        printf("Error in opening file '%s': %s\n",
+                filename, strerror(errno));
+        fclose(openfile);
+        exit(EXIT_FAILURE);
+    }
+    return(openfile);
+}
+
+
+/*
     Reads the array of the given type from the file and
     stores it in the array in the given ordering. type must
     be 'R' for real, 'C' for complex and 'I' for int.
@@ -99,6 +128,52 @@ int io_read_array(char type, char ordering, void * array,
 
     return(info);
 }
+
+
+/*
+    Reads the array of the given type from the file and
+    stores it in the array in the given ordering. type must
+    be 'R' for real, 'C' for complex and 'I' for int.
+    ordering must be 'R' for row major and 'C' for column
+    major.
+*/
+int io_read_array_bin(char type, void * array,
+                int m, int n, char * filename)
+{
+    FILE * ifile = io_safely_open_binary('r', filename);
+    size_t count;
+
+    if(type == 'C')
+    {
+        // printf("io_read_array: m = %d n = %d\n", m, n);
+        count = fread((CDTYPE *) array, sizeof(CDTYPE), m*n, ifile);
+    }
+    else if(type == 'R')
+    {    
+        count = fread((DTYPE *) array, sizeof(DTYPE), m*n, ifile);
+    }
+    else if(type == 'I')
+    {
+        count = fread((int *) array, sizeof(int), m*n, ifile);
+    }
+    else
+    {
+        printf("ERROR: type given to io_read_array_bin must be one of "
+                "the following: 'C', 'R' or 'I'!\n");
+        exit(EXIT_FAILURE);
+    }
+    
+    fclose(ifile);
+    if(count != m*n)
+    {
+        printf("Read Error: Only %d out of %d read\n", count, m*n);
+        printf("Erring Filename: %s\n", filename);
+        exit(EXIT_FAILURE);
+    }
+
+    return(count);
+}
+
 
 /*
     Reads the complex array from the file and stores it in
@@ -257,6 +332,45 @@ int io_write_array(char type, char ordering, void * array,
     fclose(ofile);
     return 0;
 }
+
+
+/*
+    Writes the array given to the given binary file. type must be
+    'R' for real, 'C' for complex. ordering must be 'R' for
+    row major and 'C' for column major.
+*/
+int io_write_array_bin(char type, void * array,
+                    int m, int n, char * filename)
+{
+    FILE * ofile = io_safely_open_binary('w', filename);
+    size_t count;
+
+    if(type != 'C' && type != 'R')
+    {
+        printf("Invalid type passed to io_write_array.\n");
+        printf("type must be either 'C' or 'R'.\n");
+    }
+
+    if(type == 'R')
+    {
+        count = fwrite((DTYPE *) array, sizeof(DTYPE), m*n, ofile);
+    }
+    else if(type == 'C')
+    {
+        count = fwrite((CDTYPE *) array, sizeof(CDTYPE), m*n, ofile);
+    }
+
+    if(count != m*n)
+    {
+        printf("Write Error: Only %d out of %d written\n", count, m*n);
+        printf("Erring Filename: %s\n", filename);
+        exit(EXIT_FAILURE);        
+    }
+
+    fclose(ofile);
+    return 0;
+}
+
 
 
 int io_get_gfuncsq_from_file(DTYPE * matrix, struct OutStream outfiles,
