@@ -18,7 +18,7 @@ int diag_get_eigvalsh(CDTYPE * matrix, int size, DTYPE * eigvals)
 {    
     // Diagonalize with LAPACK
     // printf("Entered utils_get_eigvalsh\n");
-    int info = LAPACKE_zheev(LAPACK_COL_MAJOR, 'N', 'U', size,
+    int info = LAPACKE_cheev(LAPACK_COL_MAJOR, 'N', 'U', size,
                             matrix, size, eigvals);
     if (info != 0)
     {
@@ -47,7 +47,7 @@ int diag_get_eigh(CDTYPE * matrix, int size, DTYPE * eigvals)
     lda = size;
     n = size;
 
-    info = LAPACKE_zheev(LAPACK_COL_MAJOR, 'V', 'U', n,
+    info = LAPACKE_cheev(LAPACK_COL_MAJOR, 'V', 'U', n,
                         matrix, lda, eigvals);
     if (info != 0)
     {

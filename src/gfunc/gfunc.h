@@ -30,3 +30,5 @@ int gfuncsq_sym_GR_GRstar_deg(CDTYPE * eigvecs, DTYPE * gfuncsq, int length,
                         int nmin, int nmax, uint alpha);
 int gfuncsq_asym_GR_GRstar_deg(CDTYPE * eigvecs, CDTYPE * gfuncsq, int length,
                         int nmin, int nmax, uint alpha, uint beta);
+int gfunc_direct_full(CDTYPE * eigvecs, CDTYPE * gfuncsq, int length,
+                        int nmin, int nmax, uint alpha, uint beta);

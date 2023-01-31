@@ -4,7 +4,7 @@
 #include <complex.h>
 
 #define DTYPE double
-#define CDTYPE complex double
+#define CDTYPE complex float
 // #define lapack_complex_double CDTYPE
 typedef unsigned int uint;
 
