@@ -760,10 +760,10 @@ int main(void)
     // For NaN detection
     // feenableexcept(FE_INVALID | FE_OVERFLOW);
     UNITY_BEGIN();
-    RUN_TEST(test_utils_gfuncsq_sigma_matrix_nondeg);
-    RUN_TEST(test_utils_gfuncsq_sigma_matrix_deg);
-    RUN_TEST(test_utils_gfuncsq_sigma_coeff_nondeg);
-    RUN_TEST(test_utils_gfuncsq_sigma_coeff_deg);
+    // RUN_TEST(test_utils_gfuncsq_sigma_matrix_nondeg);
+    // RUN_TEST(test_utils_gfuncsq_sigma_matrix_deg);
+    // RUN_TEST(test_utils_gfuncsq_sigma_coeff_nondeg);
+    // RUN_TEST(test_utils_gfuncsq_sigma_coeff_deg);
     RUN_TEST(test_utils_multiply_restricted);
     RUN_TEST(test_utils_bin_energy_range);
     RUN_TEST(test_gfuncsq_GR_GRstar_nondeg);

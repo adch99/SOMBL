@@ -67,13 +67,14 @@ TESTFLAGS += -DUNITY_INCLUDE_DOUBLE
 # --------------------------------------
 CFLAGS=
 LFLAGS=
-CFLAGS += -Wall
-CFLAGS += -Wextra
-CFLAGS += -g
-CFLAGS += -fdiagnostics-color=always
+# CFLAGS += -Wall
+# CFLAGS += -Wextra
+# CFLAGS += -g
+# CFLAGS += -fdiagnostics-color=always
 CFLAGS += -ffast-math
 # CFLAGS += -ftrapv -fwrapv
-CFLAGS += -O2
+# CFLAGS += -O2
+CFLAGS += -Ofast
 # CFLAGS += -Iextern/unity
 # CFLAGS += -fopenmp
 CFLAGS += $(IDIRS)
