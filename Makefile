@@ -5,32 +5,43 @@ LDIRS=
 # -----------------
 # MKL Configuration
 # -----------------
+CMKL=
+LMKL=
+
 
 # On cluster use these lines
 # On flock
 # MKLROOT=/apps/intel_2018/mkl
 # On leap
 # MKLROOT=/apps/intel/oneapi/mkl/latest
-# CMKL=
-# LMKL=-Wl,--start-group $(MKLROOT)/lib/intel64/libmkl_intel_lp64.a $(MKLROOT)/lib/intel64/libmkl_intel_thread.a $(MKLROOT)/lib/intel64/libmkl_core.a -Wl,--end-group
+# On local machine, though it isn't necessary
+# MKLROOT=/opt/intel/mkl
+
+ONCLUSTER=
+ONLOCAL=yes
+
+# For all clusters
+ifdef ONCLUSTER
+LMKL += -Wl,--start-group $(MKLROOT)/lib/intel64/libmkl_intel_lp64.a
+LMKL += $(MKLROOT)/lib/intel64/libmkl_intel_thread.a
+LMKL += $(MKLROOT)/lib/intel64/libmkl_core.a
+LMKL += -Wl,--end-group
+endif
 
 # On local machine use these lines
-# MKLROOT=/opt/intel/mkl
-CMKL=-DMKL_ILP64
+# We are using static linking
+ifdef ONLOCAL
+CMKL += -DMKL_ILP64
 CMKL += -m64
-# CMKL += -I"${MKLROOT}/include"
-# LMKL += -L${MKLROOT}/lib/intel64
-LMKL=
-# Static
 LMKL += -Wl,--start-group
 LMKL += ${MKLROOT}/lib/intel64/libmkl_intel_ilp64.a
-# LMKL += ${MKLROOT}/lib/intel64/libmkl_gnu_thread.a
 LMKL += ${MKLROOT}/lib/intel64/libmkl_intel_thread.a
 LMKL += ${MKLROOT}/lib/intel64/libmkl_core.a
 LMKL += ${MKLROOT}/lib/intel64/libmkl_blacs_intelmpi_ilp64.a
 LMKL += -Wl,--end-group
+endif
+
 # Common lines
-# LMKL += -lgomp
 LMKL += -liomp5
 LMKL += -lpthread
 LMKL += -lm

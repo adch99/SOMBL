@@ -1,7 +1,7 @@
 #!/bin/bash
 
 W=15
-C=0
+C=0.2
 size=10
 bins=10
 batchsize=10
