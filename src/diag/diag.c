@@ -3,6 +3,7 @@
 #include <complex.h>
 // #include <lapacke.h>
 #include "mkl.h"
+#include "mkl_lapacke.h"
 #include "diag.h"
 #include "../constants.h"
 
@@ -22,7 +23,7 @@ int diag_get_eigvalsh(CDTYPE * matrix, int size, DTYPE * eigvals)
                             matrix, size, eigvals);
     if (info != 0)
     {
-        printf("LAPACKE_zheev error! Code: %d", info);
+        printf("LAPACKE_cheev error! Code: %d", info);
         return info; // Some error has occured.
     }
     
@@ -51,7 +52,7 @@ int diag_get_eigh(CDTYPE * matrix, int size, DTYPE * eigvals)
                         matrix, lda, eigvals);
     if (info != 0)
     {
-        printf("LAPACKE_zheev error! Code: %lld", info);
+        printf("LAPACKE_cheev error! Code: %d", info);
         return(info); // Some error has occured.
     }
     return(0);

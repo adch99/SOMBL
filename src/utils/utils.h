@@ -7,8 +7,8 @@
 
 DTYPE utils_loc_len(DTYPE energy, const DTYPE * eigenvals, DTYPE hop_strength,
                     int len, int eigenfunc_num);
-int utils_uniform_dist(double low, double high, int num_samples,
-                        double * samples, int seed_with_time);
+int utils_uniform_dist(DTYPE low, DTYPE high, int num_samples,
+                        DTYPE * samples, int seed_with_time);
 int utils_print_matrix(void * matrix, int m, int n,
                     char type, char ordering);
 int utils_save_matrix(void * matrix, int m, int n,

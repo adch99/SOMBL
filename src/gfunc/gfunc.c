@@ -37,12 +37,12 @@ int gfuncsq_std(CDTYPE * eigenvectors, int size,
         for(j = 0; j < size; j++)
         {
             elem = *(eigenvectors + RTC(i, j, size));
-            *(eigvec_sq + RTC(i, j, size)) = creal(elem)*creal(elem)
-                                            + cimag(elem)*cimag(elem); 
+            *(eigvec_sq + RTC(i, j, size)) = crealf(elem)*crealf(elem)
+                                            + cimagf(elem)*cimagf(elem); 
         }
     }
 
-    cblas_dsyrk(CblasColMajor, CblasUpper, CblasNoTrans, size, size,
+    cblas_ssyrk(CblasColMajor, CblasUpper, CblasNoTrans, size, size,
                 1.0, eigvec_sq, size, 1.0, green_func, size);
     free(eigvec_sq);
     
@@ -57,7 +57,7 @@ int gfuncsq_std(CDTYPE * eigenvectors, int size,
         {
             for(n = 0; n < size/2; n++)
             {
-                *(B + RTC(i,n,size)) = conj(*(eigenvectors + RTC(i,2*n,size)))
+                *(B + RTC(i,n,size)) = conjf(*(eigenvectors + RTC(i,2*n,size)))
                                     * (*(eigenvectors + RTC(i,2*n+1,size)));
             }
         }
@@ -70,7 +70,7 @@ int gfuncsq_std(CDTYPE * eigenvectors, int size,
             for(j = i; j < size; j++)
             {
                 index_ij = RTC(i, j, size);
-                *(green_func + index_ij) += 2*creal(*(BBh + index_ij));
+                *(green_func + index_ij) += 2*crealf(*(BBh + index_ij));
             }
         }
 
@@ -119,8 +119,8 @@ DTYPE gfuncsq_std_elem(int i, int j, CDTYPE * eigenvectors,
     {
         psi1 = *(eigenvectors + index1);
         psi2 = *(eigenvectors + index2);
-        mod1 = creal(psi1)*creal(psi1) + cimag(psi1)*cimag(psi1);
-        mod2 = creal(psi2)*creal(psi2) + cimag(psi2)*cimag(psi2);
+        mod1 = crealf(psi1)*crealf(psi1) + cimagf(psi1)*cimagf(psi1);
+        mod2 = crealf(psi2)*crealf(psi2) + cimagf(psi2)*cimagf(psi2);
         sum += mod1 * mod2;
         index1 += size;
         index2 += size;
@@ -152,8 +152,8 @@ DTYPE gfuncsq_std_elem(int i, int j, CDTYPE * eigenvectors,
             psi_k_j = *(eigenvectors + index_jk);
             psi_l_j = *(eigenvectors + index_jl);
 
-            term = psi_k_i * conj(psi_l_i) * conj(psi_k_j) * psi_l_j;
-            sum += term + conj(term);
+            term = psi_k_i * conjf(psi_l_i) * conjf(psi_k_j) * psi_l_j;
+            sum += term + conjf(term);
         }
     }
     return(sum);
@@ -206,7 +206,7 @@ DTYPE gfuncsq_std_elem(int i, int j, CDTYPE * eigenvectors,
 //             {
 //                 for(alpha_p = 0; alpha_p < 2; alpha_p++)
 //                 {
-//                     coeff += conj(*(sigma + RTC(alpha_p,gamma,2)))
+//                     coeff += conjf(*(sigma + RTC(alpha_p,gamma,2)))
 //                             * *(sigma + RTC(alpha,gamma_p,2));
 //                 }
 //             }
@@ -220,7 +220,7 @@ DTYPE gfuncsq_std_elem(int i, int j, CDTYPE * eigenvectors,
 //             {
 //                 for(n = 0; n < 2*Lsq; n++)
 //                 {
-//                     elem = conj(*(eigvecs + RTC(2*i+gamma,n,2*Lsq)))
+//                     elem = conjf(*(eigvecs + RTC(2*i+gamma,n,2*Lsq)))
 //                             * *(eigvecs + RTC(2*i+gamma_p,n,2*Lsq));
 //                     *(matrix1 + RTC(i,n,Lsq)) += coeff * elem;
 //                     *(matrix2 + RTC(i,n,Lsq)) += elem;
@@ -238,7 +238,7 @@ DTYPE gfuncsq_std_elem(int i, int j, CDTYPE * eigenvectors,
 
 //     for(i = 0; i < Lsq*Lsq; i++)
 //     {
-//         *(gfuncsq + i) += creal(*(product + i));
+//         *(gfuncsq + i) += crealf(*(product + i));
 //     }
 
 //     free(matrix1);
@@ -278,7 +278,7 @@ DTYPE gfuncsq_std_elem(int i, int j, CDTYPE * eigenvectors,
 //             {
 //                 for(alpha_p = 0; alpha_p < 2; alpha_p++)
 //                 {
-//                     coeff += conj(*(sigma + RTC(alpha_p,gamma,2)))
+//                     coeff += conjf(*(sigma + RTC(alpha_p,gamma,2)))
 //                             * *(sigma + RTC(alpha,gamma_p,2));
 //                 }
 //             }
@@ -292,7 +292,7 @@ DTYPE gfuncsq_std_elem(int i, int j, CDTYPE * eigenvectors,
 //             {
 //                 for(p = 0; p < Lsq; p++)
 //                 {
-//                     elem = conj(*(eigvecs + RTC(2*i+gamma,2*p,2*Lsq)))
+//                     elem = conjf(*(eigvecs + RTC(2*i+gamma,2*p,2*Lsq)))
 //                         * *(eigvecs + RTC(2*i+gamma_p,2*p+1,2*Lsq));
 //                     *(matrix1 + RTC(i,p,Lsq)) += coeff * elem;
 //                     *(matrix2 + RTC(i,p,Lsq)) += elem;
@@ -313,7 +313,7 @@ DTYPE gfuncsq_std_elem(int i, int j, CDTYPE * eigenvectors,
 //     {
 //         for(j = 0; j < Lsq; j++)
 //         {
-//             *(gfuncsq + RTC(i, j, Lsq)) += 2 * creal(*(product + RTC(i, j, Lsq)));
+//             *(gfuncsq + RTC(i, j, Lsq)) += 2 * crealf(*(product + RTC(i, j, Lsq)));
 //         }
 //     }
 
@@ -367,7 +367,7 @@ int gfuncsq_sigma_op_nondeg(DTYPE * gfuncsq, CDTYPE * sigma,
             {
                 for(alpha_p = 0; alpha_p < 2; alpha_p++)
                 {
-                    coeff += conj(*(sigma + RTC(alpha_p,gamma,2))) 
+                    coeff += conjf(*(sigma + RTC(alpha_p,gamma,2))) 
                             * *(sigma + RTC(alpha,gamma_p,2));
                 }
             }
@@ -381,7 +381,7 @@ int gfuncsq_sigma_op_nondeg(DTYPE * gfuncsq, CDTYPE * sigma,
             {
                 for(n = 0; n < 2*Lsq; n++)
                 {
-                    elem = conj(*(eigvecs + RTC(2*i+gamma,n,2*Lsq)))
+                    elem = conjf(*(eigvecs + RTC(2*i+gamma,n,2*Lsq)))
                             * *(eigvecs + RTC(2*i+gamma_p,n,2*Lsq));
                     *(matrix1 + RTC(i,n,Lsq)) += coeff * elem;
                     *(matrix2 + RTC(i,n,Lsq)) += elem;
@@ -399,7 +399,7 @@ int gfuncsq_sigma_op_nondeg(DTYPE * gfuncsq, CDTYPE * sigma,
     
     for(i = 0; i < Lsq*Lsq; i++)
     {
-        *(gfuncsq + i) += creal(*(product + i));
+        *(gfuncsq + i) += crealf(*(product + i));
     }
 
     free(matrix1);
@@ -438,7 +438,7 @@ int gfuncsq_sigma_op_deg(DTYPE * gfuncsq, CDTYPE * sigma,
             {
                 for(alpha_p = 0; alpha_p < 2; alpha_p++)
                 {
-                    coeff += conj(*(sigma + RTC(alpha_p,gamma,2)))
+                    coeff += conjf(*(sigma + RTC(alpha_p,gamma,2)))
                             * *(sigma + RTC(alpha,gamma_p,2));
                 }
             }
@@ -452,7 +452,7 @@ int gfuncsq_sigma_op_deg(DTYPE * gfuncsq, CDTYPE * sigma,
             {
                 for(p = 0; p < Lsq; p++)
                 {
-                    elem = conj(*(eigvecs + RTC(2*i+gamma,2*p,2*Lsq)))
+                    elem = conjf(*(eigvecs + RTC(2*i+gamma,2*p,2*Lsq)))
                             * *(eigvecs + RTC(2*i+gamma_p,2*p+1,2*Lsq));
                     *(matrix1 + RTC(i,p,Lsq)) += coeff * elem;
                     *(matrix2 + RTC(i,p,Lsq)) += elem;
@@ -473,7 +473,7 @@ int gfuncsq_sigma_op_deg(DTYPE * gfuncsq, CDTYPE * sigma,
     {
         for(j = 0; j < Lsq; j++)
         {
-            *(gfuncsq + RTC(i, j, Lsq)) += 2 * creal(*(product + RTC(i, j, Lsq)));
+            *(gfuncsq + RTC(i, j, Lsq)) += 2 * crealf(*(product + RTC(i, j, Lsq)));
         }
     }
 
@@ -508,8 +508,8 @@ int gfuncsq_sym_GR_GRstar_nondeg(CDTYPE * eigvecs, DTYPE * gfuncsq, int length,
             // printf("Index m = %d\tn = %d\n", m, n);
             q = n - nmin;
             elem = *(eigvecs + RTC(m, n, num_states));
-            *(Z + RTC(m, q, num_states)) = creal(elem)*creal(elem)
-                                        + cimag(elem)*cimag(elem);            
+            *(Z + RTC(m, q, num_states)) = crealf(elem)*crealf(elem)
+                                        + cimagf(elem)*cimagf(elem);            
         }
     }
     // printf("Z Initialized!\n\n");
@@ -522,14 +522,14 @@ int gfuncsq_sym_GR_GRstar_nondeg(CDTYPE * eigvecs, DTYPE * gfuncsq, int length,
             // printf("(%d, %d) ", i, n);
             q = n - nmin;
             *(A + RTC(i, q, num_sites)) = *(eigvecs + RTC(2*i+alpha, n, num_states))
-                                        * conj(*(eigvecs + RTC(2*i+alpha, n, num_states)));
+                                        * conjf(*(eigvecs + RTC(2*i+alpha, n, num_states)));
         }
         // printf("\n");
     }
 
     lapack_int Lsq = num_sites;
     lapack_int twoLsq = num_states;
-    cblas_dgemm(CblasColMajor, CblasNoTrans, CblasTrans,
+    cblas_sgemm(CblasColMajor, CblasNoTrans, CblasTrans,
                 Lsq, twoLsq, nwindow, 1.0, A, Lsq,
                 Z, twoLsq, 1.0, gfuncsq, Lsq);
     free(Z);
@@ -563,8 +563,8 @@ int gfuncsq_asym_GR_GRstar_nondeg(CDTYPE * eigvecs, CDTYPE * gfuncsq, int length
             // printf("Index m = %d\tn = %d\n", m, n);
             q = n - nmin;
             elem = *(eigvecs + RTC(m, n, num_states));
-            *(Z + RTC(m, q, num_states)) = creal(elem)*creal(elem)
-                                        + cimag(elem)*cimag(elem);            
+            *(Z + RTC(m, q, num_states)) = crealf(elem)*crealf(elem)
+                                        + cimagf(elem)*cimagf(elem);            
         }
     }
     // printf("Z Initialized!\n\n");
@@ -577,18 +577,21 @@ int gfuncsq_asym_GR_GRstar_nondeg(CDTYPE * eigvecs, CDTYPE * gfuncsq, int length
             // printf("(%d, %d) ", i, n);
             q = n - nmin;
             *(A + RTC(i, q, num_sites)) = *(eigvecs + RTC(2*i+alpha, n, num_states))
-                                        * conj(*(eigvecs + RTC(2*i+beta, n, num_states)));
+                                        * conjf(*(eigvecs + RTC(2*i+beta, n, num_states)));
         }
         // printf("\n");
     }
 
     lapack_int Lsq = num_sites;
     lapack_int twoLsq = num_states;
-    lapack_complex_double blas_alpha, blas_beta;
-    blas_alpha.real = 1.0;
-    blas_alpha.imag = 0.0;
-    blas_beta.real = 1.0;
-    blas_beta.imag = 0.0;
+    lapack_complex_float blas_alpha, blas_beta;
+    // blas_alpha.real = 1.0;
+    // blas_alpha.imag = 0.0;
+    // blas_beta.real = 1.0;
+    // blas_beta.imag = 0.0;
+    blas_alpha = 1.0 + 0*I;
+    blas_beta = 1.0 + 0*I;
+
     cblas_cgemm(CblasColMajor, CblasNoTrans, CblasTrans,
                 Lsq, twoLsq, nwindow, &blas_alpha, A, Lsq,
                 Z, twoLsq, &blas_beta, gfuncsq, Lsq);
@@ -612,7 +615,7 @@ int gfuncsq_asym_GR_GRstar_deg(CDTYPE * eigvecs, CDTYPE * gfuncsq, int length,
     lapack_int M = Lsq;
     lapack_int N = Lsq;
     lapack_int K = (nmax - nmin) / 2;
-    lapack_complex_double blas_alpha, blas_beta;
+    lapack_complex_float blas_alpha, blas_beta;
 
     output = calloc(Lsq*Lsq, sizeof(CDTYPE));
 
@@ -626,7 +629,7 @@ int gfuncsq_asym_GR_GRstar_deg(CDTYPE * eigvecs, CDTYPE * gfuncsq, int length,
             {
                 q = p - pmin;
                 *(C_gg + RTC(i, q, Lsq)) = *(eigvecs + RTC(2*i+gamma,2*p,2*Lsq))
-                                            * conj(*(eigvecs + RTC(2*i+gamma, 2*p+1, 2*Lsq)));
+                                            * conjf(*(eigvecs + RTC(2*i+gamma, 2*p+1, 2*Lsq)));
             }
         }
         // Create C_ab
@@ -637,17 +640,19 @@ int gfuncsq_asym_GR_GRstar_deg(CDTYPE * eigvecs, CDTYPE * gfuncsq, int length,
             {
                 q = p - pmin;
                 *(C_ab + RTC(i, q, Lsq)) = *(eigvecs + RTC(2*i+alpha,2*p,2*Lsq))
-                                            * conj(*(eigvecs + RTC(2*i+beta, 2*p+1, 2*Lsq)));
+                                            * conjf(*(eigvecs + RTC(2*i+beta, 2*p+1, 2*Lsq)));
             }
         }
 
         // compute C_ab C_gg^T and add to output
         // blas_beta = 0 is important to clear out
         // any pre-existing values.
-        blas_alpha.real = 1.0;
-        blas_alpha.imag = 0.0;
-        blas_beta.real = 0.0;
-        blas_beta.imag = 0.0;
+        // blas_alpha.real = 1.0;
+        // blas_alpha.imag = 0.0;
+        // blas_beta.real = 0.0;
+        // blas_beta.imag = 0.0;
+        blas_alpha = 1.0;
+        blas_beta = 0;
         cblas_cgemm(CblasColMajor, CblasNoTrans, CblasTrans,
                     M, N, K, &blas_alpha, C_ab, M, C_gg, N,
                     &blas_beta, output, M);
@@ -660,16 +665,18 @@ int gfuncsq_asym_GR_GRstar_deg(CDTYPE * eigvecs, CDTYPE * gfuncsq, int length,
             for(p = pmin; p < pmax; p++)
             {
                 q = p - pmin;
-                *(C_ba_star + RTC(i, q, Lsq)) = conj(*(eigvecs + RTC(2*i+beta, 2*p, 2*Lsq)))
+                *(C_ba_star + RTC(i, q, Lsq)) = conjf(*(eigvecs + RTC(2*i+beta, 2*p, 2*Lsq)))
                                         * (*(eigvecs + RTC(2*i+alpha, 2*p+1, 2*Lsq)));
             }
         }
 
         // compute C_ba_star C_gg^H and add to output
-        blas_alpha.real = 1.0;
-        blas_alpha.imag = 0.0;
-        blas_beta.real = 1.0;
-        blas_beta.imag = 0.0;
+        // blas_alpha.real = 1.0;
+        // blas_alpha.imag = 0.0;
+        // blas_beta.real = 1.0;
+        // blas_beta.imag = 0.0;
+        blas_alpha = 1;
+        blas_beta = 1;
         cblas_cgemm(CblasColMajor, CblasNoTrans, CblasConjTrans,
                     M, N, K, &blas_alpha, C_ba_star, M, C_gg, N,
                     &blas_beta, output, M);
@@ -703,7 +710,7 @@ int gfuncsq_sym_GR_GRstar_deg(CDTYPE * eigvecs, DTYPE * gfuncsq, int length,
     lapack_int M = Lsq;
     lapack_int N = Lsq;
     lapack_int K = (nmax - nmin) / 2;
-    // lapack_complex_double blas_alpha, blas_beta;
+    // lapack_complex_float blas_alpha, blas_beta;
     CDTYPE blas_alpha, blas_beta;
 
     output = calloc(Lsq*Lsq, sizeof(CDTYPE));
@@ -723,7 +730,7 @@ int gfuncsq_sym_GR_GRstar_deg(CDTYPE * eigvecs, DTYPE * gfuncsq, int length,
             {
                 q = p - pmin;
                 *(C_gg + RTC(i, q, Lsq)) = *(eigvecs + RTC(2*i+gamma,2*p,2*Lsq))
-                                            * conj(*(eigvecs + RTC(2*i+gamma, 2*p+1, 2*Lsq)));
+                                            * conjf(*(eigvecs + RTC(2*i+gamma, 2*p+1, 2*Lsq)));
             }
         }
         // Create C_ab
@@ -734,7 +741,7 @@ int gfuncsq_sym_GR_GRstar_deg(CDTYPE * eigvecs, DTYPE * gfuncsq, int length,
             {
                 q = p - pmin;
                 *(C_ab + RTC(i, q, Lsq)) = *(eigvecs + RTC(2*i+alpha,2*p,2*Lsq))
-                                            * conj(*(eigvecs + RTC(2*i+beta, 2*p+1, 2*Lsq)));
+                                            * conjf(*(eigvecs + RTC(2*i+beta, 2*p+1, 2*Lsq)));
             }
         }
 
@@ -762,7 +769,7 @@ int gfuncsq_sym_GR_GRstar_deg(CDTYPE * eigvecs, DTYPE * gfuncsq, int length,
         //         for(k = 0; k < 4; k++)
         //         {
         //             elem = *(output + RTC(i, k, Lsq));
-        //             printf("(%10.3e%+10.3ej) ",creal(elem), cimag(elem));
+        //             printf("(%10.3e%+10.3ej) ",crealf(elem), cimagf(elem));
         //         }
         //         printf("\n");
         //     }
@@ -774,7 +781,7 @@ int gfuncsq_sym_GR_GRstar_deg(CDTYPE * eigvecs, DTYPE * gfuncsq, int length,
         {
             for(k = 0; k < Lsq; k++)
             {
-                *(gfuncsq + RTC(i, 2*k+gamma, Lsq)) += 2*creal(*(output + RTC(i, k, Lsq)));
+                *(gfuncsq + RTC(i, 2*k+gamma, Lsq)) += 2*crealf(*(output + RTC(i, k, Lsq)));
             }
         }
     }
@@ -784,25 +791,49 @@ int gfuncsq_sym_GR_GRstar_deg(CDTYPE * eigvecs, DTYPE * gfuncsq, int length,
 
 
 
-int gfunc_calc_direct(CDTYPE * eigvecs, int length, int i, int k, uint alpha,
+CDTYPE gfunc_calc_direct(CDTYPE * eigvecs, int length, int i, int k, uint alpha,
                     uint beta, uint gamma, int nmin, int nmax)
 {
-    int n;
+    int n, p;
+    int pmin = nmin / 2;
+    int pmax = nmax / 2;
     int Lsq = length*length;
+    int twoLsq = 2*Lsq;
     CDTYPE sum = 0;
-    CDTYPE * ptr_n_ialpha = eigvecs + RTC(2*i+alpha, 0, 2*Lsq);
-    CDTYPE * ptr_n_ibeta = eigvecs + RTC(2*i+beta, 0, 2*Lsq);
-    CDTYPE * ptr_n_kgamma = eigvecs + RTC(2*k+gamma, 0, 2*Lsq);
-    size_t next_col = RTC(2*i+alpha, 1, 2*Lsq) - RTC(2*i+alpha, 0, 2*Lsq);
+    CDTYPE * ptr_n_ialpha = eigvecs + RTC(2*i+alpha, nmin, 2*Lsq);
+    CDTYPE * ptr_n_ibeta = eigvecs + RTC(2*i+beta, nmin, 2*Lsq);
+    CDTYPE * ptr_n_kgamma = eigvecs + RTC(2*k+gamma, nmin, 2*Lsq);
+    // printf("next_col: %d\n", next_col);
 
     for(n = nmin; n < nmax; n++)
     {
-        sum += (*ptr_n_ialpha) * conj(*ptr_n_ibeta) * (creal(*ptr_n_kgamma)*creal(*ptr_n_kgamma)
-                + cimag(*ptr_n_kgamma)*cimag(*ptr_n_kgamma));
-        ptr_n_ialpha += next_col;
-        ptr_n_ibeta += next_col;
-        ptr_n_kgamma += next_col;
+        sum += (*ptr_n_ialpha) * conjf(*ptr_n_ibeta) * (crealf(*ptr_n_kgamma)*crealf(*ptr_n_kgamma)
+                + cimagf(*ptr_n_kgamma)*cimagf(*ptr_n_kgamma));
+        ptr_n_ialpha += twoLsq;
+        ptr_n_ibeta += twoLsq;
+        ptr_n_kgamma += twoLsq;
     }
+
+    CDTYPE * ptr_2p_ialpha = eigvecs + RTC(2*i+alpha, 2*pmin, twoLsq);
+    CDTYPE * ptr_2p_kgamma = eigvecs + RTC(2*k+gamma, 2*pmin, twoLsq);
+    CDTYPE * ptr_2p_ibeta = eigvecs + RTC(2*i+beta, 2*pmin, twoLsq);
+    CDTYPE * ptr_2p1_ialpha = eigvecs + RTC(2*i+alpha, 2*pmin+1, twoLsq);
+    CDTYPE * ptr_2p1_kgamma = eigvecs + RTC(2*k+gamma, 2*pmin+1, twoLsq);
+    CDTYPE * ptr_2p1_ibeta = eigvecs + RTC(2*i+beta, 2*pmin+1, twoLsq);
+
+
+    for(p = pmin; p < pmax; p++)
+    {
+        sum += (*ptr_2p_ialpha) * conjf((*ptr_2p1_kgamma) * (*ptr_2p1_ibeta)) * (*ptr_2p_kgamma)
+            + (*ptr_2p1_ialpha) * conjf((*ptr_2p_kgamma) * (*ptr_2p_ibeta)) * (*ptr_2p1_kgamma);
+        ptr_2p_ialpha += twoLsq;
+        ptr_2p_ibeta += twoLsq;
+        ptr_2p_kgamma += twoLsq;
+        ptr_2p1_ialpha += twoLsq;
+        ptr_2p1_ibeta += twoLsq;
+        ptr_2p1_kgamma += twoLsq;
+    }
+
     return(sum);
 }
 

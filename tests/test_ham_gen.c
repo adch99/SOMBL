@@ -45,8 +45,8 @@ int tester(int (*test_func)(), char * name)
 
 int test_ceq(CDTYPE a, CDTYPE b, DTYPE tol)
 {
-    DTYPE diff_real = fabs(creal(a) - creal(b));
-    DTYPE diff_imag = fabs(cimag(a) - cimag(b));
+    DTYPE diff_real = fabs(crealf(a) - crealf(b));
+    DTYPE diff_imag = fabs(cimagf(a) - cimagf(b));
     return((diff_real < tol) && (diff_imag < tol));
 }
 
@@ -107,8 +107,8 @@ int test_ham_lattice_site(int index, CDTYPE * ham, int length, DTYPE hopup,
         printf("Error in ham:\n");
         printf("i = %d = (%d, %d, %d)\n", nb_index, x-1, y, spin);
         printf("j = %d = (%d, %d, %d)\n", index, x, y, spin);
-        printf("value = %.3e + i%.3e\nexpected = %.3e + i%.3e\n\n", creal(value), cimag(value),
-                creal(expected), cimag(expected));
+        printf("value = %.3e + i%.3e\nexpected = %.3e + i%.3e\n\n", crealf(value), cimagf(value),
+                crealf(expected), cimagf(expected));
     }
     success = success && cond;
 
@@ -122,8 +122,8 @@ int test_ham_lattice_site(int index, CDTYPE * ham, int length, DTYPE hopup,
         printf("Error in ham:\n");
         printf("i = %d = (%d, %d, %d)\n", nb_index, x-1, y, 1-spin);
         printf("j = %d = (%d, %d, %d)\n", index, x, y, spin);
-        printf("value = %.3e + i%.3e\nexpected = %.3e + i%.3e\n\n", creal(value), cimag(value),
-                creal(expected), cimag(expected));
+        printf("value = %.3e + i%.3e\nexpected = %.3e + i%.3e\n\n", crealf(value), cimagf(value),
+                crealf(expected), cimagf(expected));
     }
     success = success && cond;
 
@@ -137,8 +137,8 @@ int test_ham_lattice_site(int index, CDTYPE * ham, int length, DTYPE hopup,
         printf("Error in ham:\n");
         printf("i = %d = (%d, %d, %d)\n", nb_index, x+1, y, spin);
         printf("j = %d = (%d, %d, %d)\n", index, x, y, spin);
-        printf("value = %.3e + i%.3e\nexpected = %.3e + i%.3e\n\n", creal(value), cimag(value),
-                creal(expected), cimag(expected));
+        printf("value = %.3e + i%.3e\nexpected = %.3e + i%.3e\n\n", crealf(value), cimagf(value),
+                crealf(expected), cimagf(expected));
     }
     success = success && cond;
 
@@ -152,8 +152,8 @@ int test_ham_lattice_site(int index, CDTYPE * ham, int length, DTYPE hopup,
         printf("Error in ham:\n");
         printf("i = %d = (%d, %d, %d)\n", nb_index, x+1, y, 1-spin);
         printf("j = %d = (%d, %d, %d)\n", index, x, y, spin);
-        printf("value = %.3e + i%.3e\nexpected = %.3e + i%.3e\n\n", creal(value), cimag(value),
-                creal(expected), cimag(expected));
+        printf("value = %.3e + i%.3e\nexpected = %.3e + i%.3e\n\n", crealf(value), cimagf(value),
+                crealf(expected), cimagf(expected));
     }
     success = success && cond;
 
@@ -167,8 +167,8 @@ int test_ham_lattice_site(int index, CDTYPE * ham, int length, DTYPE hopup,
         printf("Error in ham:\n");
         printf("i = %d = (%d, %d, %d)\n", nb_index, x, y-1, spin);
         printf("j = %d = (%d, %d, %d)\n", index, x, y, spin);
-        printf("value = %.3e + i%.3e\nexpected = %.3e + i%.3e\n\n", creal(value), cimag(value),
-                creal(expected), cimag(expected));
+        printf("value = %.3e + i%.3e\nexpected = %.3e + i%.3e\n\n", crealf(value), cimagf(value),
+                crealf(expected), cimagf(expected));
     }
     success = success && cond;
 
@@ -182,8 +182,8 @@ int test_ham_lattice_site(int index, CDTYPE * ham, int length, DTYPE hopup,
         printf("Error in ham:\n");
         printf("i = %d = (%d, %d, %d)\n", nb_index, x, y-1, 1-spin);
         printf("j = %d = (%d, %d, %d)\n", index, x, y, spin);
-        printf("value = %.3e + i%.3e\nexpected = %.3e + i%.3e\n\n", creal(value), cimag(value),
-                creal(expected), cimag(expected));
+        printf("value = %.3e + i%.3e\nexpected = %.3e + i%.3e\n\n", crealf(value), cimagf(value),
+                crealf(expected), cimagf(expected));
     }
     success = success && cond;
 
@@ -197,8 +197,8 @@ int test_ham_lattice_site(int index, CDTYPE * ham, int length, DTYPE hopup,
         printf("Error in ham:\n");
         printf("i = %d = (%d, %d, %d)\n", nb_index, x, y+1, spin);
         printf("j = %d = (%d, %d, %d)\n", index, x, y, spin);
-        printf("value = %.3e + i%.3e\nexpected = %.3e + i%.3e\n\n", creal(value), cimag(value),
-                creal(expected), cimag(expected));
+        printf("value = %.3e + i%.3e\nexpected = %.3e + i%.3e\n\n", crealf(value), cimagf(value),
+                crealf(expected), cimagf(expected));
     }
     success = success && cond;
 
@@ -212,8 +212,8 @@ int test_ham_lattice_site(int index, CDTYPE * ham, int length, DTYPE hopup,
         printf("Error in ham:\n");
         printf("i = %d = (%d, %d, %d)\n", nb_index, x, y+1, 1-spin);
         printf("j = %d = (%d, %d, %d)\n", index, x, y, spin);
-        printf("value = %.3e + i%.3e\nexpected = %.3e + i%.3e\n\n", creal(value), cimag(value),
-                creal(expected), cimag(expected));
+        printf("value = %.3e + i%.3e\nexpected = %.3e + i%.3e\n\n", crealf(value), cimagf(value),
+                crealf(expected), cimagf(expected));
     }
     success = success && cond;
 
@@ -315,7 +315,7 @@ int test_hamiltonian_nospin()
                 {
                     printf("Problem at (%d,%d) index=%d!\n", i, j, index);
                     printf("Result: %d\n", test_ceq(value, 0+0*I, TOL));
-                    printf("H(i,j) = %e+%ej\n", creal(value), cimag(value));
+                    printf("H(i,j) = %e+%ej\n", crealf(value), cimagf(value));
                     success = 0;
                 }
             }
@@ -324,7 +324,7 @@ int test_hamiltonian_nospin()
                 if(test_ceq(value, -1+0*I, TOL) == 0)
                 {
                     printf("Problem at (%d,%d) index=%d!\n", i, j, index);
-                    printf("H(i,j) = %e+%ej =/= -1\n", creal(value), cimag(value));
+                    printf("H(i,j) = %e+%ej =/= -1\n", crealf(value), cimagf(value));
                     success = 0;
                 }
             }
@@ -333,7 +333,7 @@ int test_hamiltonian_nospin()
                 if(test_ceq(value, 0+0*I, TOL) == 0)
                 {
                     printf("Problem at (%d,%d) index=%d\n!", i, j, index);
-                    printf("H(i,j) = %e+%ej =/= 0\n", creal(value), cimag(value));
+                    printf("H(i,j) = %e+%ej =/= 0\n", crealf(value), cimagf(value));
                     success = 0;
                 }
             }

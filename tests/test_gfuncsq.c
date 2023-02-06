@@ -1,11 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../extern/unity/unity.h"
+#include "unity.h"
 #include "../src/utils/utils.h"
 #include "../src/gfunc/gfunc.h"
 #include "../src/io/io.h"
 #include "../src/constants.h"
+
+#define TOL 1e-6
 
 // For NaN detection
 // #define _GNU_SOURCE
@@ -36,6 +38,26 @@ void assert_equal_complex_double_array(const double complex * expected,
     }
 }
 
+void assert_equal_complex_float_array(const float complex * expected,
+                                        const float complex * actual,
+                                        int length)
+{
+    int i;
+    double complex elem1, elem2;
+    char template[] = "Element %d %s Part";
+    char message[40];
+    for(i = 0; i < length; i++)
+    {
+        elem1 = *(actual + i);
+        elem2 = *(expected + i);
+        snprintf(message, 40, template, i, "Real");
+        TEST_ASSERT_FLOAT_WITHIN_MESSAGE(TOL, crealf(elem2), crealf(elem1), message);
+        snprintf(message, 40, template, i, "Imag");
+        TEST_ASSERT_FLOAT_WITHIN_MESSAGE(TOL, cimagf(elem2), cimagf(elem1), message);
+
+    }
+}
+
 
 void test_utils_gfuncsq_sigma_matrix_nondeg()
 {
@@ -60,7 +82,7 @@ void test_utils_gfuncsq_sigma_matrix_nondeg()
     //     for (j = 0; j < 2; j++)
     //     {
     //         elem = *(sigma + RTC(i, j, 2));
-    //         printf("%.2g+%.2gj  ", creal(elem), cimag(elem));
+    //         printf("%.2g+%.2gj  ", crealf(elem), cimagf(elem));
     //     }
     //     printf("\n");
     // }
@@ -76,7 +98,7 @@ void test_utils_gfuncsq_sigma_matrix_nondeg()
     //     for (j = 0; j < 4; j++)
     //     {
     //         elem = *(eigvecs + RTC(i, j, 2 * Lsq));
-    //         printf("(%7.2e+%7.2ej) ", creal(elem), cimag(elem));
+    //         printf("(%7.2e+%7.2ej) ", crealf(elem), cimagf(elem));
     //     }
     //     printf("\n");
     // }
@@ -116,7 +138,7 @@ void test_utils_gfuncsq_sigma_matrix_nondeg()
 
     // printf("Diff = %.2g\n", diff);
 
-    TEST_ASSERT_EQUAL_DOUBLE_ARRAY(exp_gfuncsq, gfuncsq, Lsq * Lsq);
+    TEST_ASSERT_EQUAL_FLOAT_ARRAY(exp_gfuncsq, gfuncsq, Lsq * Lsq);
 
     // char message[64];
     // CDTYPE actual, expected;
@@ -127,9 +149,9 @@ void test_utils_gfuncsq_sigma_matrix_nondeg()
     //         actual = *(gfuncsq + RTC(i, j, Lsq));
     //         expected = *(exp_gfuncsq + RTC(i, j, Lsq));
     //         sprintf(message, "Error at (%d,%d) real part", i, j);
-    //         TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(creal(actual), creal(expected), message);
+    //         TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(crealf(actual), crealf(expected), message);
     //         sprintf(message, "Error at (%d,%d) imag part", i, j);
-    //         TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(cimag(actual), cimag(expected), message);
+    //         TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(cimagf(actual), cimagf(expected), message);
     //     }
     // }
 
@@ -162,7 +184,7 @@ void test_utils_gfuncsq_sigma_matrix_deg()
     //     for (j = 0; j < 2; j++)
     //     {
     //         elem = *(sigma + RTC(i, j, 2));
-    //         printf("%.2g+%.2gj  ", creal(elem), cimag(elem));
+    //         printf("%.2g+%.2gj  ", crealf(elem), cimagf(elem));
     //     }
     //     printf("\n");
     // }
@@ -178,7 +200,7 @@ void test_utils_gfuncsq_sigma_matrix_deg()
     //     for (j = 0; j < 4; j++)
     //     {
     //         elem = *(eigvecs + RTC(i, j, 2 * Lsq));
-    //         printf("(%7.2e+%7.2ej) ", creal(elem), cimag(elem));
+    //         printf("(%7.2e+%7.2ej) ", crealf(elem), cimagf(elem));
     //     }
     //     printf("\n");
     // }
@@ -218,7 +240,7 @@ void test_utils_gfuncsq_sigma_matrix_deg()
 
     // printf("Diff = %.2g\n", diff);
 
-    TEST_ASSERT_EQUAL_DOUBLE_ARRAY(exp_gfuncsq, gfuncsq, Lsq * Lsq);
+    TEST_ASSERT_EQUAL_FLOAT_ARRAY(exp_gfuncsq, gfuncsq, Lsq * Lsq);
 
     // char message[64];
     // CDTYPE actual, expected;
@@ -229,9 +251,9 @@ void test_utils_gfuncsq_sigma_matrix_deg()
     //         actual = *(gfuncsq + RTC(i, j, Lsq));
     //         expected = *(exp_gfuncsq + RTC(i, j, Lsq));
     //         sprintf(message, "Error at (%d,%d) real part", i, j);
-    //         TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(creal(actual), creal(expected), message);
+    //         TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(crealf(actual), crealf(expected), message);
     //         sprintf(message, "Error at (%d,%d) imag part", i, j);
-    //         TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(cimag(actual), cimag(expected), message);
+    //         TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(cimagf(actual), cimagf(expected), message);
     //     }
     // }
 
@@ -264,7 +286,7 @@ void test_utils_gfuncsq_sigma_coeff_nondeg()
     //     for (j = 0; j < 2; j++)
     //     {
     //         elem = *(sigma + RTC(i, j, 2));
-    //         printf("%.2g+%.2gj  ", creal(elem), cimag(elem));
+    //         printf("%.2g+%.2gj  ", crealf(elem), cimagf(elem));
     //     }
     //     printf("\n");
     // }
@@ -280,7 +302,7 @@ void test_utils_gfuncsq_sigma_coeff_nondeg()
     //     for (j = 0; j < 4; j++)
     //     {
     //         elem = *(eigvecs + RTC(i, j, 2 * Lsq));
-    //         printf("(%7.2e+%7.2ej) ", creal(elem), cimag(elem));
+    //         printf("(%7.2e+%7.2ej) ", crealf(elem), cimagf(elem));
     //     }
     //     printf("\n");
     // }
@@ -351,7 +373,7 @@ void test_utils_gfuncsq_sigma_coeff_deg()
     //     for (j = 0; j < 2; j++)
     //     {
     //         elem = *(sigma + RTC(i, j, 2));
-    //         printf("%.2g+%.2gj  ", creal(elem), cimag(elem));
+    //         printf("%.2g+%.2gj  ", crealf(elem), cimagf(elem));
     //     }
     //     printf("\n");
     // }
@@ -367,7 +389,7 @@ void test_utils_gfuncsq_sigma_coeff_deg()
     //     for (j = 0; j < 4; j++)
     //     {
     //         elem = *(eigvecs + RTC(i, j, 2 * Lsq));
-    //         printf("(%7.2e+%7.2ej) ", creal(elem), cimag(elem));
+    //         printf("(%7.2e+%7.2ej) ", crealf(elem), cimagf(elem));
     //     }
     //     printf("\n");
     // }
@@ -407,7 +429,7 @@ void test_utils_gfuncsq_sigma_coeff_deg()
 
     // printf("Diff = %.2g\n", diff);
 
-    TEST_ASSERT_EQUAL_DOUBLE_ARRAY(exp_gfuncsq, gfuncsq, Lsq * Lsq);
+    TEST_ASSERT_EQUAL_FLOAT_ARRAY(exp_gfuncsq, gfuncsq, Lsq * Lsq);
 
     free(sigma);
     free(eigvecs);
@@ -444,8 +466,8 @@ void test_utils_multiply_restricted(void)
     {
         actual = *(actual_C + i);
         expected = *(exp_C + i);
-        TEST_ASSERT_EQUAL_DOUBLE(creal(expected), creal(actual));
-        TEST_ASSERT_EQUAL_DOUBLE(cimag(expected), cimag(actual));
+        TEST_ASSERT_EQUAL_FLOAT(crealf(expected), crealf(actual));
+        TEST_ASSERT_EQUAL_FLOAT(cimagf(expected), cimagf(actual));
     }
 
     free(actual_C);
@@ -486,17 +508,18 @@ void test_gfuncsq_GR_GRstar_nondeg(void)
     // Get eigenvectors
     io_read_array('C', 'C', eigvecs, 2*Lsq, 2*Lsq,
                 "data/fake_eigenvectors_4x4.dat");
-
     char message[32];
     for(alpha = 0; alpha < 2; alpha++)
     {
         for(beta = 0; beta < 2; beta++)
         {
+            // printf("α = %d β = %d\n", alpha, beta);
             // Get expected value from file
             char filename[50];
             snprintf(filename, 50,
                     "data/nondeg_gfunc_gfuncstar_a%d_b%d_python_4x4.dat",
                     alpha, beta);
+
             if(alpha == beta)
             {
                 DTYPE *exp_gfuncsq = calloc(Lsq * 2*Lsq, sizeof(DTYPE));
@@ -509,8 +532,10 @@ void test_gfuncsq_GR_GRstar_nondeg(void)
                 gfuncsq_sym_GR_GRstar_nondeg(eigvecs, gfuncsq, L,
                                         0, 2*Lsq, alpha);
                 snprintf(message, 32, "alpha = %d beta = %d", alpha, beta);
-                TEST_ASSERT_EQUAL_DOUBLE_ARRAY_MESSAGE(exp_gfuncsq, gfuncsq,
+                TEST_ASSERT_FLOAT_ARRAY_WITHIN_MESSAGE(TOL, exp_gfuncsq, gfuncsq,
                                                         Lsq*2*Lsq, message);
+                // TEST_ASSERT_FLOAT_WITHIN(TOL, 1.2323432e-3, 1.2323442e-3);
+
                 free(exp_gfuncsq);
                 free(gfuncsq);
 
@@ -524,7 +549,7 @@ void test_gfuncsq_GR_GRstar_nondeg(void)
                                         0, 2*Lsq, alpha, beta);
                 // snprintf(message, 40, "alpha = %d beta = %d gamma = %d",
                 //         alpha, beta, gamma);
-                assert_equal_complex_double_array(exp_gfuncsq, gfuncsq, Lsq*2*Lsq);
+                assert_equal_complex_float_array(exp_gfuncsq, gfuncsq, Lsq*2*Lsq);
                 free(exp_gfuncsq);
                 free(gfuncsq);
             }
@@ -588,7 +613,7 @@ void test_gfuncsq_GR_GRstar_deg(void)
 
                 snprintf(message, 40, "alpha = %d beta = %d",
                         alpha, beta);
-                TEST_ASSERT_EQUAL_DOUBLE_ARRAY_MESSAGE(exp_gfuncsq, gfuncsq,
+                TEST_ASSERT_FLOAT_ARRAY_WITHIN_MESSAGE(TOL, exp_gfuncsq, gfuncsq,
                                                         Lsq*2*Lsq, message);
                 free(exp_gfuncsq);
                 free(gfuncsq);
@@ -609,7 +634,7 @@ void test_gfuncsq_GR_GRstar_deg(void)
                 //     for(j = 0; j < 4; j++)
                 //     {
                 //         elem = *(exp_gfuncsq + RTC(i, j, Lsq));
-                //         printf("(%10.3e%+10.3ej) ",creal(elem), cimag(elem));
+                //         printf("(%10.3e%+10.3ej) ",crealf(elem), cimagf(elem));
                 //     }
                 //     printf("\n");
                 // }
@@ -620,12 +645,12 @@ void test_gfuncsq_GR_GRstar_deg(void)
                 //     for(j = 0; j < 4; j++)
                 //     {
                 //         elem = *(gfuncsq + RTC(i, j, Lsq));
-                //         printf("(%10.3e%+10.3ej) ",creal(elem), cimag(elem));
+                //         printf("(%10.3e%+10.3ej) ",crealf(elem), cimagf(elem));
                 //     }
                 //     printf("\n");
                 // }
 
-                assert_equal_complex_double_array(exp_gfuncsq, gfuncsq, Lsq*2*Lsq);
+                assert_equal_complex_float_array(exp_gfuncsq, gfuncsq, Lsq*2*Lsq);
                 free(exp_gfuncsq);
                 free(gfuncsq);
             }
@@ -674,7 +699,7 @@ void test_gfuncsq_GR_GRstar_nondeg_restr(void)
                 gfuncsq_sym_GR_GRstar_nondeg(eigvecs, gfuncsq, L,
                                         nmin, nmax, alpha);
                 snprintf(message, 32, "alpha = %d beta = %d", alpha, beta);
-                TEST_ASSERT_EQUAL_DOUBLE_ARRAY_MESSAGE(exp_gfuncsq, gfuncsq,
+                TEST_ASSERT_FLOAT_ARRAY_WITHIN_MESSAGE(TOL, exp_gfuncsq, gfuncsq,
                                                         Lsq*2*Lsq, message);
                 free(exp_gfuncsq);
                 free(gfuncsq);
@@ -688,7 +713,7 @@ void test_gfuncsq_GR_GRstar_nondeg_restr(void)
                                         nmin, nmax, alpha, beta);
                 // snprintf(message, 40, "alpha = %d beta = %d gamma = %d",
                 //         alpha, beta, gamma);
-                assert_equal_complex_double_array(exp_gfuncsq, gfuncsq, Lsq*2*Lsq);
+                assert_equal_complex_float_array(exp_gfuncsq, gfuncsq, Lsq*2*Lsq);
                 free(exp_gfuncsq);
                 free(gfuncsq);
             }
@@ -733,7 +758,7 @@ void test_gfuncsq_GR_GRstar_deg_restr(void)
                                         nmin, nmax, alpha);
                 snprintf(message, 40, "alpha = %d beta = %d",
                         alpha, beta);
-                TEST_ASSERT_EQUAL_DOUBLE_ARRAY_MESSAGE(exp_gfuncsq, gfuncsq,
+                TEST_ASSERT_FLOAT_ARRAY_WITHIN_MESSAGE(TOL, exp_gfuncsq, gfuncsq,
                                                         Lsq*2*Lsq, message);
                 free(exp_gfuncsq);
                 free(gfuncsq);
@@ -745,7 +770,7 @@ void test_gfuncsq_GR_GRstar_deg_restr(void)
                 io_read_array('C', 'C', exp_gfuncsq, Lsq, 2*Lsq, filename);
                 gfuncsq_asym_GR_GRstar_deg(eigvecs, gfuncsq, L,
                                         nmin, nmax, alpha, beta);
-                assert_equal_complex_double_array(exp_gfuncsq, gfuncsq, Lsq*2*Lsq);
+                assert_equal_complex_float_array(exp_gfuncsq, gfuncsq, Lsq*2*Lsq);
                 free(exp_gfuncsq);
                 free(gfuncsq);
             }

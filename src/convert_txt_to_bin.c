@@ -27,7 +27,7 @@ int main()
     //     for(j = 0; j < n; j++)
     //     {
     //         elem = *(arrayc + i + m*j);
-    //         printf("(%e+%ej) ", creal(elem), cimag(elem));
+    //         printf("(%e+%ej) ", crealf(elem), cimagf(elem));
     //     }
     //     printf("\n");
     // }

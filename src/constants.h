@@ -3,10 +3,12 @@
 
 #include <complex.h>
 
-#define DTYPE double
+#define DTYPE float
 #define CDTYPE complex float
 // #define lapack_complex_double CDTYPE
 typedef unsigned int uint;
+#define MKL_Complex16 complex double
+#define MKL_Complex8 complex float
 
 #define NEIGHS 4
 

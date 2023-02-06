@@ -325,7 +325,7 @@ int output_gfuncsq_matrix(int runs_done, DTYPE * gfuncsq,
         for(j = 0; j < params.num_states; j++)
         {
             elem = *(gfuncsq + RTC(i, j, params.num_states)) / (DTYPE) runs_done;
-            fprintf(ofile, "%le ", elem);
+            fprintf(ofile, "%e ", elem);
         }
         fprintf(ofile, "\n");
     }

@@ -204,7 +204,7 @@ int test_get_eigh()
                 for(j = 0; j < 4; j++)
                 {
                     elem = expected_eigvecs[i][j];
-                    printf("%08.4lf+%08.4lfj\t", creal(elem), cimag(elem));
+                    printf("%08.4lf+%08.4lfj\t", crealf(elem), cimagf(elem));
                 }
                 printf("\n");
             }

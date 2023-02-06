@@ -73,7 +73,7 @@ int main(int argc, char ** argv)
     //     printf("\n");
     // }
     // CDTYPE x = I;
-    // printf("%e + %ej\n", creal(x), cimag(x));
+    // printf("%e + %ej\n", crealf(x), cimagf(x));
 
     // free(gfuncsq);
     free(eigvals);

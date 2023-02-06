@@ -59,26 +59,26 @@ LSYSBLAS=-lcblas -lblas
 # -------------------
 # Unity Configuration
 # -------------------
+UNITYROOT=extern/unity
 TESTFLAGS=
+TESTFLAGS += -DUNITY_INCLUDE_FLOAT
 TESTFLAGS += -DUNITY_INCLUDE_DOUBLE
+TESTFLAGS += -I$(UNITYROOT)
+# TESTFLAGS += -DUNITY_INCLUDE_CONFIG_H
 
 # --------------------------------------
 # Main Compiler and Linker Configuration
 # --------------------------------------
 CFLAGS=
 LFLAGS=
-# CFLAGS += -Wall
-# CFLAGS += -Wextra
-# CFLAGS += -g
-# CFLAGS += -fdiagnostics-color=always
-# CFLAGS += -Wall
-# CFLAGS += -Wextra
-# CFLAGS += -g
-# CFLAGS += -fdiagnostics-color=always
+CFLAGS += -Wall
+CFLAGS += -Wextra
+CFLAGS += -g
+CFLAGS += -fdiagnostics-color=always
 CFLAGS += -ffast-math
 # CFLAGS += -ftrapv -fwrapv
-# CFLAGS += -O2
-CFLAGS += -Ofast
+CFLAGS += -O2
+# CFLAGS += -Ofast
 # CFLAGS += -Iextern/unity
 # CFLAGS += -fopenmp
 CFLAGS += $(IDIRS)
@@ -145,8 +145,8 @@ $(EXECS): build/%: src/%.c $(OBJ)
 $(SIMPLETESTS): build/tests/%: tests/%.c $(OBJ)
 	$(CC) -o $@ $^ $(CFLAGS) $(LFLAGS)
 
-$(UNITYTESTS): build/tests/%: tests/%.c $(OBJ) $(EXTDEPS)
-	$(CC) -o $@ $^ $(TESTFLAGS) $(CFLAGS) $(LFLAGS)
+$(UNITYTESTS): build/tests/%: tests/%.c $(EXTDEPS) $(OBJ) 
+	$(CC) -o $@ $(TESTFLAGS) $(CFLAGS) $^ $(LFLAGS)
 
 # build/tests/test_gfuncsq: tests/test_gfuncsq.c $(OBJ) $(EXTDEPS)
 # 	$(CC) -o $@ $^ $(TESTFLAGS) $(CFLAGS) $(LFLAGS)

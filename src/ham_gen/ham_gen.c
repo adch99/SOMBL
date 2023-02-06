@@ -59,13 +59,13 @@ int hamiltonian(CDTYPE * ham, int len, int width,
             // if(site1 == 0 && site2 == 4)
             // {
             //     CDTYPE x = -hop_strength_upup;
-            //     printf("upup: %.5f+%.5fj\n", creal(x), cimag(x));
+            //     printf("upup: %.5f+%.5fj\n", crealf(x), cimagf(x));
             //     x = -hop_strength_dndn;
-            //     printf("dndn: %.5f+%.5fj\n", creal(x), cimag(x));
+            //     printf("dndn: %.5f+%.5fj\n", crealf(x), cimagf(x));
             //     x = coupling_const * spinorbit_coeffs[loc][0];
-            //     printf("updn: %.5f+%.5fj\n", creal(x), cimag(x));
+            //     printf("updn: %.5f+%.5fj\n", crealf(x), cimagf(x));
             //     x = coupling_const * spinorbit_coeffs[loc][1];
-            //     printf("dnup: %.5f+%.5fj\n", creal(x), cimag(x));
+            //     printf("dnup: %.5f+%.5fj\n", crealf(x), cimagf(x));
             // }
 
             // Check if the neighbour actually exists

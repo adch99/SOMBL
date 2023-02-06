@@ -25,7 +25,7 @@ int main(int argc, char ** argv)
         {
             index = RTC(i, j, num_states);
             value = *(ham + index);
-            printf("%e+%ej ", creal(value), cimag(value));
+            printf("%e+%ej ", crealf(value), cimagf(value));
         }
         printf("\n");
     }

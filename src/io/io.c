@@ -189,7 +189,7 @@ int io_read_array_complex(char ordering, CDTYPE * array,
     {
         for(j = 0; j < n; j++)
         {
-            info = fscanf(ifile, " (%le%lej) ", &zreal, &zimag);
+            info = fscanf(ifile, " (%e%ej) ", &zreal, &zimag);
             if(info != 2)
             {
                 fprintf(stderr, "Input file in wrong format at (%d,%d) info = %d!\nstrerror: %s\n",
@@ -226,7 +226,7 @@ int io_read_array_real(char ordering, DTYPE * array,
     {
         for(j = 0; j < n; j++)
         {
-            match = fscanf(ifile, "%le", &elem);
+            match = fscanf(ifile, "%e", &elem);
             if(match == 0)
             {
                 printf("An error occured while parsing the file!\n");
@@ -319,7 +319,7 @@ int io_write_array(char type, char ordering, void * array,
             if(type == 'C')
             {
                 elemc = *((CDTYPE*)array + index);
-                fprintf(ofile, " (%le%+lej) ", creal(elemc), cimag(elemc));
+                fprintf(ofile, " (%le%+lej) ", crealf(elemc), cimagf(elemc));
             }
             else
             {
@@ -397,7 +397,7 @@ int io_get_gfuncsq_from_file(DTYPE * matrix, struct OutStream outfiles,
         for(j = 0; j < size; j++)
         {
             index = RTC(i, j, size);
-            fscanf(datafile, "%lf", &elem);
+            fscanf(datafile, "%f", &elem);
             *(matrix + index) = elem;
         }
     }
@@ -607,7 +607,7 @@ int io_dread_2d(DTYPE * array, int m, int n, FILE * ifile)
     {
         for(j = 0; j < n; j++)
         {
-            match = fscanf(ifile, "%le", &elem);
+            match = fscanf(ifile, "%e", &elem);
             if(match == 0)
             {
                 printf("An error occured while parsing the file!\n");
@@ -646,9 +646,9 @@ int io_zread_2d(CDTYPE * array, int m, int n, FILE * ifile)
             // printf("Pointer at %d\n", ftell(ifile));
             fseek(ifile, 1, SEEK_CUR);
             // printf("Pointer at %d\n", ftell(ifile));
-            fscanf(ifile, "%le", &zreal);
+            fscanf(ifile, "%e", &zreal);
             // printf("Pointer at %d\n", ftell(ifile));
-            fscanf(ifile, "%le", &zimag);
+            fscanf(ifile, "%e", &zimag);
             // printf("Pointer at %d\n\n", ftell(ifile));
             // printf("z = %le+%lej\n", zreal, zimag);
 
@@ -708,7 +708,7 @@ int io_append_array(char type, void * array, int n, char * filename)
         if(type == 'C')
         {
             elemc = *((CDTYPE*)array + i);
-            fprintf(ofile, "(%le%+lej) ", creal(elemc), cimag(elemc));
+            fprintf(ofile, "(%le%+lej) ", crealf(elemc), cimagf(elemc));
         }
         else
         {

@@ -203,7 +203,7 @@ int get_density(void * density, void * initial_cond,
         char filename[64];
         params_gr_grstar_filename(filename, params, bin, alpha, beta);
         io_read_array('R', 'C', gfuncsq, Lsq, 2*Lsq, filename);
-        cblas_dgemv(CblasColMajor, CblasNoTrans, Lsq, 2*Lsq,
+        cblas_sgemv(CblasColMajor, CblasNoTrans, Lsq, 2*Lsq,
                     1.0, gfuncsq, Lsq, (DTYPE *) initial_cond, 1,
                     0.0, (DTYPE *) density, 1);
         free(gfuncsq);
@@ -214,12 +214,14 @@ int get_density(void * density, void * initial_cond,
         char filename[64];
         params_gr_grstar_filename(filename, params, bin, alpha, beta);
         io_read_array('C', 'C', gfuncsq, Lsq, 2*Lsq, filename);
-        MKL_Complex16 blas_alpha, blas_beta;
-        blas_alpha.real = 1;
-        blas_alpha.imag = 0;
-        blas_beta.real = 0;
-        blas_beta.imag = 0;
-        cblas_zgemv(CblasColMajor, CblasNoTrans, Lsq, 2*Lsq,
+        lapack_complex_float blas_alpha, blas_beta;
+        // blas_alpha.real = 1;
+        // blas_alpha.imag = 0;
+        // blas_beta.real = 0;
+        // blas_beta.imag = 0;
+        blas_alpha = 1;
+        blas_beta = 0;
+        cblas_cgemv(CblasColMajor, CblasNoTrans, Lsq, 2*Lsq,
                     &blas_alpha, gfuncsq, Lsq, (CDTYPE *) initial_cond, 1,
                     &blas_beta, (CDTYPE *) density, 1);
         free(gfuncsq);
@@ -236,12 +238,12 @@ int get_density(void * density, void * initial_cond,
         int i;
         for(i = 0; i < 2*Lsq; i++)
             *((CDTYPE *)initial_cond + i) = conj(*((CDTYPE *)initial_cond + i));
-        MKL_Complex16 blas_alpha, blas_beta;
-        blas_alpha.real = 1;
-        blas_alpha.imag = 0;
-        blas_beta.real = 0;
-        blas_beta.imag = 0;
-        cblas_zgemv(CblasColMajor, CblasNoTrans, Lsq, 2*Lsq,
+        lapack_complex_float blas_alpha, blas_beta;
+        // blas_alpha.real = 1;
+        // blas_alpha.imag = 0;
+        // blas_beta.real = 0;
+        // blas_beta.imag = 0;
+        cblas_cgemv(CblasColMajor, CblasNoTrans, Lsq, 2*Lsq,
                     &blas_alpha, gfuncsq, Lsq, (CDTYPE *) initial_cond, 1,
                     &blas_beta, (CDTYPE *) density, 1);
         // Take the conjugate of the output
@@ -276,7 +278,7 @@ int save_density(void * density, struct SystemParams params,
         else
         {
             CDTYPE elemc = *((CDTYPE *) density + i);
-            fprintf(ifile, " (%e+%ej) ", creal(elemc), cimag(elemc));
+            fprintf(ifile, " (%e+%ej) ", crealf(elemc), cimagf(elemc));
         }
     }
     fclose(ifile);

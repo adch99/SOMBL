@@ -22,12 +22,33 @@ void assert_equal_complex_double_array(const double complex * expected,
         elem1 = *(actual + i);
         elem2 = *(expected + i);
         snprintf(message, 40, template, i, "Real");
-        TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(creal(elem2), creal(elem1), message);
+        TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(crealf(elem2), crealf(elem1), message);
         snprintf(message, 40, template, i, "Imag");
-        TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(cimag(elem2), cimag(elem1), message);
+        TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(cimagf(elem2), cimagf(elem1), message);
 
     }
 }
+
+void assert_equal_complex_float_array(const float complex * expected,
+                                        const float complex * actual,
+                                        int length)
+{
+    int i;
+    float complex elem1, elem2;
+    char template[] = "Element %d %s Part";
+    char message[40];
+    for(i = 0; i < length; i++)
+    {
+        elem1 = *(actual + i);
+        elem2 = *(expected + i);
+        snprintf(message, 40, template, i, "Real");
+        TEST_ASSERT_EQUAL_FLOAT_MESSAGE(crealf(elem2), crealf(elem1), message);
+        snprintf(message, 40, template, i, "Imag");
+        TEST_ASSERT_EQUAL_FLOAT_MESSAGE(cimagf(elem2), cimagf(elem1), message);
+
+    }
+}
+
 
 void test_io_read_until_char()
 {
@@ -62,7 +83,7 @@ void test_io_read_array_complex()
     CDTYPE actual[12];
     io_read_array('C', 'C', actual, 3, 4, "data/test_matrix.dat");
     // utils_print_matrix(actual, 3, 4, 'C', 'C');
-    assert_equal_complex_double_array(expected, actual, 12);
+    assert_equal_complex_float_array(expected, actual, 12);
 }
 
 void test_io_readwrite_array_complex()
@@ -77,7 +98,7 @@ void test_io_readwrite_array_complex()
     io_write_array_bin('C', expected, 3, 4, "data/test_matrix_bin.dat");
     io_read_array_bin('C', actual, 3, 4, "data/test_matrix_bin.dat");
     // utils_print_matrix(actual, 3, 4, 'C', 'C');
-    assert_equal_complex_double_array(expected, actual, 12);
+    assert_equal_complex_float_array(expected, actual, 12);
 }
 
 

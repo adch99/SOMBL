@@ -63,18 +63,18 @@ DTYPE utils_loc_len(DTYPE energy, const DTYPE * eigenvals, DTYPE hop_strength,
     give a reasonable number for low and high i.e.
     low < high.
 */
-int utils_uniform_dist(double low, double high, int num_samples,
-                     double * samples, int seed_with_time)
+int utils_uniform_dist(DTYPE low, DTYPE high, int num_samples,
+                    DTYPE * samples, int seed_with_time)
 {
     int randint, i;
-    double div, scale = (high - low);
+    DTYPE div, scale = (high - low);
     if (seed_with_time)
         srandom((unsigned) time(NULL));
     
     for(i = 0; i < num_samples; i++)
     {
         randint = random();
-        div = ((double) randint) / ((double) RAND_MAX);
+        div = ((DTYPE) randint) / ((DTYPE) RAND_MAX);
         *(samples + i) = low + scale * div;
     }
     return 0;
@@ -110,8 +110,8 @@ int utils_print_matrix(void * matrix, int m, int n,
             if(type == 'C')
             {
                 elemc = *((CDTYPE*)matrix + index);
-                printf("%10.4lg%+11.4lgj ", creal(elemc),
-                        cimag(elemc));
+                printf("%10.4lg%+11.4lgj ", crealf(elemc),
+                        cimagf(elemc));
             }
             else
             {
@@ -154,7 +154,7 @@ int utils_save_matrix(void * matrix, int m, int n,
             if(type == 'C')
             {
                 elemc = *((CDTYPE*)matrix + index);
-                fprintf(ofile, "%e+%ej ", creal(elemc), cimag(elemc));
+                fprintf(ofile, "%e+%ej ", crealf(elemc), cimagf(elemc));
             }
             else
             {
@@ -195,11 +195,11 @@ int utils_get_green_func_lim(CDTYPE * eigenvectors, int size,
         for(j = 0; j < size; j++)
         {
             elem = *(eigenvectors + RTC(i, j, size));
-            *(eigvec_sq + RTC(i, j, size)) = creal(elem)*creal(elem) + cimag(elem)*cimag(elem); 
+            *(eigvec_sq + RTC(i, j, size)) = crealf(elem)*crealf(elem) + cimagf(elem)*cimagf(elem); 
         }
     }
 
-    cblas_dsyrk(CblasColMajor, CblasUpper, CblasNoTrans, size, size,
+    cblas_ssyrk(CblasColMajor, CblasUpper, CblasNoTrans, size, size,
                 1.0, eigvec_sq, size, 1.0, green_func, size);
     free(eigvec_sq);
     
@@ -238,7 +238,7 @@ int utils_get_green_func_lim(CDTYPE * eigenvectors, int size,
             for(j = i; j < size; j++)
             {
                 index_ij = RTC(i, j, size);
-                *(green_func + index_ij) += 2*creal(*(BBh + index_ij));
+                *(green_func + index_ij) += 2*crealf(*(BBh + index_ij));
             }
         }
 
@@ -286,8 +286,8 @@ DTYPE utils_compute_gfsq_elem(int i, int j, CDTYPE * eigenvectors,
     {
         psi1 = *(eigenvectors + index1);
         psi2 = *(eigenvectors + index2);
-        mod1 = creal(psi1)*creal(psi1) + cimag(psi1)*cimag(psi1);
-        mod2 = creal(psi2)*creal(psi2) + cimag(psi2)*cimag(psi2);
+        mod1 = crealf(psi1)*crealf(psi1) + cimagf(psi1)*cimagf(psi1);
+        mod2 = crealf(psi2)*crealf(psi2) + cimagf(psi2)*cimagf(psi2);
         sum += mod1 * mod2;
         index1 += size;
         index2 += size;
@@ -370,7 +370,7 @@ int utils_gfuncsq_sigma_matrix_nondeg(DTYPE * gfuncsq, CDTYPE * sigma,
                     coeff += conj(*(sigma + RTC(alpha_p,gamma,2))) * *(sigma + RTC(alpha,gamma_p,2));
                 }
             }
-            // printf("g=%d,g'=%d  coeff=%e+%e\n", gamma, gamma_p, creal(coeff), cimag(coeff));
+            // printf("g=%d,g'=%d  coeff=%e+%e\n", gamma, gamma_p, crealf(coeff), cimagf(coeff));
             
             // Check if coeff is zero
             if(cabs(coeff) < TOL)
@@ -396,7 +396,7 @@ int utils_gfuncsq_sigma_matrix_nondeg(DTYPE * gfuncsq, CDTYPE * sigma,
     //     for (j = 0; j < 2*Lsq; j++)
     //     {
     //         elem = *(matrix1 + RTC(i,j,Lsq));
-    //         printf("%.3g+%.3gj ", creal(elem), cimag(elem));
+    //         printf("%.3g+%.3gj ", crealf(elem), cimagf(elem));
     //     }
     //     printf("\n");
     // }
@@ -412,11 +412,11 @@ int utils_gfuncsq_sigma_matrix_nondeg(DTYPE * gfuncsq, CDTYPE * sigma,
                 Lsq, 2*Lsq, &cblas_alpha, matrix1, Lsq, matrix2,
                 Lsq, &cblas_beta, product, Lsq);
     
-    // printf("G(0,0) = %le+%lej\n", creal(*(product + 1)), cimag(*(product + 1)));
+    // printf("G(0,0) = %le+%lej\n", crealf(*(product + 1)), cimagf(*(product + 1)));
 
     for(i = 0; i < Lsq*Lsq; i++)
     {
-        *(gfuncsq + i) += creal(*(product + i));
+        *(gfuncsq + i) += crealf(*(product + i));
     }
 
     free(matrix1);
@@ -457,7 +457,7 @@ int utils_gfuncsq_sigma_matrix_deg(DTYPE * gfuncsq, CDTYPE * sigma,
                     coeff += conj(*(sigma + RTC(alpha_p,gamma,2))) * *(sigma + RTC(alpha,gamma_p,2));
                 }
             }
-            // printf("g=%d,g'=%d  coeff=%e+%e\n", gamma, gamma_p, creal(coeff), cimag(coeff));
+            // printf("g=%d,g'=%d  coeff=%e+%e\n", gamma, gamma_p, crealf(coeff), cimagf(coeff));
             
             // Check if coeff is zero
             if(cabs(coeff) < TOL)
@@ -488,7 +488,7 @@ int utils_gfuncsq_sigma_matrix_deg(DTYPE * gfuncsq, CDTYPE * sigma,
     {
         for(j = 0; j < Lsq; j++)
         {
-            *(gfuncsq + RTC(i, j, Lsq)) += 2 * creal(*(product + RTC(i, j, Lsq)));
+            *(gfuncsq + RTC(i, j, Lsq)) += 2 * crealf(*(product + RTC(i, j, Lsq)));
         }
     }
 
@@ -581,7 +581,7 @@ int utils_bin_energy_range(DTYPE * energies, int len, int num_bins,
 //                     coeff += conj(*(sigma + RTC(alpha_p,gamma,2))) * *(sigma + RTC(alpha,gamma_p,2));
 //                 }
 //             }
-//             // printf("g=%d,g'=%d  coeff=%e+%e\n", gamma, gamma_p, creal(coeff), cimag(coeff));
+//             // printf("g=%d,g'=%d  coeff=%e+%e\n", gamma, gamma_p, crealf(coeff), cimagf(coeff));
             
 //             // Check if coeff is zero
 //             if(cabs(coeff) < TOL)
@@ -609,7 +609,7 @@ int utils_bin_energy_range(DTYPE * energies, int len, int num_bins,
 
 //     for(i = 0; i < Lsq*Lsq; i++)
 //     {
-//         *(gfuncsq + i) += creal(*(product + i));
+//         *(gfuncsq + i) += crealf(*(product + i));
 //     }
 
 //     free(matrix1);
@@ -650,7 +650,7 @@ int utils_bin_energy_range(DTYPE * energies, int len, int num_bins,
 //                     coeff += conj(*(sigma + RTC(alpha_p,gamma,2))) * *(sigma + RTC(alpha,gamma_p,2));
 //                 }
 //             }
-//             // printf("g=%d,g'=%d  coeff=%e+%e\n", gamma, gamma_p, creal(coeff), cimag(coeff));
+//             // printf("g=%d,g'=%d  coeff=%e+%e\n", gamma, gamma_p, crealf(coeff), cimagf(coeff));
             
 //             // Check if coeff is zero
 //             if(cabs(coeff) < TOL)
@@ -681,7 +681,7 @@ int utils_bin_energy_range(DTYPE * energies, int len, int num_bins,
 //     {
 //         for(j = 0; j < Lsq; j++)
 //         {
-//             *(gfuncsq + RTC(i, j, Lsq)) += 2 * creal(*(product + RTC(i, j, Lsq)));
+//             *(gfuncsq + RTC(i, j, Lsq)) += 2 * crealf(*(product + RTC(i, j, Lsq)));
 //         }
 //     }
 
@@ -1095,7 +1095,7 @@ int utils_multiply_restricted(CDTYPE * mat1, int m1, int n1min, int n1max,
     CDTYPE alpha = 1.0;
     CDTYPE beta = 1.0;
 
-    cblas_zgemm(CblasColMajor, CblasNoTrans, CblasConjTrans, 
+    cblas_cgemm(CblasColMajor, CblasNoTrans, CblasConjTrans, 
                 m1, m2, nlen, &alpha,
                 A, m1, B, m2, &beta, prod, m1);
 
@@ -1217,10 +1217,10 @@ int utils_gfuncsq_sigma_coeff_nondeg(DTYPE * gfuncsq, CDTYPE * sigma,
         for(j = 0; j < Lsq; j++)
         {
             elem = *(product + RTC(i,j,Lsq));
-            *(gfuncsq + RTC(i,j,Lsq)) += creal(elem);
-            // printf("(%d,%d) = %.2g + %.2gj\n", i, j, creal(elem), cimag(elem));
-            // if(fabs(cimag(elem)) > TOL)
-            //     printf("Problem at (%d,%d), imag part is %.3g", i, j, cimag(elem));
+            *(gfuncsq + RTC(i,j,Lsq)) += crealf(elem);
+            // printf("(%d,%d) = %.2g + %.2gj\n", i, j, crealf(elem), cimagf(elem));
+            // if(fabs(cimagf(elem)) > TOL)
+            //     printf("Problem at (%d,%d), imag part is %.3g", i, j, cimagf(elem));
         }
     }
 
@@ -1343,10 +1343,10 @@ int utils_gfuncsq_sigma_coeff_deg(DTYPE * gfuncsq, CDTYPE * sigma,
         for(j = 0; j < Lsq; j++)
         {
             elem = *(product + RTC(i,j,Lsq));
-            *(gfuncsq + RTC(i,j,Lsq)) += 2*creal(elem);
-            // printf("(%d,%d) = %.2g + %.2gj\n", i, j, creal(elem), cimag(elem));
-            // if(fabs(cimag(elem)) > TOL)
-            //     printf("Problem at (%d,%d), imag part is %.3g", i, j, cimag(elem));
+            *(gfuncsq + RTC(i,j,Lsq)) += 2*crealf(elem);
+            // printf("(%d,%d) = %.2g + %.2gj\n", i, j, crealf(elem), cimagf(elem));
+            // if(fabs(cimagf(elem)) > TOL)
+            //     printf("Problem at (%d,%d), imag part is %.3g", i, j, cimagf(elem));
         }
     }
 
