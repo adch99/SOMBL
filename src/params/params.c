@@ -54,6 +54,8 @@ error_t params_parse_opt(int key, char *arg, struct argp_state *state)
         case 'f':
             params->startfrom = atoi(arg);
             break;
+        case 'a':
+            strncpy(params->dtypelist, arg, 21);
         default:
             return ARGP_ERR_UNKNOWN;
         }

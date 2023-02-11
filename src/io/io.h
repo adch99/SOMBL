@@ -11,6 +11,8 @@ int io_read_array(char type, char ordering, void * array,
                 int m, int n, char * filename);
 int io_read_array_bin(char type, void * array,
                 int m, int n, char * filename);
+int io_read_array_bin_d2f(char type, void * array,
+                int m, int n, char * filename);
 int io_read_array_real(char ordering, DTYPE * array,
                         int m, int n, FILE * ifile);
 int io_read_array_complex(char ordering, CDTYPE * array,

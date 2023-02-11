@@ -101,6 +101,58 @@ void test_io_readwrite_array_complex()
     assert_equal_complex_float_array(expected, actual, 12);
 }
 
+void test_io_read_bin_d2f_real()
+{
+    double expected[10] = {0.85689756,  0.10860182,
+                        1.58300039, -0.39497725,
+                        0.13802642, -1.46729247,
+                        -0.99387897, -1.87410812,
+                        -0.07429885,  1.46899403};
+
+    char filename[32] = "data/test_matrix_bin_d2f.dat";
+    FILE * fp = io_safely_open_binary('w', filename);
+    fwrite(expected, sizeof(double), 10, fp);
+    fclose(fp);
+
+    DTYPE actual[10];
+    DTYPE diff;
+    io_read_array_bin_d2f('R', actual, 5, 2, filename);
+    int i;
+    for(i = 0; i < 10; i++)
+    {
+        // printf("%le\t%e\n", expected[i], actual[i]);
+        diff = fabsf((DTYPE) expected[i] - actual[i]);
+        TEST_ASSERT(diff < 1e-12);
+    }
+}
+
+void test_io_read_bin_d2f_complex()
+{
+    complex double expected[10] = {
+        1.40486024-0.44140975*I, -1.57381065+0.37067508*I,
+        0.22793477+1.8792268*I , -1.38351069-1.84556993*I,
+       -0.13283254-1.38679858*I,  0.42847776-0.89848716*I,
+        1.64092895+0.67027061*I, -0.26917277-1.33239699*I,
+       -1.72383996+0.64206111*I, -0.2081726 -1.80638975*I};
+
+    char filename[32] = "data/test_matrix_bin_d2f.dat";
+    FILE * fp = io_safely_open_binary('w', filename);
+    fwrite(expected, sizeof(complex double), 10, fp);
+    fclose(fp);
+
+    CDTYPE actual[10];
+    DTYPE diff;
+    io_read_array_bin_d2f('C', actual, 5, 2, filename);
+    int i;
+    for(i = 0; i < 10; i++)
+    {
+        // printf("%le\t%e\n", expected[i], actual[i]);
+        diff = cabsf((CDTYPE) expected[i] - actual[i]);
+        TEST_ASSERT(diff < 1e-12);
+    }
+
+}
+
 
 int main(void)
 {
@@ -108,5 +160,7 @@ int main(void)
     RUN_TEST(test_io_read_until_char);
     RUN_TEST(test_io_read_array_complex);
     RUN_TEST(test_io_readwrite_array_complex);
+    RUN_TEST(test_io_read_bin_d2f_real);
+    RUN_TEST(test_io_read_bin_d2f_complex);
     return(UNITY_END());
 }

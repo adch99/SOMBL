@@ -33,6 +33,7 @@ static struct argp_option options[] = {
     {"batchsize", 'j', "BATCHSIZE",  0, "Number of runs in each batch.",          0},
     {"seed",      'x', "SEED",       0, "Seed for random number generation.",     0},
     {"bins",      'e', "ENERGYBINS", 0, "Number of bins for energy binning.",     0},
+    {"dtypes",    'a', "DTYPELIST",  0, "Word having dtypes for each batch",      0},
     { 0 }
 };
 // Our argp parser.
@@ -40,10 +41,15 @@ static struct argp argp = { options, params_parse_opt, args_doc, doc, 0, 0, 0};
 
 //------------------------------------------------------------------------
 int average_real_matrix(char * ofilename, char ** ifilenames,
-                        int num_batches, int m, int n);
+                        int num_batches, int m, int n,
+                        char * dtypelist);
 int average_complex_matrix(char * ofilename, char ** ifilenames,
-                        int num_batches, int m, int n);
-
+                        int num_batches, int m, int n,
+                        char * dtypelist);
+int get_real_matrix(char * filename, char dtype,
+                    DTYPE * array, int m, int n);
+int get_complex_matrix(char * filename, char dtype,
+                    CDTYPE * array, int m, int n);
 
 
 
@@ -89,7 +95,7 @@ int main(int argc, char ** argv)
             }
             printf("\n");
             average_real_matrix(ofilename, ifilenames, num_batches,
-                                Lsq, 2*Lsq);
+                                Lsq, 2*Lsq, params.dtypelist);
         }
     }
 
@@ -118,7 +124,7 @@ int main(int argc, char ** argv)
         }
         printf("\n");
         average_complex_matrix(ofilename, ifilenames, num_batches,
-                            Lsq, 2*Lsq);
+                            Lsq, 2*Lsq, params.dtypelist);
     }
 
 
@@ -129,7 +135,9 @@ int main(int argc, char ** argv)
     return(0);
 }
 
-int average_real_matrix(char * ofilename, char ** ifilenames, int num_batches, int m, int n)
+int average_real_matrix(char * ofilename, char ** ifilenames,
+                        int num_batches, int m, int n,
+                        char * dtypelist)
 {
     DTYPE * avg_gfuncsq = calloc(m*n, sizeof(DTYPE));
     DTYPE * batch_gfuncsq = calloc(m*n, sizeof(DTYPE));
@@ -143,7 +151,9 @@ int average_real_matrix(char * ofilename, char ** ifilenames, int num_batches, i
         ifilename = *(ifilenames + batchnum - 1);
         // Read the array and add it to the sum
         printf("Reading file %s...\n", ifilename);
-        io_read_array('R', 'C', batch_gfuncsq, m, n, ifilename);
+        char dtype = *(dtypelist + batchnum);
+        get_real_matrix(ifilename, dtype, batch_gfuncsq, m, n);
+        // io_read_array('R', 'C', batch_gfuncsq, m, n, ifilename);
         utils_add_to_matrix_real(avg_gfuncsq, batch_gfuncsq, m, n);
     }
 
@@ -158,7 +168,7 @@ int average_real_matrix(char * ofilename, char ** ifilenames, int num_batches, i
 
     // Save this array in a file
     printf("Writing to file %s...\n", ofilename);
-    io_write_array('R', 'C', avg_gfuncsq, m, n, ofilename);
+    io_write_array_bin('R', avg_gfuncsq, m, n, ofilename);
 
     free(avg_gfuncsq);
     free(batch_gfuncsq);
@@ -166,7 +176,8 @@ int average_real_matrix(char * ofilename, char ** ifilenames, int num_batches, i
 }
 
 int average_complex_matrix(char * ofilename, char ** ifilenames,
-                            int num_batches, int m, int n)
+                            int num_batches, int m, int n,
+                            char * dtypelist)
 {
     CDTYPE * avg_gfuncsq = calloc(m*n, sizeof(CDTYPE));
     CDTYPE * batch_gfuncsq = calloc(m*n, sizeof(CDTYPE));
@@ -180,7 +191,10 @@ int average_complex_matrix(char * ofilename, char ** ifilenames,
         ifilename = *(ifilenames + batchnum - 1);
         // Read the array and add it to the sum
         printf("Reading file %s...\n", ifilename);
-        io_read_array('C', 'C', batch_gfuncsq, m, n, ifilename);
+        // io_read_array('C', 'C', batch_gfuncsq, m, n, ifilename);
+        char dtype = *(dtypelist + batchnum);
+        get_complex_matrix(ifilename, dtype, batch_gfuncsq, m, n);
+
         utils_add_to_matrix_complex(avg_gfuncsq, batch_gfuncsq, m, n);
     }
 
@@ -195,9 +209,43 @@ int average_complex_matrix(char * ofilename, char ** ifilenames,
 
     // Save this array in a file
     printf("Writing to file %s...\n", ofilename);
-    io_write_array('C', 'C', avg_gfuncsq, m, n, ofilename);
+    io_write_array_bin('C', avg_gfuncsq, m, n, ofilename);
 
     free(avg_gfuncsq);
     free(batch_gfuncsq);
+    return(0);
+}
+
+int get_real_matrix(char * filename, char dtype, DTYPE * array,
+                    int m, int n)
+{
+    if (dtype == 't')
+        io_read_array('R', 'C', array, m, n, filename);
+    else if (dtype == 'd')
+        io_read_array_bin_d2f('R', array, m, n, filename);
+    else if(dtype == 'f')
+        io_read_array_bin('R', array, m, n, filename);
+    else
+    {
+        fprintf(stderr, "dtype passed to get_real_matrix should be either 't', 'd' or 'f'!\n");
+        return(-1);
+    }
+    return(0);
+}
+
+int get_complex_matrix(char * filename, char dtype, CDTYPE * array,
+                    int m, int n)
+{
+    if (dtype == 't')
+        io_read_array('C', 'C', array, m, n, filename);
+    else if (dtype == 'd')
+        io_read_array_bin_d2f('C', array, m, n, filename);
+    else if(dtype == 'f')
+        io_read_array_bin('C', array, m, n, filename);
+    else
+    {
+        fprintf(stderr, "dtype passed to get_real_matrix should be either 't', 'd' or 'f'!\n");
+        return(-1);
+    }
     return(0);
 }

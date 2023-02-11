@@ -13,8 +13,7 @@ struct SystemParams {
     DTYPE hop_strength_upup;
     DTYPE hop_strength_dndn;
     int (*neighbours)[NEIGHS];
-    int numRuns; // Technically not a system parameter but it's convenient
-    // to have it here.
+    int numRuns;
     int nospin;
     int num_states;
     int num_sites;
@@ -23,8 +22,8 @@ struct SystemParams {
     int seed;
     int energybins;
     int startfrom;
+    char dtypelist[21];
 };
-
 
 struct OutStream {
     char * gfuncsq;

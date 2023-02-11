@@ -720,3 +720,60 @@ int io_append_array(char type, void * array, int n, char * filename)
     fclose(ofile);
     return(0);
 }
+
+/*
+    Reads the array of the given type from the file and
+    stores it in the array. type must be 'R' for real and
+    'C' for complex. Assumes the file to be read is in
+    binary double or complex double whereas the array
+    is float or complex float.
+*/
+int io_read_array_bin_d2f(char type, void * array,
+                int m, int n, char * filename)
+{
+    FILE * ifile = io_safely_open_binary('r', filename);
+    size_t count;
+    double rbuffer;
+    complex double cbuffer;
+    int i;
+
+    if(type == 'C')
+    {
+        // printf("io_read_array: m = %d n = %d\n", m, n);
+        for(i = 0; i < m*n; i++)
+        {
+            count = fread(&cbuffer, sizeof(complex double), 1, ifile);
+            if(count != 1)
+            {
+                printf("Read Error: Only %d out of %d read\n", i, m*n);
+                printf("Erring Filename: %s\n", filename);
+                exit(EXIT_FAILURE);
+            }
+            *((CDTYPE *) array + i) = (CDTYPE) cbuffer;
+        }
+    }
+    else if(type == 'R')
+    {    
+        for(i = 0; i < m*n; i++)
+        {
+            count = fread(&rbuffer, sizeof(double), 1, ifile);
+            if(count != 1)
+            {
+                printf("Read Error: Only %d out of %d read\n", i, m*n);
+                printf("Erring Filename: %s\n", filename);
+                exit(EXIT_FAILURE);
+            }
+            *((DTYPE *) array + i) = (DTYPE) rbuffer;
+        }
+    }
+    else
+    {
+        printf("ERROR: type given to io_read_array_bin_d2f must be one of "
+                "the following: 'C' or 'R'!\n");
+        exit(EXIT_FAILURE);
+    }
+    
+    fclose(ifile);
+
+    return(count);
+}
