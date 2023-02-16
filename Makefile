@@ -11,7 +11,6 @@ LMKL=
 
 # On cluster use these lines
 # On flock
-# MKLROOT=/apps/intel_2018/mkl
 # On leap
 # MKLROOT=/apps/intel/oneapi/mkl/latest
 # On local machine, though it isn't necessary
@@ -19,9 +18,21 @@ LMKL=
 
 ONCLUSTER=
 ONLOCAL=yes
+FLOCK=
+LEAP=
+ZEAL=
 
 # For all clusters
 ifdef ONCLUSTER
+ifdef FLOCK
+MKLROOT=/apps/intel_2018/mkl
+endif
+ifdef LEAP
+MKLROOT=/apps/intel/oneapi/mkl/latest
+CMKL += -I"$(MKLROOT)/include"
+endif
+ifdef ZEAL
+endif
 LMKL += -Wl,--start-group $(MKLROOT)/lib/intel64/libmkl_intel_lp64.a
 LMKL += $(MKLROOT)/lib/intel64/libmkl_intel_thread.a
 LMKL += $(MKLROOT)/lib/intel64/libmkl_core.a
