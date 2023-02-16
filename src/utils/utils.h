@@ -58,9 +58,14 @@ int utils_bin_energy_range(DTYPE * energies, int len, int num_bins,
                         DTYPE core_min, DTYPE core_max, int * bin_edges);
 int utils_add_to_matrix_real(DTYPE * matrix1, DTYPE * matrix2,
                             int m, int n);
+int utils_add_to_matrix_real_error(DTYPE * matrix1, DTYPE * matrix2,
+                            int m, int n, DTYPE * sqsum);
 int utils_add_to_matrix_complex(CDTYPE * matrix1, CDTYPE * matrix2,
                             int m, int n);
-
+int utils_add_to_matrix_complex_error(CDTYPE * matrix1, CDTYPE * matrix2,
+                            int m, int n, CDTYPE * sqsum);
+int utils_create_keldysh_vector(void * initial_cond,
+                            char type, int num_states);
 
 // Bitwise manipulations
 // From SO community wiki post

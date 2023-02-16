@@ -107,10 +107,14 @@ def outputPattern(upList, downList, filename):
 
 
 def main():
-    length = 60
-    filename = f"data/altn_updown_empty_L{length}.dat"
+    length = 4
+    filename = f"data/alt_up_down_L{length}.dat"
+    # filename = f"data/testing_sample_initial_cond_L{length}.dat"
+
     # filename = f"data/adj_up_L{length}.dat"
-    upList, downList = altn_updown_empty(length)
+    upList, downList = alt_up_down(length)
+    # upList = [2, 3, 5, 9, 11, 12, 15]
+    # downList = [1, 2, 4, 5, 7, 8, 11, 14, 15]
     print(f"Up: {upList} Down: {downList}")
     outputPattern(upList, downList, filename)
 

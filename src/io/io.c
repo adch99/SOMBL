@@ -7,6 +7,8 @@
 #include "io.h"
 
 #define MAXCHAR 1024
+enum SpinPair {UPUP=0, UPDN, DNUP, DNDN};
+enum Spin {UP=0, DOWN};
 
 int check_terminated(const char * str, int max_len)
 {
@@ -185,30 +187,45 @@ int io_read_array_complex(char ordering, CDTYPE * array,
 {
     int i, j, info;
     DTYPE zreal, zimag;
-    for(i = 0; i < m; i++)
+
+    if (ordering == 'C')
     {
-        for(j = 0; j < n; j++)
+        for(i = 0; i < m; i++)
         {
-            info = fscanf(ifile, " (%e%ej) ", &zreal, &zimag);
-            if(info != 2)
+            for(j = 0; j < n; j++)
             {
-                fprintf(stderr, "Input file in wrong format at (%d,%d) info = %d!\nstrerror: %s\n",
-                        i, j, info, strerror(errno));
-                char line[32];
-                fgets(line, 32, ifile);
-                fprintf(stderr, "Error line: '%s'\n", line);
-                fprintf(stderr, "feof: %d ferror: %d\n", feof(ifile), ferror(ifile));
-                fprintf(stderr, "m: %d n: %d\n", m, n);
-                return(-1);
-            }
-            if (ordering == 'C')
+                info = fscanf(ifile, " (%e%ej) ", &zreal, &zimag);
                 *(array + RTC(i, j, m)) = zreal + I*zimag;
-            else if (ordering == 'R')
+            }
+        }
+
+    }
+    else if (ordering == 'R')
+    {
+        for(i = 0; i < m; i++)
+        {
+            for(j = 0; j < n; j++)
+            {
+                info = fscanf(ifile, " (%e%ej) ", &zreal, &zimag);
                 *(array + i*n + j) = zreal + I*zimag;
-            else
-                return(-1);
+            }
         }
     }
+    else
+        return(-1);
+
+    if(info != 2)
+    {
+        fprintf(stderr, "Input file in wrong format at (%d,%d) info = %d!\nstrerror: %s\n",
+                i, j, info, strerror(errno));
+        char line[32];
+        fgets(line, 32, ifile);
+        fprintf(stderr, "Error line: '%s'\n", line);
+        fprintf(stderr, "feof: %d ferror: %d\n", feof(ifile), ferror(ifile));
+        fprintf(stderr, "m: %d n: %d\n", m, n);
+        return(-1);
+    }
+
     return(0);
 }
 
@@ -222,28 +239,41 @@ int io_read_array_real(char ordering, DTYPE * array,
 {
     int i, j, match;
     DTYPE elem;
-    for(i = 0; i < m; i++)
+    if(ordering == 'C')
     {
-        for(j = 0; j < n; j++)
+        for(i = 0; i < m; i++)
         {
-            match = fscanf(ifile, "%e", &elem);
-            if(match == 0)
+            for(j = 0; j < n; j++)
             {
-                printf("An error occured while parsing the file!\n");
-                return(-1);
-            }
-            if (ordering == 'C')
+                match = fscanf(ifile, "%e", &elem);
                 *(array + RTC(i, j, m)) = elem;
-            else if (ordering == 'R')
-                *(array + i*n + j) = elem;
-            else
-                return(-1);
+            }
         }
-        // io_read_until_char('\n', ifile);
-        // fseek(ifile, 1, SEEK_CUR);
-        // printf("\n");
+
     }
-    // printf("\n");
+    else if(ordering == 'R')
+    {
+        for(i = 0; i < m; i++)
+        {
+            for(j = 0; j < n; j++)
+            {
+                match = fscanf(ifile, "%e", &elem);
+                *(array + i*n + j) = elem;
+            }
+        }
+
+    }
+    else
+    {
+        return(-1);
+    }
+
+    if(match == 0)
+    {
+        printf("An error occured while parsing the file!\n");
+        return(-1);
+    }
+
     return(0);
 }
 
@@ -776,4 +806,54 @@ int io_read_array_bin_d2f(char type, void * array,
     fclose(ifile);
 
     return(count);
+}
+
+int io_get_initial_cond_vector(void * initial_cond, char type, char * filename)
+{
+    int * occupied_set_up;
+    int * occupied_set_down;
+    int set_length_up, set_length_down;
+    int i, index;
+    char err_msg[] = "get_initial_cond requires type "
+    "as either 'C' for complex or 'R' for real.\n";
+    io_get_initial_condition(&occupied_set_up, &set_length_up,
+                            &occupied_set_down, &set_length_down,
+                            filename);
+    printf("set_length_up: %d set_length_down: %d\n", set_length_up, set_length_down);
+
+    if(set_length_up > 0)
+    {
+        for(i = 0; i < set_length_up; i++)
+        {
+            index = *(occupied_set_up + i);
+            if(type == 'R')
+                *((DTYPE *)initial_cond + 2*index + UP) = 1;
+            else if(type == 'C')
+                *((CDTYPE *)initial_cond + 2*index + UP) = 1;
+            else
+            {
+                fprintf(stderr, err_msg);
+                exit(EXIT_FAILURE);
+            }
+        }
+        free(occupied_set_up);
+    }
+    if(set_length_down > 0)
+    {
+        for(i = 0; i < set_length_down; i++)
+        {
+            index = *(occupied_set_down + i);
+            if(type == 'R')
+                *((DTYPE *)initial_cond + 2*index + DOWN) = 1;
+            else if(type == 'C')
+                *((CDTYPE *)initial_cond + 2*index + DOWN) = 1;
+            else
+            {
+                fprintf(stderr, err_msg);
+                exit(EXIT_FAILURE);
+            }
+        }
+        free(occupied_set_down);
+    }
+    return(0);
 }

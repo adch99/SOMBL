@@ -54,9 +54,11 @@ enum Spin {UP=0, DOWN};
 // ----------------------
 int get_initial_cond(void * initial_cond, char type, char * filename);
 int get_density(void * density, void * initial_cond,
-                struct SystemParams params, uint alpha, uint beta, int bin);
+                struct SystemParams params, uint alpha, uint beta, int bin,
+                void * variance);
 int save_density(void * density, struct SystemParams params,
-                uint alpha, uint beta, int bin, char * basename);
+                uint alpha, uint beta, int bin, char * basename,
+                void * variance);
 int create_initial_vector(void * initial_cond, char type, int num_states);
 
 int main(int argc, char ** argv)
@@ -83,10 +85,12 @@ int main(int argc, char ** argv)
                 {
                     DTYPE * initial_cond = calloc(params.num_states, sizeof(DTYPE));
                     DTYPE * density = calloc(params.num_sites, sizeof(DTYPE));
+                    DTYPE * variance = calloc(params.num_sites, sizeof(DTYPE));
                     io_get_initial_cond_vector(initial_cond, 'R', filename);
                     utils_create_keldysh_vector(initial_cond, 'R', params.num_states);
-                    get_density(density, initial_cond, params, alpha, beta, bin);
-                    save_density(density, params, alpha, beta, bin, basename);
+                    get_density(density, initial_cond, params, alpha, beta, bin, variance);
+                    save_density(density, params, alpha, beta, bin, basename, variance);
+                    free(variance);
                     free(initial_cond);
                     free(density);        
                 }
@@ -94,10 +98,12 @@ int main(int argc, char ** argv)
                 {
                     CDTYPE * initial_cond = calloc(params.num_states, sizeof(CDTYPE));
                     CDTYPE * density = calloc(params.num_sites, sizeof(CDTYPE));
+                    CDTYPE * variance = calloc(params.num_sites, sizeof(CDTYPE));
                     io_get_initial_cond_vector(initial_cond, 'C', filename);
                     utils_create_keldysh_vector(initial_cond, 'C', params.num_states);
-                    get_density(density, initial_cond, params, alpha, beta, bin);
-                    save_density(density, params, alpha, beta, bin, basename);
+                    get_density(density, initial_cond, params, alpha, beta, bin, variance);
+                    save_density(density, params, alpha, beta, bin, basename, variance);
+                    free(variance);
                     free(initial_cond);
                     free(density);        
                 }
@@ -112,7 +118,7 @@ int main(int argc, char ** argv)
 
 int get_density(void * density, void * initial_cond,
                 struct SystemParams params, uint alpha,
-                uint beta, int bin)
+                uint beta, int bin, void * variance)
 {
     if(alpha > 2 || beta > 2)
     {
@@ -126,20 +132,32 @@ int get_density(void * density, void * initial_cond,
     if(alpha == beta)
     {
         DTYPE * gfuncsq = calloc(Lsq * 2*Lsq, sizeof(DTYPE));
+        DTYPE * gfuncvar = calloc(Lsq * 2*Lsq, sizeof(DTYPE));
         char filename[64];
+        char varfilename[128];
         params_gr_grstar_filename(filename, params, bin, alpha, beta);
+        sprintf(varfilename, "%s.variance", filename);
         io_read_array_bin('R', gfuncsq, Lsq, 2*Lsq, filename);
+        io_read_array_bin('R', gfuncvar, Lsq, 2*Lsq, varfilename);
         cblas_sgemv(CblasColMajor, CblasNoTrans, Lsq, 2*Lsq,
                     1.0, gfuncsq, Lsq, (DTYPE *) initial_cond, 1,
                     0.0, (DTYPE *) density, 1);
+        cblas_sgemv(CblasColMajor, CblasNoTrans, Lsq, 2*Lsq,
+                    1.0/(double)(2*Lsq), gfuncvar, Lsq, (DTYPE *) initial_cond, 1,
+                    0.0, (DTYPE *) variance, 1);
+        
         free(gfuncsq);
     }
     else if(alpha == 0 && beta == 1)
     {
         CDTYPE * gfuncsq = calloc(Lsq * 2*Lsq, sizeof(CDTYPE));
+        CDTYPE * gfuncvar = calloc(Lsq * 2*Lsq, sizeof(CDTYPE));
         char filename[64];
+        char varfilename[128];
         params_gr_grstar_filename(filename, params, bin, alpha, beta);
+        sprintf(varfilename, "%s.variance", filename);
         io_read_array_bin('C', gfuncsq, Lsq, 2*Lsq, filename);
+        io_read_array_bin('C', gfuncvar, Lsq, 2*Lsq, varfilename);
         lapack_complex_float blas_alpha, blas_beta;
         blas_alpha = 1;
         blas_beta = 0;
@@ -147,11 +165,14 @@ int get_density(void * density, void * initial_cond,
         // blas_alpha.imag = 0;
         // blas_beta.real = 0;
         // blas_beta.imag = 0;
-        blas_alpha = 1;
-        blas_beta = 0;
         cblas_cgemv(CblasColMajor, CblasNoTrans, Lsq, 2*Lsq,
                     &blas_alpha, gfuncsq, Lsq, (CDTYPE *) initial_cond, 1,
                     &blas_beta, (CDTYPE *) density, 1);
+        blas_alpha = 1/(double)(2*Lsq);
+        blas_beta = 0;
+        cblas_cgemv(CblasColMajor, CblasNoTrans, Lsq, 2*Lsq,
+                    &blas_alpha, gfuncvar, Lsq, (CDTYPE *) initial_cond, 1,
+                    &blas_beta, (CDTYPE *) variance, 1);
         free(gfuncsq);
     }
     else if(alpha == 1 && beta == 0)
@@ -159,9 +180,13 @@ int get_density(void * density, void * initial_cond,
         // We need the conjugate value here.
         // G_R(i, α; k, γ)G_R^*(i, β; k, γ) = [G_R(i, β; k, γ)G_R^*(i, α; k, γ)]^*
         CDTYPE * gfuncsq = calloc(Lsq * 2*Lsq, sizeof(CDTYPE));
+        CDTYPE * gfuncvar = calloc(Lsq * 2*Lsq, sizeof(CDTYPE));
         char filename[128];
+        char varfilename[256];
         params_gr_grstar_filename(filename, params, bin, beta, alpha);
+        sprintf(varfilename, "%s.variance", filename);
         io_read_array_bin('C', gfuncsq, Lsq, 2*Lsq, filename);
+        io_read_array_bin('C', gfuncvar, Lsq, 2*Lsq, filename);
         // Take the conjugate of the initial_cond
         int i;
         for(i = 0; i < 2*Lsq; i++)
@@ -176,6 +201,11 @@ int get_density(void * density, void * initial_cond,
         cblas_cgemv(CblasColMajor, CblasNoTrans, Lsq, 2*Lsq,
                     &blas_alpha, gfuncsq, Lsq, (CDTYPE *) initial_cond, 1,
                     &blas_beta, (CDTYPE *) density, 1);
+        blas_alpha = 1/(double)(2*Lsq);
+        blas_beta = 0;
+        cblas_cgemv(CblasColMajor, CblasNoTrans, Lsq, 2*Lsq,
+                    &blas_alpha, gfuncvar, Lsq, (CDTYPE *) initial_cond, 1,
+                    &blas_beta, (CDTYPE *) variance, 1);
         // Take the conjugate of the output
         for(i = 0; i < Lsq; i++)
             *((CDTYPE *)density + i) = conj(*((CDTYPE *)density + i));
@@ -186,9 +216,11 @@ int get_density(void * density, void * initial_cond,
 }
 
 int save_density(void * density, struct SystemParams params,
-                uint alpha, uint beta, int bin, char * basename)
+                uint alpha, uint beta, int bin, char * basename,
+                void * variance)
 {
     char filename[128];
+    char varfilename[256];
     char suffix[64];
     int i;
     if(bin >= 0)
@@ -197,8 +229,13 @@ int save_density(void * density, struct SystemParams params,
         snprintf(suffix, 64, "_a%d_b%d_full_%s.dat", alpha, beta, basename);
     params_basefilename(params, "data/mbl_density", suffix, filename);
 
+    sprintf(varfilename, "%s.variance", filename);
+
     printf("Writing density alpha=%d beta=%d bin=%d to %s\n",
             alpha, beta, bin, filename);
+    printf("Writing variance alpha=%d beta=%d bin=%d to %s\n",
+            alpha, beta, bin, varfilename);
+
 
     FILE * ifile = io_safely_open('w', filename);
     for(i = 0; i < params.num_sites; i++)
@@ -212,5 +249,20 @@ int save_density(void * density, struct SystemParams params,
         }
     }
     fclose(ifile);
+
+    ifile = io_safely_open('w', varfilename);
+    for(i = 0; i < params.num_sites; i++)
+    {
+        if(alpha == beta)
+            fprintf(ifile, "%e ", *((DTYPE *)variance + i));
+        else
+        {
+            CDTYPE elemc = *((CDTYPE *) variance + i);
+            fprintf(ifile, " (%e+%ej) ", crealf(elemc), cimagf(elemc));
+        }
+    }
+    fclose(ifile);
+
+
     return(0);
 }

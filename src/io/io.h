@@ -34,6 +34,8 @@ int io_get_gfuncsq_from_file(DTYPE * matrix, struct OutStream outfiles,
 int io_get_initial_condition(int ** occupied_set_up, int * set_length_up,
                             int ** occupied_set_dn, int * set_length_dn,
                             char * filename);
+int io_get_initial_cond_vector(void * initial_cond, char type,
+                            char * filename);
 int io_output_function_data(DTYPE * dists, DTYPE * gfuncsq,
                         DTYPE * errors, char * filename,
                         int data_len);

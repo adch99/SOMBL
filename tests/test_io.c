@@ -153,6 +153,29 @@ void test_io_read_bin_d2f_complex()
 
 }
 
+void test_io_get_initial_vector()
+{
+    char filename[] = "data/testing_sample_initial_cond_L4.dat";
+    DTYPE expected[32] = {0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1,
+                    0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 1,
+                    0, 0, 0, 0, 1, 1, 1};
+    DTYPE actual[32];
+    int i;
+    for(i = 0; i < 32; i++)
+        actual[i] = 0;
+    io_get_initial_cond_vector(actual, 'R', filename);
+    TEST_ASSERT_FLOAT_ARRAY_WITHIN(1e-12, expected, actual, 32);
+
+    CDTYPE expectedc[32] = {0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1,
+                    0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 1,
+                    0, 0, 0, 0, 1, 1, 1};
+    CDTYPE actualc[32];
+    for(i = 0; i < 32; i++)
+        actualc[i] = 0;
+    io_get_initial_cond_vector(actualc, 'C', filename);
+    assert_equal_complex_float_array(expectedc, actualc, 32);
+}
+
 
 int main(void)
 {
@@ -162,5 +185,6 @@ int main(void)
     RUN_TEST(test_io_readwrite_array_complex);
     RUN_TEST(test_io_read_bin_d2f_real);
     RUN_TEST(test_io_read_bin_d2f_complex);
+    RUN_TEST(test_io_get_initial_vector);
     return(UNITY_END());
 }

@@ -4,7 +4,7 @@
 #include "io/io.h"
 #include "constants.h"
 
-int main()
+int main(int argc, char ** argv)
 {
     char filename[64] = "data/sample_matrix_10x10.dat";
     char newfilename[64] = "data/sample_matrix_bin_10x10.dat";

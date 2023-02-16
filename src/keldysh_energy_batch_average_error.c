@@ -145,6 +145,7 @@ int average_real_matrix(char * ofilename, char ** ifilenames,
                         char * dtypelist)
 {
     DTYPE * avg_gfuncsq = calloc(m*n, sizeof(DTYPE));
+    DTYPE * avg_sq_gfuncsq = calloc(m*n, sizeof(DTYPE));
     DTYPE * batch_gfuncsq = calloc(m*n, sizeof(DTYPE));
     char * ifilename;
     int batchnum, i, j;
@@ -159,23 +160,34 @@ int average_real_matrix(char * ofilename, char ** ifilenames,
         char dtype = *(dtypelist + batchnum - 1);
         get_real_matrix(ifilename, dtype, batch_gfuncsq, m, n);
         // io_read_array('R', 'C', batch_gfuncsq, m, n, ifilename);
-        utils_add_to_matrix_real(avg_gfuncsq, batch_gfuncsq, m, n);
+        utils_add_to_matrix_real_error(avg_gfuncsq, batch_gfuncsq,
+                                    m, n, avg_sq_gfuncsq);
     }
 
     // Divide to get the average
+    int index;
     for(i = 0; i < m; i++)
     {
         for(j = 0; j < n; j++)
         {
-            *(avg_gfuncsq + RTC(i,j,m)) /= num_batches;
+            index = RTC(i, j, m);
+            *(avg_gfuncsq + index) /= num_batches;
+            *(avg_sq_gfuncsq + index) = *(avg_sq_gfuncsq + index)/num_batches
+                                    - (*(avg_gfuncsq + index))*(*(avg_gfuncsq + index));
         }
     }
+
 
     // Save this array in a file
     printf("Writing to file %s...\n", ofilename);
     io_write_array_bin('R', avg_gfuncsq, m, n, ofilename);
 
+    char varfilename[128];
+    sprintf(varfilename, "%s.variance", ofilename);
+    io_write_array_bin('R', avg_sq_gfuncsq, m, n, varfilename);
+
     free(avg_gfuncsq);
+    free(avg_sq_gfuncsq);
     free(batch_gfuncsq);
     return(0);
 }
@@ -185,6 +197,7 @@ int average_complex_matrix(char * ofilename, char ** ifilenames,
                             char * dtypelist)
 {
     CDTYPE * avg_gfuncsq = calloc(m*n, sizeof(CDTYPE));
+    CDTYPE * avg_sq_gfuncsq = calloc(m*n, sizeof(CDTYPE));
     CDTYPE * batch_gfuncsq = calloc(m*n, sizeof(CDTYPE));
     char * ifilename;
     int batchnum, i, j;
@@ -200,15 +213,21 @@ int average_complex_matrix(char * ofilename, char ** ifilenames,
         char dtype = *(dtypelist + batchnum - 1);
         get_complex_matrix(ifilename, dtype, batch_gfuncsq, m, n);
 
-        utils_add_to_matrix_complex(avg_gfuncsq, batch_gfuncsq, m, n);
+        utils_add_to_matrix_complex_error(avg_gfuncsq, batch_gfuncsq, m, n, avg_sq_gfuncsq);
     }
 
     // Divide to get the average
+    int index;
+    CDTYPE elem;
     for(i = 0; i < m; i++)
     {
         for(j = 0; j < n; j++)
         {
-            *(avg_gfuncsq + RTC(i,j,m)) /= num_batches;
+            index = RTC(i, j, m);
+            *(avg_gfuncsq + index) /= num_batches;
+            elem = *(avg_gfuncsq + index);
+            *(avg_sq_gfuncsq + index) = *(avg_sq_gfuncsq + index)/num_batches - (creal(elem)*creal(elem) + I*cimag(elem)*cimag(elem));
+
         }
     }
 
@@ -216,7 +235,13 @@ int average_complex_matrix(char * ofilename, char ** ifilenames,
     printf("Writing to file %s...\n", ofilename);
     io_write_array_bin('C', avg_gfuncsq, m, n, ofilename);
 
+    char varfilename[128];
+    sprintf(varfilename, "%s.variance", ofilename);
+    io_write_array_bin('C', avg_sq_gfuncsq, m, n, varfilename);
+
+
     free(avg_gfuncsq);
+    free(avg_sq_gfuncsq);
     free(batch_gfuncsq);
     return(0);
 }

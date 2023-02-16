@@ -1388,6 +1388,28 @@ int utils_add_to_matrix_real(DTYPE * matrix1, DTYPE * matrix2, int m, int n)
 
 /*
     Adds matrix2 to matrix1 and stores the result back
+    in matrix1. Matrices should be real (DTYPE).
+    Assumes column major format.
+*/
+int utils_add_to_matrix_real_error(DTYPE * matrix1, DTYPE * matrix2, int m, int n, DTYPE * sqsum)
+{
+    int i, j, index;
+    for(i = 0; i < m; i++)
+    {
+        for(j = 0; j < n; j++)
+        {
+            index = RTC(i, j, m);
+            *(matrix1 + index) = *(matrix1 + index) + *(matrix2 + index);
+            *(sqsum + index) = *(sqsum + index) + *(matrix2 + index) * (*(matrix2 + index));
+        }
+    }
+    return(0);
+}
+
+
+
+/*
+    Adds matrix2 to matrix1 and stores the result back
     in matrix1. Matrices should be complex (CDTYPE)
     Assumes column major format.
 */
@@ -1400,6 +1422,60 @@ int utils_add_to_matrix_complex(CDTYPE * matrix1, CDTYPE * matrix2, int m, int n
         {
             index = RTC(i, j, m);
             *(matrix1 + index) = *(matrix1 + index) + *(matrix2 + index);
+        }
+    }
+    return(0);
+}
+
+
+/*
+    Adds matrix2 to matrix1 and stores the result back
+    in matrix1. Matrices should be complex (CDTYPE)
+    Assumes column major format.
+*/
+int utils_add_to_matrix_complex_error(CDTYPE * matrix1, CDTYPE * matrix2, int m, int n,
+                                    CDTYPE * sqsum)
+{
+    int i, j, index;
+    for(i = 0; i < m; i++)
+    {
+        for(j = 0; j < n; j++)
+        {
+            index = RTC(i, j, m);
+            CDTYPE elem = *(matrix2 + index);
+            *(matrix1 + index) = *(matrix1 + index) + elem;
+            *(sqsum + index) = *(sqsum + index) + (creal(elem)*creal(elem) + I*cimag(elem)*cimag(elem));
+        }
+    }
+    return(0);
+}
+
+
+
+/*
+    Change v to 1-2*v[k,γ] for the initial vector v.
+*/
+int utils_create_keldysh_vector(void * initial_cond, char type, int num_states)
+{
+    int i;
+    CDTYPE * ptr_c;
+    DTYPE *ptr_r;
+    for(i = 0; i < num_states; i++)
+    {
+        if(type == 'C')
+        {
+            ptr_c = (CDTYPE *) initial_cond + i;
+            *ptr_c = 1 - 2* (*ptr_c);
+        }
+        else if(type == 'R')
+        {
+            ptr_r = (DTYPE *) initial_cond + i;
+            *ptr_r = 1 - 2* (*ptr_r);
+        }
+        else
+        {
+            fprintf(stderr, "type should be 'R' or 'C'!\n");
+            exit(EXIT_FAILURE);
         }
     }
     return(0);
