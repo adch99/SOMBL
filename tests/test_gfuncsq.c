@@ -523,33 +523,63 @@ void test_gfuncsq_GR_GRstar_nondeg(void)
             if(alpha == beta)
             {
                 DTYPE *exp_gfuncsq = calloc(Lsq * 2*Lsq, sizeof(DTYPE));
+                DTYPE *exp_sqsum = calloc(Lsq * 2*Lsq, sizeof(DTYPE));
                 DTYPE *gfuncsq = calloc(Lsq * 2*Lsq, sizeof(DTYPE));
+                DTYPE *sqsum = calloc(Lsq * 2*Lsq, sizeof(DTYPE));
 
                 io_read_array('R', 'C', exp_gfuncsq, Lsq, 2*Lsq, filename);
+                // expected square sum is the square of the expected
+                for(i = 0; i < Lsq*2*Lsq; i++)
+                    *(exp_sqsum + i) = 0.01*(i % 7) + (*(exp_gfuncsq + i)) * (*(exp_gfuncsq + i));
                 // Zero out the gfuncsq for the run.
                 for(i = 0; i < Lsq*2*Lsq; i++)
+                {
                     *(gfuncsq + i) = 0;
-                gfuncsq_sym_GR_GRstar_nondeg(eigvecs, gfuncsq, L,
+                    *(sqsum + i) = 0.01*(i % 7);
+                }
+                gfuncsq_sym_GR_GRstar_nondeg_error(eigvecs, gfuncsq, sqsum, L,
                                         0, 2*Lsq, alpha);
                 snprintf(message, 32, "alpha = %d beta = %d", alpha, beta);
                 TEST_ASSERT_FLOAT_ARRAY_WITHIN_MESSAGE(TOL, exp_gfuncsq, gfuncsq,
                                                         Lsq*2*Lsq, message);
+                TEST_ASSERT_FLOAT_ARRAY_WITHIN_MESSAGE(TOL, exp_sqsum, sqsum,
+                                                        Lsq*2*Lsq, message);
                 // TEST_ASSERT_FLOAT_WITHIN(TOL, 1.2323432e-3, 1.2323442e-3);
 
+                free(sqsum);
+                free(exp_sqsum);
                 free(exp_gfuncsq);
                 free(gfuncsq);
-
             }
             else
             {
                 CDTYPE * exp_gfuncsq = calloc(Lsq * 2*Lsq, sizeof(CDTYPE));
                 CDTYPE * gfuncsq = calloc(Lsq * 2*Lsq, sizeof(CDTYPE));
+                CDTYPE * exp_sqsum = calloc(Lsq * 2*Lsq, sizeof(CDTYPE));
+                CDTYPE * sqsum = calloc(Lsq * 2*Lsq, sizeof(CDTYPE));
                 io_read_array('C', 'C', exp_gfuncsq, Lsq, 2*Lsq, filename);
-                gfuncsq_asym_GR_GRstar_nondeg(eigvecs, gfuncsq, L,
+                CDTYPE elemc, shift;
+                for(i = 0; i < Lsq*2*Lsq; i++)
+                {
+                    elemc = *(exp_gfuncsq + i);
+                    shift = 0.01*(i%7) + I*0.2*(i % 11 + 2.3);
+                    // shift = 0;
+                    *(exp_sqsum + i) = shift + crealf(elemc)*crealf(elemc)
+                                    + I*cimagf(elemc)*cimagf(elemc);
+                }
+
+                for(i = 0; i < Lsq*2*Lsq; i++)
+                {
+                    *(sqsum + i) = 0.01*(i%7) + I*0.2*(i % 11 + 2.3);
+                }
+                gfuncsq_asym_GR_GRstar_nondeg_error(eigvecs, gfuncsq, sqsum, L,
                                         0, 2*Lsq, alpha, beta);
                 // snprintf(message, 40, "alpha = %d beta = %d gamma = %d",
                 //         alpha, beta, gamma);
                 assert_equal_complex_float_array(exp_gfuncsq, gfuncsq, Lsq*2*Lsq);
+                assert_equal_complex_float_array(exp_sqsum, sqsum, Lsq*2*Lsq);
+                free(sqsum);
+                free(exp_sqsum);
                 free(exp_gfuncsq);
                 free(gfuncsq);
             }
@@ -563,6 +593,7 @@ void test_gfuncsq_GR_GRstar_deg(void)
     int L = 4;
     int Lsq = L * L;
     uint alpha, beta;
+    int i;
     // int i, j;
     // CDTYPE elem;
 
@@ -586,9 +617,16 @@ void test_gfuncsq_GR_GRstar_deg(void)
             {
                 DTYPE * exp_gfuncsq = calloc(Lsq * 2*Lsq, sizeof(DTYPE));
                 DTYPE * gfuncsq = calloc(Lsq * 2*Lsq, sizeof(DTYPE));
+                DTYPE * sqsum = calloc(Lsq * 2*Lsq, sizeof(DTYPE));
+                DTYPE * exp_sqsum = calloc(Lsq * 2*Lsq, sizeof(DTYPE));
                 io_read_array('R', 'C', exp_gfuncsq, Lsq, 2*Lsq, filename);
-                gfuncsq_sym_GR_GRstar_deg(eigvecs, gfuncsq, L,
+                // expected square sum is the square of the expected
+                for(i = 0; i < Lsq*2*Lsq; i++)
+                    *(exp_sqsum + i) = (*(exp_gfuncsq + i)) * (*(exp_gfuncsq + i));
+
+                gfuncsq_sym_GR_GRstar_deg_error(eigvecs, gfuncsq, sqsum, L,
                                         0, 2*Lsq, alpha);
+
                 // printf("alpha = %d beta = %d\n", alpha, beta);
                 // printf("Expected:\n");
                 // for(i = 0; i < 4; i++)
@@ -615,6 +653,10 @@ void test_gfuncsq_GR_GRstar_deg(void)
                         alpha, beta);
                 TEST_ASSERT_FLOAT_ARRAY_WITHIN_MESSAGE(TOL, exp_gfuncsq, gfuncsq,
                                                         Lsq*2*Lsq, message);
+                TEST_ASSERT_FLOAT_ARRAY_WITHIN_MESSAGE(TOL, exp_sqsum, sqsum,
+                                                        Lsq*2*Lsq, message);
+                free(sqsum);
+                free(exp_sqsum);
                 free(exp_gfuncsq);
                 free(gfuncsq);
             }
@@ -622,8 +664,16 @@ void test_gfuncsq_GR_GRstar_deg(void)
             {
                 CDTYPE * exp_gfuncsq = calloc(Lsq * 2*Lsq, sizeof(CDTYPE));
                 CDTYPE * gfuncsq = calloc(Lsq * 2*Lsq, sizeof(CDTYPE));
+                CDTYPE * exp_sqsum = calloc(Lsq * 2*Lsq, sizeof(CDTYPE));
+                CDTYPE * sqsum = calloc(Lsq * 2*Lsq, sizeof(CDTYPE));
                 io_read_array('C', 'C', exp_gfuncsq, Lsq, 2*Lsq, filename);
-                gfuncsq_asym_GR_GRstar_deg(eigvecs, gfuncsq, L,
+                CDTYPE elemc;
+                for(i = 0; i < Lsq*2*Lsq; i++)
+                {
+                    elemc = *(exp_gfuncsq + i);
+                    *(exp_sqsum + i) = crealf(elemc)*crealf(elemc) + I*cimagf(elemc)*cimagf(elemc);
+                }
+                gfuncsq_asym_GR_GRstar_deg_error(eigvecs, gfuncsq, sqsum, L,
                                         0, 2*Lsq, alpha, beta);
                 // snprintf(message, 40, "alpha = %d beta = %d gamma = %d",
                 //         alpha, beta, gamma);
@@ -651,6 +701,9 @@ void test_gfuncsq_GR_GRstar_deg(void)
                 // }
 
                 assert_equal_complex_float_array(exp_gfuncsq, gfuncsq, Lsq*2*Lsq);
+                assert_equal_complex_float_array(exp_sqsum, sqsum, Lsq*2*Lsq);
+                free(exp_sqsum);
+                free(sqsum);
                 free(exp_gfuncsq);
                 free(gfuncsq);
             }

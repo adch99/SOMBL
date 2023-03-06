@@ -21,6 +21,8 @@
 struct GFunc {
     DTYPE * gfunc_sym[2];
     CDTYPE * gfunc_asym;
+    DTYPE * gfunc_sym_var[2];
+    CDTYPE * gfunc_asym_var;
 };
 
 /* Function Declarations */ 
@@ -33,6 +35,7 @@ DTYPE post_process(struct SystemParams params, struct OutStream outfiles,
 int process_gr_grstar(struct SystemParams * params, struct GFunc gfuncs, 
                     CDTYPE * eigvecs, uint alpha, uint beta, int run_num,
                     bool isLastRun);
+int gfunc_cleanup(struct GFunc * gfuncs);
 
 //------------------------------------------------------------------------
 
@@ -127,6 +130,9 @@ int main(int argc, char ** argv)
     gfuncs.gfunc_sym[0] = calloc(Lsq * 2*Lsq, sizeof(DTYPE));
     gfuncs.gfunc_sym[1] = calloc(Lsq * 2*Lsq, sizeof(DTYPE));
     gfuncs.gfunc_asym = calloc(Lsq * 2*Lsq, sizeof(CDTYPE));
+    gfuncs.gfunc_sym_var[0] = calloc(Lsq * 2*Lsq, sizeof(DTYPE));
+    gfuncs.gfunc_sym_var[1] = calloc(Lsq * 2*Lsq, sizeof(DTYPE));
+    gfuncs.gfunc_asym_var = calloc(Lsq * 2*Lsq, sizeof(CDTYPE));
 
     printf("Starting Simulation for Exact Diagonalization...\n");
     for(ctr = start; ctr <= stop; ctr++)
@@ -142,6 +148,7 @@ int main(int argc, char ** argv)
 
     free(params.neighbours);
     params_cleanup(&params, &outfiles);
+    gfunc_cleanup(&gfuncs);
     return(0);
 }
 
@@ -217,6 +224,7 @@ int process_gr_grstar(struct SystemParams * params, struct GFunc gfuncs,
     int L = params->len;
     int Lsq = L*L;
     char filename[100];
+    char varfilename[128];
     int nmin, nmax, i;
     bool isCheckpoint, isFirst, startMiddle;
     int runs_done = run_num - params->startfrom;
@@ -228,38 +236,65 @@ int process_gr_grstar(struct SystemParams * params, struct GFunc gfuncs,
             beta, nmin, nmax);
     // Get the filename
     params_gr_grstar_filename(filename, *params, -1, alpha, beta);
-
+    sprintf(varfilename, "%s.variance", filename);
     if(alpha == beta)
     {
         DTYPE * gfunc_sym = gfuncs.gfunc_sym[alpha];
+        DTYPE * sqsum_sym = gfuncs.gfunc_sym_var[alpha];
         isFirst = (run_num == params->startfrom);
         startMiddle = (params->startfrom > 1);
         if(isFirst && startMiddle)
         {
             // Get the matrix from the file
             io_read_array('R', 'C', gfunc_sym, Lsq, 2*Lsq, filename);
+            io_read_array('R', 'C', sqsum_sym, Lsq, 2*Lsq, varfilename);
+
 
             // Multiply matrix by the number of runs already done
+            DTYPE elem, meansq;
             for(i = 0; i < Lsq * 2*Lsq; i++)
-                *(gfunc_sym + i) *= run_num - 1;
+            {
+                elem = *(gfunc_sym + i);
+                meansq = elem*elem;
+                *(gfunc_sym + i) *= (CDTYPE) run_num - 1;
+                *(sqsum_sym + i) += meansq;
+                *(sqsum_sym + i) *= (CDTYPE) run_num - 1;
+
+            }
         }
-        gfuncsq_sym_GR_GRstar_nondeg(eigvecs, gfunc_sym, L,
+        gfuncsq_sym_GR_GRstar_nondeg_error(eigvecs, gfunc_sym, sqsum_sym, L,
                                     nmin, nmax, alpha);
-        gfuncsq_sym_GR_GRstar_deg(eigvecs, gfunc_sym, L,
+        gfuncsq_sym_GR_GRstar_deg_error(eigvecs, gfunc_sym, sqsum_sym, L,
                                 nmin, nmax, alpha);
 
         isCheckpoint = ((runs_done % 5 == 0) && (runs_done > 0));
         if(isCheckpoint || isLastRun)
         {
             // Divide matrix by the number of runs already done
+            DTYPE elem, meansq;
             for(i = 0; i < Lsq * 2*Lsq; i++)
-                *(gfunc_sym + i) /= run_num;
-            
+            {
+                elem = *(gfunc_sym + i) / (DTYPE) run_num;
+                meansq = elem * elem;
+                *(gfunc_sym + i) = elem;
+                *(sqsum_sym + i) = *(sqsum_sym + i)/(DTYPE) run_num - meansq;                
+            }
+
+            printf("Writing to %s\n", filename);
             io_write_array_bin('R', gfunc_sym, Lsq, 2*Lsq, filename);
+            printf("Writing to %s\n", varfilename);            
+            io_write_array_bin('R', sqsum_sym, Lsq, 2*Lsq, varfilename);
 
             // Multiply matrix by the number of runs already done
             for(i = 0; i < Lsq * 2*Lsq; i++)
-                *(gfunc_sym + i) *= (CDTYPE) run_num;
+            {
+                elem = *(gfunc_sym + i);
+                meansq = elem*elem;
+                *(gfunc_sym + i) *= (DTYPE) run_num;
+                *(sqsum_sym + i) += meansq;
+                *(sqsum_sym + i) *= (DTYPE) run_num;
+
+            }
 
         }
 
@@ -269,36 +304,60 @@ int process_gr_grstar(struct SystemParams * params, struct GFunc gfuncs,
     else // alpha != beta
     {
         CDTYPE * gfunc_asym = gfuncs.gfunc_asym;
+        CDTYPE * sqsum_asym = gfuncs.gfunc_asym_var;
         isFirst = (run_num == params->startfrom);
         startMiddle = (params->startfrom > 1);
         if(isFirst && startMiddle)
         {
             // Get the matrix from the file
             io_read_array('C', 'C', gfunc_asym, Lsq, 2*Lsq, filename);
+            io_read_array('C', 'C', sqsum_asym, Lsq, 2*Lsq, varfilename);
 
             // Multiply matrix by the number of runs already done
+            CDTYPE elem, meansq;
             for(i = 0; i < Lsq * 2*Lsq; i++)
-                *(gfunc_asym + i) *= run_num - 1;
+            {
+                elem = *(gfunc_asym + i);
+                meansq = creal(elem)*creal(elem) + I*cimag(elem)*cimag(elem);
+                *(gfunc_asym + i) *= (CDTYPE) run_num - 1;
+                *(sqsum_asym + i) += meansq;
+                *(sqsum_asym + i) *= (CDTYPE) run_num - 1;
+            }
         }
-        gfuncsq_asym_GR_GRstar_nondeg(eigvecs, gfunc_asym, L,
+        gfuncsq_asym_GR_GRstar_nondeg_error(eigvecs, gfunc_asym, sqsum_asym, L,
                                     nmin, nmax, alpha, beta);
-        gfuncsq_asym_GR_GRstar_deg(eigvecs, gfunc_asym, L,
+        gfuncsq_asym_GR_GRstar_deg_error(eigvecs, gfunc_asym, sqsum_asym, L,
                                     nmin, nmax, alpha, beta);
         
         isCheckpoint = ((runs_done % 5 == 0) && (runs_done > 0));
         if(isCheckpoint || isLastRun)
         {
             // Divide matrix by the number of runs already done
+            CDTYPE elem;
+            CDTYPE meansq;
             for(i = 0; i < Lsq * 2*Lsq; i++)
-                *(gfunc_asym + i) /= (CDTYPE) run_num;
+            {
+                elem = *(gfunc_asym + i) / (CDTYPE) run_num;
+                meansq = creal(elem)*creal(elem) + I*cimag(elem)*cimag(elem);
+                *(gfunc_asym + i) = elem;
+                *(sqsum_asym + i) = *(sqsum_asym + i)/(CDTYPE) run_num - meansq;
+            }
 
             // Write the new matrix back to the file.
+            printf("Writing to %s\n", filename);
             io_write_array_bin('C', gfunc_asym, Lsq, 2*Lsq, filename);
+            printf("Writing to %s\n", varfilename);
+            io_write_array_bin('C', sqsum_asym, Lsq, 2*Lsq, varfilename);
 
             // Multiply matrix by the number of runs already done
             for(i = 0; i < Lsq * 2*Lsq; i++)
+            {
+                elem = *(gfunc_asym + i);
+                meansq = creal(elem)*creal(elem) + I*cimag(elem)*cimag(elem);
                 *(gfunc_asym + i) *= (CDTYPE) run_num;
-
+                *(sqsum_asym + i) += meansq;
+                *(sqsum_asym + i) *= (CDTYPE) run_num;
+            }
         }
         // free(gfunc_asym);
     }
@@ -332,4 +391,16 @@ int output_gfuncsq_matrix(int runs_done, DTYPE * gfuncsq,
 
     fclose(ofile);
     return 0;
+}
+
+
+int gfunc_cleanup(struct GFunc * gfuncs)
+{
+    free(gfuncs->gfunc_sym[0]);
+    free(gfuncs->gfunc_sym[1]);
+    free(gfuncs->gfunc_asym);
+    free(gfuncs->gfunc_sym_var[0]);
+    free(gfuncs->gfunc_sym_var[1]);
+    free(gfuncs->gfunc_asym_var);
+    return(0);
 }

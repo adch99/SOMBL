@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "constants.h"
-#define L (4)
+#define L (10)
 #define BUFFSIZE (L*L*L*L*2)
 int main(int argc, char ** argv)
 {
@@ -17,7 +17,7 @@ int main(int argc, char ** argv)
     {
         for(j = 0; j < 2*L*L; j++)
         {
-            printf("%le ", buffer[i + j*L*L]);
+            printf("%e ", buffer[i + j*L*L]);
         }
         printf("\n");
     }

@@ -858,3 +858,330 @@ int gfunc_direct_full(CDTYPE * eigvecs, CDTYPE * gfuncsq, int length,
     }
     return 0;
 }   
+
+
+int gfuncsq_sym_GR_GRstar_nondeg_error(CDTYPE * eigvecs, DTYPE * gfuncsq,
+                                        DTYPE * sqsum, int length,
+                                        int nmin, int nmax, uint alpha)
+{
+    int num_sites = length * length;
+    int num_states = 2*num_sites;
+    int nwindow = nmax - nmin;
+    // Case where alpha = beta
+    int i; // Positional index
+    int n, m; // Pos+Spin index or eigenvector index
+    int q; // index that is summed over
+    CDTYPE elem;
+
+    DTYPE * Z = calloc(num_states * nwindow, sizeof(DTYPE));
+    DTYPE * A = calloc(num_sites * nwindow, sizeof(DTYPE));
+    DTYPE * output = calloc(num_sites * num_states, sizeof(DTYPE));
+    // printf("A = %d x %d\n", num_sites, nwindow);
+
+    // Create Z_{2i+alpha,n} = |psi_n(i,alpha)|^2
+    for(m = 0; m < num_states; m++)
+    {
+        for(n = nmin; n < nmax; n++)
+        {
+
+            // printf("Index m = %d\tn = %d\n", m, n);
+            q = n - nmin;
+            elem = *(eigvecs + RTC(m, n, num_states));
+            *(Z + RTC(m, q, num_states)) = crealf(elem)*crealf(elem)
+                                        + cimagf(elem)*cimagf(elem);            
+        }
+    }
+    // printf("Z Initialized!\n\n");
+
+    // Create A_{alpha,alpha} =     
+    for(i = 0; i < num_sites; i++)
+    {
+        for(n = nmin; n < nmax; n++)
+        {
+            // printf("(%d, %d) ", i, n);
+            q = n - nmin;
+            *(A + RTC(i, q, num_sites)) = *(eigvecs + RTC(2*i+alpha, n, num_states))
+                                        * conjf(*(eigvecs + RTC(2*i+alpha, n, num_states)));
+        }
+        // printf("\n");
+    }
+
+    lapack_int Lsq = num_sites;
+    lapack_int twoLsq = num_states;
+    cblas_sgemm(CblasColMajor, CblasNoTrans, CblasTrans,
+                Lsq, twoLsq, nwindow, 1.0, A, Lsq,
+                Z, twoLsq, 0.0, output, Lsq);
+    
+    int index;
+    DTYPE elemr;
+    for(i = 0; i < Lsq; i++)
+    {
+        for(n = 0; n < twoLsq; n++)
+        {
+            index = RTC(i, n, Lsq);
+            elemr = *(output + index);
+            *(gfuncsq + index) += elemr;
+            *(sqsum + index) += elemr*elemr;
+        }
+    }
+
+    free(output);
+    free(Z);
+    free(A);
+
+    return(0);
+}
+
+int gfuncsq_sym_GR_GRstar_deg_error(CDTYPE * eigvecs, DTYPE * gfuncsq,
+                                    DTYPE * sqsum, int length, int nmin,
+                                    int nmax, uint alpha)
+{
+    int Lsq = length * length;
+    CDTYPE * C_ab, * C_gg, * output;
+    int i, k, p, q;
+    uint gamma;
+    uint beta = alpha;
+    int pmin = nmin / 2;
+    int pmax = nmax / 2;
+
+    lapack_int M = Lsq;
+    lapack_int N = Lsq;
+    lapack_int K = (nmax - nmin) / 2;
+    // lapack_complex_float blas_alpha, blas_beta;
+    CDTYPE blas_alpha, blas_beta;
+
+    output = calloc(Lsq*Lsq, sizeof(CDTYPE));
+
+    for(gamma = 0; gamma < 2; gamma++)
+    {
+        // Create C_gg
+        C_gg = calloc(Lsq*Lsq, sizeof(CDTYPE));
+        for(i = 0; i < Lsq; i++)
+        {
+            for(p = pmin; p < pmax; p++)
+            {
+                q = p - pmin;
+                *(C_gg + RTC(i, q, Lsq)) = *(eigvecs + RTC(2*i+gamma,2*p,2*Lsq))
+                                            * conjf(*(eigvecs + RTC(2*i+gamma, 2*p+1, 2*Lsq)));
+            }
+        }
+        // Create C_ab
+        C_ab = calloc(Lsq*Lsq, sizeof(CDTYPE));
+        for(i = 0; i < Lsq; i++)
+        {
+            for(p = pmin; p < pmax; p++)
+            {
+                q = p - pmin;
+                *(C_ab + RTC(i, q, Lsq)) = *(eigvecs + RTC(2*i+alpha,2*p,2*Lsq))
+                                            * conjf(*(eigvecs + RTC(2*i+beta, 2*p+1, 2*Lsq)));
+            }
+        }
+
+        // compute C_ab C_gg^T and add to output
+        blas_alpha = 1.0;
+        blas_beta = 0.0;
+        cblas_cgemm(CblasColMajor, CblasNoTrans, CblasTrans,
+                    M, N, K, &blas_alpha, C_ab, M, C_gg, N,
+                    &blas_beta, output, M);
+        free(C_ab);
+        free(C_gg);
+
+        // Add the output to the gfuncsq
+        DTYPE elemr;
+        for(i = 0; i < Lsq; i++)
+        {
+            for(k = 0; k < Lsq; k++)
+            {
+                elemr = 2*crealf(*(output + RTC(i, k, Lsq)));
+                *(gfuncsq + RTC(i, 2*k+gamma, Lsq)) += elemr;
+                *(sqsum + RTC(i, 2*k+gamma, Lsq)) += elemr*elemr;
+            }
+        }
+    }
+    free(output);
+    return(0);
+}
+
+
+int gfuncsq_asym_GR_GRstar_nondeg_error(CDTYPE * eigvecs, CDTYPE * gfuncsq,
+                                CDTYPE * sqsum, int length, int nmin,
+                                int nmax, uint alpha, uint beta)
+{
+    int num_sites = length * length;
+    int num_states = 2*num_sites;
+    int nwindow = nmax - nmin;
+    // Case where alpha = beta
+    int i; // Positional index
+    int n, m; // Pos+Spin index or eigenvector index
+    int q; // index that is summed over
+    CDTYPE elem;
+
+    CDTYPE * Z = calloc(num_states * nwindow, sizeof(CDTYPE));
+    CDTYPE * A = calloc(num_sites * nwindow, sizeof(CDTYPE));
+    CDTYPE * output = calloc(num_sites * num_states, sizeof(CDTYPE));
+    // printf("A = %d x %d\n", num_sites, nwindow);
+
+    // Create Z_{2i+alpha,n} = |psi_n(i,alpha)|^2
+    for(m = 0; m < num_states; m++)
+    {
+        for(n = nmin; n < nmax; n++)
+        {
+
+            // printf("Index m = %d\tn = %d\n", m, n);
+            q = n - nmin;
+            elem = *(eigvecs + RTC(m, n, num_states));
+            *(Z + RTC(m, q, num_states)) = crealf(elem)*crealf(elem)
+                                        + cimagf(elem)*cimagf(elem);            
+        }
+    }
+    // printf("Z Initialized!\n\n");
+
+    // Create A_{alpha,alpha} =     
+    for(i = 0; i < num_sites; i++)
+    {
+        for(n = nmin; n < nmax; n++)
+        {
+            // printf("(%d, %d) ", i, n);
+            q = n - nmin;
+            *(A + RTC(i, q, num_sites)) = *(eigvecs + RTC(2*i+alpha, n, num_states))
+                                        * conjf(*(eigvecs + RTC(2*i+beta, n, num_states)));
+        }
+        // printf("\n");
+    }
+
+    lapack_int Lsq = num_sites;
+    lapack_int twoLsq = num_states;
+    lapack_complex_float blas_alpha, blas_beta;
+    // blas_alpha.real = 1.0;
+    // blas_alpha.imag = 0.0;
+    // blas_beta.real = 1.0;
+    // blas_beta.imag = 0.0;
+    blas_alpha = 1.0 + 0*I;
+    blas_beta = 0.0 + 0*I;
+
+    cblas_cgemm(CblasColMajor, CblasNoTrans, CblasTrans,
+                Lsq, twoLsq, nwindow, &blas_alpha, A, Lsq,
+                Z, twoLsq, &blas_beta, output, Lsq);
+
+    int index;
+    CDTYPE elemc;
+    for(i = 0; i < Lsq; i++)
+    {
+        for(n = 0; n < twoLsq; n++)
+        {
+            index = RTC(i, n, Lsq);
+            elemc = *(output + index);
+            *(gfuncsq + index) += elemc;
+            *(sqsum + index) += creal(elemc)*creal(elemc) + I*cimag(elemc)*cimag(elemc);
+        }
+    }
+
+
+    free(output);
+    free(Z);
+    free(A);
+
+    return(0);
+}
+
+int gfuncsq_asym_GR_GRstar_deg_error(CDTYPE * eigvecs, CDTYPE * gfuncsq,
+                            CDTYPE * sqsum, int length, int nmin,
+                            int nmax, uint alpha, uint beta)
+{
+    int Lsq = length * length;
+    CDTYPE * C_ab, * C_ba_star, * C_gg, * output;
+    int i, k, p, q;
+    int pmin = nmin / 2;
+    int pmax = nmax / 2;
+    uint gamma;
+
+    lapack_int M = Lsq;
+    lapack_int N = Lsq;
+    lapack_int K = (nmax - nmin) / 2;
+    lapack_complex_float blas_alpha, blas_beta;
+
+    output = calloc(Lsq*Lsq, sizeof(CDTYPE));
+
+    for(gamma = 0; gamma < 2; gamma++)
+    {
+        // Create C_gg
+        C_gg = calloc(Lsq*Lsq, sizeof(CDTYPE));
+        for(i = 0; i < Lsq; i++)
+        {
+            for(p = pmin; p < pmax; p++)
+            {
+                q = p - pmin;
+                *(C_gg + RTC(i, q, Lsq)) = *(eigvecs + RTC(2*i+gamma,2*p,2*Lsq))
+                                            * conjf(*(eigvecs + RTC(2*i+gamma, 2*p+1, 2*Lsq)));
+            }
+        }
+        // Create C_ab
+        C_ab = calloc(Lsq*Lsq, sizeof(CDTYPE));
+        for(i = 0; i < Lsq; i++)
+        {
+            for(p = pmin; p < pmax; p++)
+            {
+                q = p - pmin;
+                *(C_ab + RTC(i, q, Lsq)) = *(eigvecs + RTC(2*i+alpha,2*p,2*Lsq))
+                                            * conjf(*(eigvecs + RTC(2*i+beta, 2*p+1, 2*Lsq)));
+            }
+        }
+
+        // compute C_ab C_gg^T and add to output
+        // blas_beta = 0 is important to clear out
+        // any pre-existing values.
+        // blas_alpha.real = 1.0;
+        // blas_alpha.imag = 0.0;
+        // blas_beta.real = 0.0;
+        // blas_beta.imag = 0.0;
+        blas_alpha = 1.0;
+        blas_beta = 0;
+        cblas_cgemm(CblasColMajor, CblasNoTrans, CblasTrans,
+                    M, N, K, &blas_alpha, C_ab, M, C_gg, N,
+                    &blas_beta, output, M);
+        free(C_ab);
+
+        // Create C_ba_star
+        C_ba_star = calloc(Lsq*Lsq, sizeof(CDTYPE));
+        for(i = 0; i < Lsq; i++)
+        {
+            for(p = pmin; p < pmax; p++)
+            {
+                q = p - pmin;
+                *(C_ba_star + RTC(i, q, Lsq)) = conjf(*(eigvecs + RTC(2*i+beta, 2*p, 2*Lsq)))
+                                        * (*(eigvecs + RTC(2*i+alpha, 2*p+1, 2*Lsq)));
+            }
+        }
+
+        // compute C_ba_star C_gg^H and add to output
+        // blas_alpha.real = 1.0;
+        // blas_alpha.imag = 0.0;
+        // blas_beta.real = 1.0;
+        // blas_beta.imag = 0.0;
+        blas_alpha = 1;
+        blas_beta = 1;
+        cblas_cgemm(CblasColMajor, CblasNoTrans, CblasConjTrans,
+                    M, N, K, &blas_alpha, C_ba_star, M, C_gg, N,
+                    &blas_beta, output, M);
+        free(C_ba_star);
+        free(C_gg);
+
+        // Add the output to the gfuncsq
+        int index;
+        CDTYPE elemc;
+        for(i = 0; i < Lsq; i++)
+        {
+            for(k = 0; k < Lsq; k++)
+            {
+                index = RTC(i, 2*k+gamma, Lsq);
+                elemc = *(output + RTC(i, k, Lsq));
+                *(gfuncsq + index) += elemc;
+                *(sqsum + index) += creal(elemc)*creal(elemc) + I*cimag(elemc)*cimag(elemc);
+            }
+        }
+    }
+
+
+    free(output);
+    return(0);
+}

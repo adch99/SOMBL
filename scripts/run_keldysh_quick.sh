@@ -2,7 +2,7 @@
 
 W=15
 C=0.2
-size=4
+size=10
 bins=10
 batchsize=5
 numbatches=5
@@ -11,7 +11,10 @@ logfile=
 for i in $(seq 1 $numbatches); do
     echo "Batch $i"
     #./build/keldysh_window_batch -s $size -w $W -c $C --batch $i --batchsize $batchsize --bins $bins >> $logfile;
-    ./build/keldysh_window_batch_nobins -s $size -n $N -w $W -c $C --batch $i --batchsize $batchsize --bins $bins;
+    seed=$(od -vAn -N4 -tu4 < /dev/urandom)
+    echo $seed
+    ./build/keldysh_window_batch_nobins_error -s $size -n $N -w $W -c $C --batch $i --batchsize $batchsize --bins $bins --seed $seed;
+    # sleep 1;
 done
 #./build/keldysh_energy_batch_average -s $size -w $W -c $C --batchsize $batchsize --bins $bins -a ffffffffff >> $logfile
 ./build/keldysh_energy_batch_average_error -s $size -n $N -w $W -c $C --batchsize $batchsize -a ffffffffff

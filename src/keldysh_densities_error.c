@@ -186,7 +186,7 @@ int get_density(void * density, void * initial_cond,
         params_gr_grstar_filename(filename, params, bin, beta, alpha);
         sprintf(varfilename, "%s.variance", filename);
         io_read_array_bin('C', gfuncsq, Lsq, 2*Lsq, filename);
-        io_read_array_bin('C', gfuncvar, Lsq, 2*Lsq, filename);
+        io_read_array_bin('C', gfuncvar, Lsq, 2*Lsq, varfilename);
         // Take the conjugate of the initial_cond
         int i;
         for(i = 0; i < 2*Lsq; i++)

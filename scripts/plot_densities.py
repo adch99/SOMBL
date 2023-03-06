@@ -20,13 +20,25 @@ def convert_to_2d(array, length):
     return matrix
 
 
-def get_final_densities(GR_GRstar, binnum):
+def get_final_densities(GR_GRstar, binnum, errorExists=False, variance=None):
     n_up = 0.5 * (1 - GR_GRstar[0, 0, binnum])
     n_down = 0.5 * (1 - GR_GRstar[1, 1, binnum])
     S_plus = -0.5 * GR_GRstar[1, 0, binnum]
     S_minus = -0.5 * GR_GRstar[0, 1, binnum]
-    return (n_up, n_down, S_plus, S_minus)
+    densities = (n_up, n_down, S_plus, S_minus)
+    
+    if errorExists and variance is None:
+        raise TypeError("if errorExists is True, variance must not be None")
+    
+    if errorExists and variance is not None:
+        n_up_var = 0.25 * variance[0, 0, binnum]
+        n_down_var = 0.25 * variance[1, 1, binnum]
+        S_plus_var = 0.25 * variance[1, 0, binnum]
+        S_minus_var = 0.25 * variance[0, 1, binnum]
+        density_vars = (n_up_var, n_down_var, S_plus_var, S_minus_var)
+        return densities, density_vars
 
+    return densities
 
 def plot_set(densities, title="", colorbar_kwargs={}):
     n_up, n_down, S_plus, S_minus = densities
@@ -94,8 +106,10 @@ def plot_set(densities, title="", colorbar_kwargs={}):
     return figures
 
 
-def calculate(kwargs, totalbins, prefix, pattern):
+def calculate(kwargs, totalbins, prefix, pattern, errorExists=False):
     GR_GRstar = np.empty((2,2,totalbins+1), dtype=object)
+    if errorExists:
+        GR_GRstar_var = np.empty((2,2,totalbins+1), dtype=object)
     for alpha in range(2):
         for beta in range(2):
             kwargs["alpha"] = alpha
@@ -104,14 +118,23 @@ def calculate(kwargs, totalbins, prefix, pattern):
             params = putils.SystemParams(**kwargs)
             filename = putils.getFilename(params, endname=f"_{pattern}.dat",
                                         prefix=prefix)
+            varfilename = filename + ".variance"
             # print(filename)
             if(alpha == beta):
                 matrix = convert_to_2d(np.loadtxt(filename), params.size)
                 GR_GRstar[alpha, beta, totalbins] = matrix
+                if errorExists:
+                    var = convert_to_2d(np.loadtxt(varfilename), params.size)
+                    GR_GRstar_var[alpha, beta, totalbins] = var
+                
             else: #(alpha != beta)
                 matrix = convert_to_2d(np.loadtxt(filename, dtype=complex),
                                     params.size)
                 GR_GRstar[alpha, beta, totalbins] = matrix
+                if errorExists:
+                    var = convert_to_2d(np.loadtxt(varfilename, dtype=complex), params.size)
+                    GR_GRstar_var[alpha, beta, totalbins] = var
+
 
             for binnum in range(totalbins):
                 kwargs["alpha"] = alpha
@@ -120,15 +143,26 @@ def calculate(kwargs, totalbins, prefix, pattern):
                 params = putils.SystemParams(**kwargs)
                 filename = putils.getFilename(params, endname=f"_{pattern}.dat",
                                             prefix=prefix)
+                varfilename = filename + ".variance"
+                # print("varfilename:", varfilename)
                 # print(filename)
                 if(alpha == beta):
                     matrix = convert_to_2d(np.loadtxt(filename), params.size)
                     GR_GRstar[alpha, beta, binnum] = matrix
+                    if errorExists:
+                        var = convert_to_2d(np.loadtxt(varfilename), params.size)
+                        GR_GRstar_var[alpha, beta, binnum] = var
                 else: # (alpha != beta)
                     matrix = convert_to_2d(np.loadtxt(filename, dtype=complex),
                                         params.size)
                     GR_GRstar[alpha, beta, binnum] = matrix
+                    if errorExists:
+                        var = convert_to_2d(np.loadtxt(varfilename, dtype=complex),
+                                            params.size)
+                        GR_GRstar_var[alpha, beta, binnum] = var
 
+    if errorExists:
+        return GR_GRstar, GR_GRstar_var
     return GR_GRstar
 
 
