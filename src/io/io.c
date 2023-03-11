@@ -65,7 +65,7 @@ FILE * io_safely_open_binary(char purpose, char * filename)
     FILE * openfile;
     char mode[3];
     sprintf(mode, "%cb", purpose);
-    // printf("Opening %s in mode %s\n", filename, mode);
+    
     openfile = fopen(filename, mode);
     if (openfile == NULL)
     {
@@ -855,5 +855,34 @@ int io_get_initial_cond_vector(void * initial_cond, char type, char * filename)
         }
         free(occupied_set_down);
     }
+    return(0);
+}
+
+int io_get_initial_cond_vector_bin(void * initial_cond, char type, char * filename, int L)
+{
+    int i;
+    FILE * ifile = io_safely_open_binary('R', filename);
+
+    if (type == 'R')
+    {
+        CDTYPE * tmp_vector = calloc(2*L*L, sizeof(CDTYPE));
+        fread(tmp_vector, sizeof(CDTYPE), 2*L*L, ifile);
+        for(i = 0; i < 2*L*L; i++)
+            *((DTYPE *) initial_cond + i) =  *(tmp_vector + i);
+        free(tmp_vector);
+    }
+    else if (type == 'C')
+    {
+        fread((CDTYPE *) initial_cond, sizeof(CDTYPE), 2*L*L, ifile);
+    }
+    else
+    {
+        char err_msg[] = "ERROR: get_initial_cond requires type "
+        "as either 'C' for complex or 'R' for real.\n";
+        fprintf(stderr, err_msg);
+        exit(EXIT_FAILURE);
+    }
+
+    fclose(ifile);
     return(0);
 }

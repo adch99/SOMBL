@@ -138,7 +138,7 @@ OBJ = $(patsubst %.c,build/%.o,$(_DEPS))
 # exact_diag_batch batch_average keldysh_window_batch check_io
 _EXECS = keldysh_window_batch_nobins convert_txt_to_bin binary_reader \
 keldysh_energy_batch_average_error keldysh_densities_error \
-keldysh_window_batch_nobins_error
+keldysh_window_batch_nobins_error create_initial_conds
 EXECS = $(patsubst %,build/%,$(_EXECS))
 
 # External Dependencies

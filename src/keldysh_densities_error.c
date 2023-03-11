@@ -86,7 +86,8 @@ int main(int argc, char ** argv)
                     DTYPE * initial_cond = calloc(params.num_states, sizeof(DTYPE));
                     DTYPE * density = calloc(params.num_sites, sizeof(DTYPE));
                     DTYPE * variance = calloc(params.num_sites, sizeof(DTYPE));
-                    io_get_initial_cond_vector(initial_cond, 'R', filename);
+                    // io_get_initial_cond_vector(initial_cond, 'R', filename);
+                    io_get_initial_cond_vector_bin(initial_cond, 'R', filename, params.len);
                     utils_create_keldysh_vector(initial_cond, 'R', params.num_states);
                     get_density(density, initial_cond, params, alpha, beta, bin, variance);
                     save_density(density, params, alpha, beta, bin, basename, variance);
@@ -99,7 +100,8 @@ int main(int argc, char ** argv)
                     CDTYPE * initial_cond = calloc(params.num_states, sizeof(CDTYPE));
                     CDTYPE * density = calloc(params.num_sites, sizeof(CDTYPE));
                     CDTYPE * variance = calloc(params.num_sites, sizeof(CDTYPE));
-                    io_get_initial_cond_vector(initial_cond, 'C', filename);
+                    // io_get_initial_cond_vector(initial_cond, 'C', filename);
+                    io_get_initial_cond_vector_bin(initial_cond, 'C', filename, params.len);
                     utils_create_keldysh_vector(initial_cond, 'C', params.num_states);
                     get_density(density, initial_cond, params, alpha, beta, bin, variance);
                     save_density(density, params, alpha, beta, bin, basename, variance);

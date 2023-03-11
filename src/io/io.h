@@ -36,6 +36,8 @@ int io_get_initial_condition(int ** occupied_set_up, int * set_length_up,
                             char * filename);
 int io_get_initial_cond_vector(void * initial_cond, char type,
                             char * filename);
+int io_get_initial_cond_vector_bin(void * initial_cond, char type,
+                            char * filename, int L);
 int io_output_function_data(DTYPE * dists, DTYPE * gfuncsq,
                         DTYPE * errors, char * filename,
                         int data_len);
