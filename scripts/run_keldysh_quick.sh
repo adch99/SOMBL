@@ -19,4 +19,4 @@ done
 #./build/keldysh_energy_batch_average -s $size -w $W -c $C --batchsize $batchsize --bins $bins -a ffffffffff >> $logfile
 ./build/keldysh_energy_batch_average_error -s $size -n $N -w $W -c $C --batchsize $batchsize -a ffffffffff
 # ./build/keldysh_densities -s $size -w $W -c $C --bins $bins >> $logfile
-./build/keldysh_densities_error -s $size -n $N -w $W -c $C
+./build/keldysh_densities_error_random_sum -s $size -n $N -w $W -c $C

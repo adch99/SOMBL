@@ -60,6 +60,8 @@ int utils_add_to_matrix_real(DTYPE * matrix1, DTYPE * matrix2,
                             int m, int n);
 int utils_add_to_matrix_real_error(DTYPE * matrix1, DTYPE * matrix2,
                             int m, int n, DTYPE * sqsum);
+int utils_add_to_matrix_real_weighted(DTYPE * matrix1, DTYPE * matrix2,
+                                    int m, int n, int w1, int w2);
 int utils_add_to_matrix_complex(CDTYPE * matrix1, CDTYPE * matrix2,
                             int m, int n);
 int utils_add_to_matrix_complex_error(CDTYPE * matrix1, CDTYPE * matrix2,

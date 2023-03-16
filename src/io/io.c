@@ -861,7 +861,7 @@ int io_get_initial_cond_vector(void * initial_cond, char type, char * filename)
 int io_get_initial_cond_vector_bin(void * initial_cond, char type, char * filename, int L)
 {
     int i;
-    FILE * ifile = io_safely_open_binary('R', filename);
+    FILE * ifile = io_safely_open_binary('r', filename);
 
     if (type == 'R')
     {

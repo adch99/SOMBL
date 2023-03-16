@@ -178,8 +178,9 @@ int params_cleanup(struct SystemParams * params, struct OutStream * outfiles)
     free(outfiles->gfuncsq);
     free(outfiles->dist_vs_gfuncsq);
     for(i = 0; i < 4; i++)
+    {
         free(outfiles->dist_vs_gfuncsq_spin[i]);
-
+    }
     return 0;
 }
 

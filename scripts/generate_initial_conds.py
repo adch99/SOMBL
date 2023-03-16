@@ -68,6 +68,40 @@ def altn_altupdown_updown(length):
 
     return np.array(upList), np.array(downList)
 
+
+def altn_altupdown_empty(length):
+    upList = []
+    downList = []
+    for x in range(length):
+        for y in range(length):
+            if ((x + y) % 2 == 0):
+                continue
+            elif ((x + y) % 4 == 1):
+                upList.append(get_index(x, y, length))
+            else:
+                downList.append(get_index(x, y, length))
+
+    return np.array(upList), np.array(downList)
+
+
+
+def altn_random_updown(length):
+    upList = []
+    downList = []
+    for x in range(length):
+        for y in range(length):
+            if ((x + y) % 2 == 0):
+                upList.append(get_index(x, y, length))
+                downList.append(get_index(x, y, length))
+            else:
+                if np.random.randint(2) == 0:
+                    upList.append(get_index(x, y, length))
+                else:
+                    downList.append(get_index(x, y, length))
+
+    return np.array(upList), np.array(downList)
+
+
 def pnjunction(length):
     upList = []
     downList = []
@@ -147,16 +181,21 @@ def outputPattern(upList, downList, filename):
 
 
 def main():
-    length = 4
-    filename = f"data/pnjunction_L{length}.dat"
+    length = 10
+    # filename = f"data/pnjunction_L{length}.dat"
     # filename = f"data/testing_sample_initial_cond_L{length}.dat"
 
-    # filename = f"data/altn_altupdown_updown_L{length}.dat"
-    upList, downList = pnjunction(length)
-    # upList = [2, 3, 5, 9, 11, 12, 15]
-    # downList = [1, 2, 4, 5, 7, 8, 11, 14, 15]
-    print(f"Up: {upList} Down: {downList}")
-    outputPattern(upList, downList, filename)
+    # filename = f"data/altn_random_updown_1_L{length}.dat"
+    # upList, downList = altn_random_updown(length)
+    # # upList = [2, 3, 5, 9, 11, 12, 15]
+    # # downList = [1, 2, 4, 5, 7, 8, 11, 14, 15]
+    # print(f"Up: {upList} Down: {downList}")
+    # outputPattern(upList, downList, filename)
+
+    for n in range(1, 101):
+        filename = f"data/altn_random_updown_n{n}_L{length}.dat"
+        upList, downList = altn_random_updown(length)
+        outputPattern(upList, downList, filename)
 
 
 if __name__ == "__main__":

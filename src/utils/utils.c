@@ -1406,6 +1406,25 @@ int utils_add_to_matrix_real_error(DTYPE * matrix1, DTYPE * matrix2, int m, int 
     return(0);
 }
 
+/*
+    Adds matrix2*w2 to matrix1*w1 and stores the result back
+    in matrix1. Matrices should be real (DTYPE).
+    Assumes column major format.
+*/
+int utils_add_to_matrix_real_weighted(DTYPE * matrix1, DTYPE * matrix2,
+                                    int m, int n, int w1, int w2)
+{
+    int i, j, index;
+    for(i = 0; i < m; i++)
+    {
+        for(j = 0; j < n; j++)
+        {
+            index = RTC(i, j, m);
+            *(matrix1 + index) = *(matrix1 + index) * w1 + *(matrix2 + index) * w2;
+        }
+    }
+    return(0);
+}
 
 
 /*

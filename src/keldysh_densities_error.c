@@ -65,12 +65,12 @@ int main(int argc, char ** argv)
 {
     struct SystemParams params;
     struct OutStream outfiles;
+    params_setup(argc, argv, &params, &outfiles, &argp, 0);
+    params.energybins = 0;
     uint alpha, beta;
     int bin;
     char filename[256];
-    char basename[] = "alt_up_down";
-    params_setup(argc, argv, &params, &outfiles, &argp, 0);
-    params.energybins = 0;
+    char basename[] = "altn_random_updown";
     snprintf(filename, 256, "data/%s_L%d.dat", basename, params.len);
     printf("Initial Cond File: %s\n", filename);
 
@@ -112,10 +112,8 @@ int main(int argc, char ** argv)
             }
         }
     }
-
     return(0);
 }
-
 
 
 int get_density(void * density, void * initial_cond,
