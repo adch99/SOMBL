@@ -102,6 +102,31 @@ def altn_random_updown(length):
     return np.array(upList), np.array(downList)
 
 
+def altn_randomequal_updown(length):
+    upList = []
+    downList = []
+    rng = np.random.default_rng()
+    subLatSize = length*length//2
+    choices = rng.choice(np.arange(subLatSize), subLatSize//2, replace=False)
+    isUp = np.full(subLatSize, False, dtype=bool)
+    isUp[choices] = True
+    ctr = 0
+    for x in range(length):
+        for y in range(length):
+            if ((x + y) % 2 == 0):
+                upList.append(get_index(x, y, length))
+                downList.append(get_index(x, y, length))
+            else:
+                if isUp[ctr]:
+                    upList.append(get_index(x, y, length))
+                else:
+                    downList.append(get_index(x, y, length))
+                ctr += 1
+
+    return np.array(upList), np.array(downList)
+
+
+
 def altn_random_empty(length):
     upList = []
     downList = []
@@ -114,6 +139,28 @@ def altn_random_empty(length):
                     upList.append(get_index(x, y, length))
                 else:
                     downList.append(get_index(x, y, length))
+
+    return np.array(upList), np.array(downList)
+
+def altn_randomequal_empty(length):
+    upList = []
+    downList = []
+    rng = np.random.default_rng()
+    subLatSize = length*length//2
+    choices = rng.choice(np.arange(subLatSize), subLatSize//2, replace=False)
+    isUp = np.full(subLatSize, False, dtype=bool)
+    isUp[choices] = True
+    ctr = 0
+    for x in range(length):
+        for y in range(length):
+            if ((x + y) % 2 == 0):
+                continue
+            else:
+                if isUp[ctr]:
+                    upList.append(get_index(x, y, length))
+                else:
+                    downList.append(get_index(x, y, length))
+                ctr += 1
 
     return np.array(upList), np.array(downList)
 
@@ -210,8 +257,8 @@ def main():
     # outputPattern(upList, downList, filename)
 
     for n in range(1, 101):
-        filename = f"data/altn_random_updown_n{n}_L{length}.dat"
-        upList, downList = altn_random_updown(length)
+        filename = f"data/altn_randomequal_empty_n{n}_L{length}.dat"
+        upList, downList = altn_randomequal_empty(length)
         outputPattern(upList, downList, filename)
 
 
