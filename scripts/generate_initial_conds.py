@@ -102,6 +102,23 @@ def altn_random_updown(length):
     return np.array(upList), np.array(downList)
 
 
+def altn_random_empty(length):
+    upList = []
+    downList = []
+    for x in range(length):
+        for y in range(length):
+            if ((x + y) % 2 == 0):
+                continue
+            else:
+                if np.random.randint(2) == 0:
+                    upList.append(get_index(x, y, length))
+                else:
+                    downList.append(get_index(x, y, length))
+
+    return np.array(upList), np.array(downList)
+
+
+
 def pnjunction(length):
     upList = []
     downList = []
