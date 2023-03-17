@@ -5,7 +5,7 @@
 #include "io/io.h"
 
 /* Constant Declarations */
-#define MAXLEN 64
+#define MAXLEN 128
 const char *argp_program_version =
     "keldysh_energy_batch_average 1.0";
 const char *argp_program_bug_address =
@@ -136,6 +136,9 @@ int main(int argc, char ** argv)
     for(batchnum = 1; batchnum <= num_batches; batchnum++)
         free(*(ifilenames + batchnum - 1));
     free(ifilenames);
+
+    printf("SUCCESS!\n");
+    params_cleanup(&params, &outfiles);
 
     return(0);
 }
