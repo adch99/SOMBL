@@ -74,7 +74,31 @@ def calculate_staggered_magnetization(S, variance, length, setA, setB):
 
     return mag, mag_var
 
+def get_oneset_mask(length, setA):
+    mask = np.full((length, length), -1)
+    setAX = [(index % length) for index in setA]
+    setAY = [(index // length) for index in setA]
+    mask[setAX, setAY] = 1
+    var_mask = np.abs(mask)
+    return mask, var_mask
 
+
+def get_twoset_mask(length, setPlus, setMinus):
+    mask = np.full((length, length), 0)
+    setPlusX = [(index % length) for index in setPlus]
+    setPlusY = [(index // length) for index in setPlus]
+    setMinusX = [(index % length) for index in setMinus]
+    setMinusY = [(index // length) for index in setMinus]
+
+    mask[setPlusX, setPlusY] = 1
+    mask[setMinusX, setMinusY] = -1
+    var_mask = np.abs(mask)
+    return mask, var_mask
+
+def calc_imb_mask(density, variance, mask, var_mask, norm):
+    imb = np.sum(density * mask) / norm
+    imb_var = np.sum(variance * var_mask) / norm**2
+    return imb, imb_var
 
 def calculate_imbalance(density, variance, length, setA, norm=None):
     imb = 0
@@ -142,15 +166,27 @@ def calculate_spin_imbalances_twoset_df(pattern, length, pspace):
         
         norm = (len(setPlus) + len(setMinus)) / 2
 
-        imb_n_up = calculate_imbalance_twoset(n_up, n_up_var, length, setPlus, setMinus)
-        imb_n_down = calculate_imbalance_twoset(n_down, n_down_var, length, setPlus, setMinus)
-        imb_S_plus = calculate_imbalance_twoset(S_plus, S_plus_var, length, setPlus, setMinus, norm=norm)
-        imb_S_minus = calculate_imbalance_twoset(S_minus, S_minus_var, length, setPlus, setMinus, norm=norm)
-        imb_charge = calculate_imbalance_twoset(charge, charge_var, length, setPlus, setMinus)
-        imb_S_x = calculate_imbalance_twoset(S_x, S_x_var, length, setPlus, setMinus, norm=norm)
-        imb_S_y = calculate_imbalance_twoset(S_y, S_y_var, length, setPlus, setMinus, norm=norm)
-        imb_S_z = calculate_imbalance_twoset(S_z, S_z_var, length, setPlus, setMinus, norm=norm)
-        st_mag_z = calculate_staggered_magnetization(S_z, S_z_var, length, setPlus, setMinus) 
+        mask, var_mask = get_twoset_mask(length, setPlus, setMinus)
+
+        # imb_n_up = calculate_imbalance_twoset(n_up, n_up_var, length, setPlus, setMinus)
+        # imb_n_down = calculate_imbalance_twoset(n_down, n_down_var, length, setPlus, setMinus)
+        # imb_S_plus = calculate_imbalance_twoset(S_plus, S_plus_var, length, setPlus, setMinus, norm=norm)
+        # imb_S_minus = calculate_imbalance_twoset(S_minus, S_minus_var, length, setPlus, setMinus, norm=norm)
+        # imb_charge = calculate_imbalance_twoset(charge, charge_var, length, setPlus, setMinus)
+        # imb_S_x = calculate_imbalance_twoset(S_x, S_x_var, length, setPlus, setMinus, norm=norm)
+        # imb_S_y = calculate_imbalance_twoset(S_y, S_y_var, length, setPlus, setMinus, norm=norm)
+        # imb_S_z = calculate_imbalance_twoset(S_z, S_z_var, length, setPlus, setMinus, norm=norm)
+        # st_mag_z = calculate_staggered_magnetization(S_z, S_z_var, length, setPlus, setMinus) 
+
+        imb_n_up = calc_imb_mask(n_up, n_up_var, mask, var_mask, np.sum(n_up))
+        imb_n_down = calc_imb_mask(n_down, n_down, mask, var_mask, np.sum(n_down))
+        imb_S_plus = calc_imb_mask(S_plus, S_plus_var, mask, var_mask, norm)
+        imb_S_minus = calc_imb_mask(S_minus, S_minus_var, mask, var_mask, norm)
+        imb_charge = calc_imb_mask(charge, charge_var, mask, var_mask, norm)
+        imb_S_x = calc_imb_mask(S_x, S_x_var, mask, var_mask, norm)
+        imb_S_y = calc_imb_mask(S_y, S_y_var, mask, var_mask, norm)
+        imb_S_z = calc_imb_mask(S_z, S_z_var, mask, var_mask, norm)
+        st_mag_z = calc_imb_mask(S_z, S_z_var, mask, var_mask, norm)
 
         datapoint = {
             "coupling": coupling,
@@ -277,7 +313,7 @@ def main():
     pspace += [(c, w) for c in np.arange(2.0, 3.01, 0.1) for w in range(12, 18+1)]
     pspace = [x for x in pspace if x != (0.8, 11)]
     spindf = calculate_spin_imbalances_twoset_df(pattern, length, pspace)
-    spindf.to_csv(f"data/spin_imbalances_twoset_error_L{length}_{pattern}.dat")
+    spindf.to_csv(f"data/spin_imbalances_twoset_error_sample_L{length}_{pattern}.dat")
 
 if __name__ == "__main__":
     main()
