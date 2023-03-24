@@ -36,7 +36,7 @@ int main()
         fprintf(stderr, "ERROR: Complete array could not be written out to file.\n");
         exit(EXIT_FAILURE);
     }
-    // print_init_cond(density, L);
+    print_init_cond(density, L);
     fclose(ofile);
     free(density);    
 }
@@ -98,8 +98,16 @@ void altn_randomequalmean_updown(int L, CDTYPE * density)
         for(y = 0; y < L; y++)
         {
             pos = x + y*L;
-            *(density + 2*pos + UP) = 0.5;
-            *(density + 2*pos + DOWN) = 0.5;
+            if((x + y) % 2 == 0)
+            {
+                *(density + 2*pos + UP) = 1;
+                *(density + 2*pos + DOWN) = 1;
+            }
+            else
+            {
+                *(density + 2*pos + UP) = 0.5;
+                *(density + 2*pos + DOWN) = 0.5;
+            }
         }
     }
 
