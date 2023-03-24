@@ -147,6 +147,7 @@ int get_density(void * density, void * initial_cond,
                     0.0, (DTYPE *) variance, 1);
         
         free(gfuncsq);
+        free(gfuncvar);
     }
     else if(alpha == 0 && beta == 1)
     {
@@ -174,6 +175,7 @@ int get_density(void * density, void * initial_cond,
                     &blas_alpha, gfuncvar, Lsq, (CDTYPE *) initial_cond, 1,
                     &blas_beta, (CDTYPE *) variance, 1);
         free(gfuncsq);
+        free(gfuncvar);
     }
     else if(alpha == 1 && beta == 0)
     {
@@ -210,6 +212,7 @@ int get_density(void * density, void * initial_cond,
         for(i = 0; i < Lsq; i++)
             *((CDTYPE *)density + i) = conj(*((CDTYPE *)density + i));
         free(gfuncsq);
+        free(gfuncvar);
     }
 
     return(0);
