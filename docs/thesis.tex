@@ -49,6 +49,27 @@ particle is present at $x$, will the wavefunction remain localized at the point 
 at long times?
 
 \subsection{Anderson Localization}
-The following system was introduced by P. W. Anderson and 
+The Anderson model, introduced by P. W. Anderson, is given by
+
+\begin{align}
+    H = \sum_{i} \epsilon_i c_{i}^{\dagger} c_{i} - t\sum_{\langle ij \rangle} c_{i}^{\dagger} c_{j}
+\end{align}
+
+where $t$ is the hopping strength, $\epsilon_i$ are random onsite potentials (known as disorder)
+drawn from a uniform distribution $[-W/2,W/2]$ and $W$ is called the disorder strength.
+
+In 1D, the model shows localization at any non-zero disorder strength $W$.
+
+
+\subsection{Weak Localization}
+In 2D, the scaling theory of localization requires a correction term to predict the resultant effect
+as $d = 2$ forms the lower critical dimension for the transition. In the 2D Anderson model,
+the phenomenon of Weak Localization results in the presence of localization even at arbitrarily low
+disorders. However, the localization length in these cases can be extremely large and can easily
+exceed the system size in finite size systems.
+
+Weak localization is a constructive interference effect that increases the probability of
+a particle to return to it's original site. 
+
 
 \end{document}

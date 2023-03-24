@@ -8,6 +8,7 @@
 enum Spin {UP=0, DOWN};
 
 void spiral(DTYPE qx,  DTYPE qy, int L, CDTYPE * density);
+void altn_randomequal_updown_mean(int L, CDTYPE * density);
 void print_init_cond(CDTYPE * density, int L);
 
 int main()
@@ -85,4 +86,19 @@ void spiral(DTYPE qx,  DTYPE qy, int L, CDTYPE * density)
             *(density + 2*pos + DOWN) = beta * conj(beta);
         }
     }
+}
+
+void altn_randomequal_updown_mean(int L, CDTYPE * density)
+{
+    int x, y, pos;
+    for(x = 0; x < L; x++)
+    {
+        for(y = 0; y < L; y++)
+        {
+            pos = x + y*L;
+            *(density + 2*pos + UP) = 0.5;
+            *(density + 2*pos + DOWN) = 0.5;
+        }
+    }
+
 }

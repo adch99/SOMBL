@@ -219,14 +219,14 @@ def calculate_spin_imbalances_twoset_df(pattern, length, pspace):
 
 
 def calculate_spin_imbalances_df(pattern, length, pspace):
-    upList, downList = putils.get_initial_condition(pattern, length)
-    # For charge imbalance
-    if upList is None:
-        upList = []
-    if downList is None:
-        downList = []
-    setAup = list(upList)
-    setAdown = list(downList)
+    # upList, downList = putils.get_initial_condition(pattern, length)
+    # # For charge imbalance
+    # if upList is None:
+    #     upList = []
+    # if downList is None:
+    #     downList = []
+    # setAup = list(upList)
+    # setAdown = list(downList)
     
     mainSubLattice = []
     for x in range(length):
@@ -293,6 +293,74 @@ def calculate_spin_imbalances_df(pattern, length, pspace):
     df = pd.DataFrame(data)
     return df
 
+def calculate_charge_imbalances_df(pattern, length, pspace):   
+    mainSubLattice = []
+    for x in range(length):
+        for y in range(length):
+            if ((x + y) % 2 == 0):
+                mainSubLattice.append(x + y*length)
+
+
+    data = []
+    for coupling, disorder in tqdm(pspace):
+        # print(f"α = {coupling} W = {disorder}")
+        binnum = -1
+        densities, density_vars = get_densities(length, coupling, disorder, binnum, pattern)
+        # print(density_vars)
+        n_up, n_down, S_plus, S_minus = densities
+        n_up_var, n_down_var, S_plus_var, S_minus_var = density_vars
+        
+        # S_x = (S_plus + S_minus)/2
+        # S_y = -1j*(S_plus - S_minus)/2
+        # S_z = (n_up - n_down) / 2
+        charge = n_up + n_down
+
+        # S_x_var = (S_plus_var + S_minus_var)/4
+        # S_y_var = (S_plus_var + S_minus_var)/4
+        # S_z_var = n_up_var + n_down_var
+        charge_var = n_up_var + n_down_var
+        
+        norm = len(mainSubLattice) / 2
+
+        # imb_n_up = calculate_imbalance(n_up, n_up_var, length, mainSubLattice)
+        # imb_n_down = calculate_imbalance(n_down, n_down_var, length, mainSubLattice)
+        # imb_S_plus = calculate_imbalance(S_plus, S_plus_var, length, mainSubLattice, norm=norm)
+        # imb_S_minus = calculate_imbalance(S_minus, S_minus_var, length, mainSubLattice, norm=norm)
+        imb_charge = calculate_imbalance(charge, charge_var, length, mainSubLattice)
+        # imb_S_x = calculate_imbalance(S_x, S_x_var, length, mainSubLattice, norm=norm)
+        # imb_S_y = calculate_imbalance(S_y, S_y_var, length, mainSubLattice, norm=norm)
+        # imb_S_z = calculate_imbalance(S_z, S_z_var, length, mainSubLattice, norm=norm)
+        
+        datapoint = {
+            "coupling": coupling,
+            "disorder": disorder,
+            "binnum": binnum,
+            # "spin_up_imb_n_up": imb_n_up[0],
+            # "spin_up_imb_n_down": imb_n_down[0],
+            # "spin_up_imb_S_plus": imb_S_plus[0],
+            # "spin_up_imb_S_minus": imb_S_minus[0],
+            "spin_up_imb_charge": imb_charge[0],
+            # "spin_up_imb_S_x": imb_S_x[0],
+            # "spin_up_imb_S_y": imb_S_y[0],
+            # "spin_up_imb_S_z": imb_S_z[0],
+
+            # "spin_up_imb_n_up_var": imb_n_up[1],
+            # "spin_up_imb_n_down_var": imb_n_down[1],
+            # "spin_up_imb_S_plus_var": imb_S_plus[1],
+            # "spin_up_imb_S_minus_var": imb_S_minus[1],
+            "spin_up_imb_charge_var": imb_charge[1],
+            # "spin_up_imb_S_x_var": imb_S_x[1],
+            # "spin_up_imb_S_y_var": imb_S_y[1],
+            # "spin_up_imb_S_z_var": imb_S_z[1]
+
+        }
+        data.append(datapoint)
+
+    df = pd.DataFrame(data)
+    return df
+
+
+
 def fourier_transform(density, length):
     density_k = fftshift(fft2(density, (length, length), norm="ortho"))
     kx = fftshift(fftfreq(length)) * 2 * np.pi
@@ -307,13 +375,14 @@ def fourier_component(kx, ky, density, length, phase=0):
     return val
 
 def main():
-    pattern = "altn_altupdown_updown"
+    pattern = "altn_random_updown"
     length = 100
     pspace = [(c, w) for c in np.arange(0, 2.01, 0.1) for w in range(8, 18+1)]
     pspace += [(c, w) for c in np.arange(2.0, 3.01, 0.1) for w in range(12, 18+1)]
     pspace = [x for x in pspace if x != (0.8, 11)]
-    spindf = calculate_spin_imbalances_twoset_df(pattern, length, pspace)
-    spindf.to_csv(f"data/spin_imbalances_twoset_error_sample_L{length}_{pattern}.dat")
+    # pspace = [x for x in pspace if x != (1.1, 8)]
+    spindf = calculate_charge_imbalances_df(pattern, length, pspace)
+    spindf.to_csv(f"data/charge_imbalances_error_L{length}_{pattern}.dat")
 
 if __name__ == "__main__":
     main()
