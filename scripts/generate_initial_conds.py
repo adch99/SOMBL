@@ -245,21 +245,21 @@ def outputPattern(upList, downList, filename):
 
 
 def main():
-    length = 100
+    length = 4
     # filename = f"data/pnjunction_L{length}.dat"
     # filename = f"data/testing_sample_initial_cond_L{length}.dat"
 
-    # filename = f"data/altn_random_updown_1_L{length}.dat"
-    # upList, downList = altn_random_updown(length)
-    # # upList = [2, 3, 5, 9, 11, 12, 15]
-    # # downList = [1, 2, 4, 5, 7, 8, 11, 14, 15]
-    # print(f"Up: {upList} Down: {downList}")
-    # outputPattern(upList, downList, filename)
+    filename = f"data/altn_altupdown_updown_L{length}.dat"
+    upList, downList = altn_altupdown_updown(length)
+    # upList = [2, 3, 5, 9, 11, 12, 15]
+    # downList = [1, 2, 4, 5, 7, 8, 11, 14, 15]
+    print(f"Up: {upList} Down: {downList}")
+    outputPattern(upList, downList, filename)
 
-    for n in range(1, 2):
-        filename = f"data/altn_randomequal_updown_n{n}_L{length}.dat"
-        upList, downList = altn_randomequal_updown(length)
-        outputPattern(upList, downList, filename)
+    # for n in range(1, 2):
+    #     filename = f"data/altn_randomequal_updown_n{n}_L{length}.dat"
+    #     upList, downList = altn_randomequal_updown(length)
+    #     outputPattern(upList, downList, filename)
 
 
 if __name__ == "__main__":

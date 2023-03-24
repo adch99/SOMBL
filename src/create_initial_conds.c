@@ -8,15 +8,15 @@
 enum Spin {UP=0, DOWN};
 
 void spiral(DTYPE qx,  DTYPE qy, int L, CDTYPE * density);
-void altn_randomequal_updown_mean(int L, CDTYPE * density);
+void altn_randomequalmean_updown(int L, CDTYPE * density);
 void print_init_cond(CDTYPE * density, int L);
 
 int main()
 {
     int L = 4;
-    char pattern[] = "data/spiral_qx0.25_qy0.25";
-    DTYPE qx = 0.25;
-    DTYPE qy = 0.25;
+    char pattern[] = "data/altn_randomequalmean_updown";
+    // DTYPE qx = 0.25;
+    // DTYPE qy = 0.25;
 
     CDTYPE * density;
     char filename[64];
@@ -25,7 +25,9 @@ int main()
 
     density = calloc(2*L*L, sizeof(CDTYPE));
     // Calculate density here
-    spiral(qx, qy, L, density);
+    // spiral(qx, qy, L, density);
+    altn_randomequalmean_updown(L, density);
+
     sprintf(filename, "%s_L%d.dat", pattern, L);
     ofile = io_safely_open_binary('w', filename);
     writesize = fwrite(density, sizeof(CDTYPE), 2*L*L, ofile);
@@ -34,7 +36,7 @@ int main()
         fprintf(stderr, "ERROR: Complete array could not be written out to file.\n");
         exit(EXIT_FAILURE);
     }
-    print_init_cond(density, L);
+    // print_init_cond(density, L);
     fclose(ofile);
     free(density);    
 }
@@ -88,7 +90,7 @@ void spiral(DTYPE qx,  DTYPE qy, int L, CDTYPE * density)
     }
 }
 
-void altn_randomequal_updown_mean(int L, CDTYPE * density)
+void altn_randomequalmean_updown(int L, CDTYPE * density)
 {
     int x, y, pos;
     for(x = 0; x < L; x++)
