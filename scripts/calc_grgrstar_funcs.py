@@ -5,9 +5,9 @@ import scripts.plot_utils as putils
 import scripts.plot_densities as pdens
 from tqdm import tqdm
 
-def get_densities(length, coupling, disorder, binnum, pattern):
+def get_densities(length, coupling, disorder, binnum, pattern, var=True):
     prefix = "data/mbl_density"
-    totalbins = 0
+    totalbins = 50
     kwargs = {
         "size": length,
         "coupling": coupling,
@@ -16,15 +16,20 @@ def get_densities(length, coupling, disorder, binnum, pattern):
         "hopdn": 1.0,
         "runs": 100,
         "nospin": False,
-        "binnum": 2,
+        "binnum": binnum,
         "alpha": 0,
         "beta": 0
     }
     # params = putils.SystemParams(**kwargs)
-    GR_GRstar, GR_GRstar_var = pdens.calculate(kwargs, totalbins, prefix, pattern, errorExists=True)
     # print("GRGR*var", GR_GRstar_var)
-    densities, density_vars = pdens.get_final_densities(GR_GRstar, binnum, errorExists=True, variance=GR_GRstar_var)
-    return densities, density_vars
+    if var:
+        GR_GRstar, GR_GRstar_var = pdens.calculate(kwargs, totalbins, prefix, pattern, errorExists=True)
+        densities, density_vars = pdens.get_final_densities(GR_GRstar, binnum, errorExists=True, variance=GR_GRstar_var)
+        return densities, density_vars
+    else:
+        GR_GRstar = pdens.calculate(kwargs, totalbins, prefix, pattern, errorExists=False)
+        densities = pdens.get_final_densities(GR_GRstar, binnum, errorExists=False)
+        return densities
 
 def calculate_staggered_magnetization(S, variance, length, setA, setB):
     mag = 0 + 0j
@@ -317,6 +322,77 @@ def calculate_spin_imbalances_df(pattern, length, pspace):
     df = pd.DataFrame(data)
     return df
 
+
+def calculate_spin_imbalances_bins_df(pattern, length, pspace, totalbins):
+    # This function is used to calculate the imbalance
+    # between the following lattice sites
+
+    # + - + - + -
+    # - + - + - +
+    # + - + - + -
+    # - + - + - +
+    
+    mainSubLattice = []
+    for x in range(length):
+        for y in range(length):
+            if ((x + y) % 2 == 0):
+                mainSubLattice.append(x + y*length)
+    norm = len(mainSubLattice) / 2
+    mask, var_mask = get_oneset_mask(length, mainSubLattice)
+    initial_imb_S_z, initial_imb_charge = initial_imbalances(pattern, length, mask)
+    if not np.isclose(initial_imb_charge, 0):
+        norm_charge = initial_imb_charge
+    else:
+        norm_charge = norm
+
+    if not np.isclose(initial_imb_S_z, 0):
+        norm_S_z = initial_imb_S_z
+    else:
+        norm_S_z = norm
+
+
+    data = []
+    for coupling, disorder in tqdm(pspace):
+        # print(f"α = {coupling} W = {disorder}")
+        for binnum in range(-1, totalbins):
+            densities = get_densities(length, coupling, disorder, binnum, pattern, var=False)
+            # print(density_vars)
+            n_up, n_down, S_plus, S_minus = densities
+            
+            S_x = (S_plus + S_minus)/2
+            S_y = -1j*(S_plus - S_minus)/2
+            S_z = (n_up - n_down) / 2
+            charge = n_up + n_down
+
+            imb_n_up = calc_imb_mask(n_up, 0, mask, 0, norm)
+            imb_n_down = calc_imb_mask(n_down, 0, mask, 0, norm)
+            imb_S_plus = calc_imb_mask(S_plus, 0, mask, 0, norm)
+            imb_S_minus = calc_imb_mask(S_minus, 0, mask, 0, norm)
+            imb_charge = calc_imb_mask(charge, 0, mask, 0, norm_charge)
+            imb_S_x = calc_imb_mask(S_x, 0, mask, 0, norm)
+            imb_S_y = calc_imb_mask(S_y, 0, mask, 0, norm)
+            imb_S_z = calc_imb_mask(S_z, 0, mask, 0, norm_S_z)
+            
+            datapoint = {
+                "coupling": coupling,
+                "disorder": disorder,
+                "binnum": binnum,
+                "spin_up_imb_n_up": imb_n_up[0],
+                "spin_up_imb_n_down": imb_n_down[0],
+                "spin_up_imb_S_plus": imb_S_plus[0],
+                "spin_up_imb_S_minus": imb_S_minus[0],
+                "spin_up_imb_charge": imb_charge[0],
+                "spin_up_imb_S_x": imb_S_x[0],
+                "spin_up_imb_S_y": imb_S_y[0],
+                "spin_up_imb_S_z": imb_S_z[0],
+            }
+            data.append(datapoint)
+
+    df = pd.DataFrame(data)
+    return df
+
+
+
 def calculate_charge_imbalances_df(pattern, length, pspace):
     # This is used to calculate the charge imbalance only
     # for the averaged densities from random initial conds 
@@ -326,6 +402,8 @@ def calculate_charge_imbalances_df(pattern, length, pspace):
             if ((x + y) % 2 == 0):
                 mainSubLattice.append(x + y*length)
 
+    mask, var_mask = get_oneset_mask(length, mainSubLattice)
+    norm_charge = length * length / 2
     data = []
     for coupling, disorder in tqdm(pspace):
         binnum = -1
@@ -335,7 +413,7 @@ def calculate_charge_imbalances_df(pattern, length, pspace):
         charge = n_up + n_down
         charge_var = n_up_var + n_down_var
         norm = len(mainSubLattice) / 2
-        imb_charge = calculate_imbalance(charge, charge_var, length, mainSubLattice)
+        imb_charge = calc_imb_mask(charge, charge_var, mask, var_mask, norm_charge)
         datapoint = {
             "coupling": coupling,
             "disorder": disorder,
@@ -364,14 +442,20 @@ def fourier_component(kx, ky, density, length, phase=0):
     return val
 
 def main():
+    # pattern = "altn_randomequalmean_updown"
+    # pattern = "altn_altupdown_updown"
     pattern = "alt_up_down"
-    length = 100
-    pspace = [(c, w) for c in np.arange(0, 2.01, 0.1) for w in range(8, 18+1)]
-    pspace += [(c, w) for c in np.arange(2.0, 3.01, 0.1) for w in range(12, 18+1)]
-    pspace = [x for x in pspace if x != (0.8, 11)]
+    length = 60
+    pspace = [(c, w) for c in [1.5, 1.6, 1.7] for w in [10, 11, 12]]
+    pspace += [(c, w) for c in [0.3, 0.4, 0.5] for w in [13, 14, 15]]
+    # pspace = [(c, w) for c in np.arange(0, 2.01, 0.1) for w in range(8, 18+1)]
+    # pspace += [(c, w) for c in np.arange(2.0, 3.01, 0.1) for w in range(12, 18+1)]
+    # pspace = [x for x in pspace if x != (0.8, 11)]
     # pspace = [x for x in pspace if x != (1.1, 8)]
-    spindf = calculate_spin_imbalances_df(pattern, length, pspace)
-    spindf.to_csv(f"data/spin_imbalances_error_L{length}_{pattern}.dat")
+    # spindf = calculate_spin_imbalances_df(pattern, length, pspace)
+    # spindf.to_csv(f"data/spin_imbalances_error_L{length}_{pattern}.dat")
+    spindf = calculate_spin_imbalances_bins_df(pattern, length, pspace, 50)
+    spindf.to_csv(f"data/spin_imbalances_bins_L{length}_{pattern}.dat")
 
 if __name__ == "__main__":
     main()
