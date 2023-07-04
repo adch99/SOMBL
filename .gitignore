@@ -8,6 +8,8 @@ scripts/__pycache__
 
 # Offline only directories
 data/
+data
+some_data/
 newdata/
 plots/
 .vscode/
