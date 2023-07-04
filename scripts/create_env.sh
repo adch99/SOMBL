@@ -21,7 +21,7 @@ setupdir()
     ln -s ../"$2" data
 }
 
-srcname = "remote_clean" 
+srcname="remote_clean"
 src="../$srcname"
 dirnamelist="flock leap zeal"
 datadirname="data"
