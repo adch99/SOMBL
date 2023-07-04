@@ -19,6 +19,7 @@ setupdir()
     # in the parent folder
     cd "$2"
     ln -s ../"$3" data
+    cd ..
 }
 
 srcname="remote_clean"
