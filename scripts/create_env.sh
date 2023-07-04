@@ -5,20 +5,20 @@
 
 setupdir()
 {
-    echo "Creating dir $1"
-    mkdir "$1"
-    echo "Copying $src to $1"
-    cp -r "$src"/* $1
+    echo "Creating dir $2"
+    mkdir "$2"
+    echo "Copying $src to $2"
+    cp -r "$src"/* $2
 
     # Now create the required dirs
-    mkdir "$1"/{build,logs,plots}
-    mkdir -p "$1"/build/{diag,io,extern/unity,gfunc}
-    mkdir -p "$1"/build/{ham_gen,params,tests,utils}
+    mkdir "$2"/{build,logs,plots}
+    mkdir -p "$2"/build/{diag,io,extern/unity,gfunc}
+    mkdir -p "$2"/build/{ham_gen,params,tests,utils}
 
     # Symlink the data to the datadir
     # in the parent folder
-    cd "$1"
-    ln -s ../"$2" data
+    cd "$2"
+    ln -s ../"$3" data
 }
 
 srcname="remote_clean"
@@ -43,12 +43,12 @@ echo "        |-- src..."
 # echo -n "Name of data dir:"
 # read datadirname
 # echo ""
-# setupdir $dirname $datadirname
+# setupdir $src $dirname $datadirname
 # echo "Done"
 # echo ""
 
 for dir in $dirnamelist; do
-    setupdir $dir $datadirname
+    setupdir $src $dir $datadirname
     echo "Setup for $dir done"
     echo ""
 done
