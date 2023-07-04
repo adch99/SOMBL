@@ -21,14 +21,37 @@ setupdir()
     ln -s ../"$2" data
 }
 
-src="../remote_clean"
+srcname = "remote_clean" 
+src="../$srcname"
+dirnamelist="flock leap zeal"
+datadirname="data"
 
-echo -n "Name of new dir: "
-read dirname
-echo "The data dir should be present"
-echo "in the parent folder where"
-echo "$dirname is to be created."
-echo -n "Name of data dir:"
-read datadirname
+echo "Directory structure"
+echo "|-- $srcname"
+echo "|-- .."
+echo "    |"
+echo "    |-- datadir"
+echo "    |"
+echo "    |-- dirname"
+echo "        |-- data -> ../datadir"
+echo "        |-- build"
+echo "        |-- src..."
 
-setupdir $dirname $datadirname
+
+# echo -n "Name of new dir: "
+# read dirname
+# echo -n "Name of data dir:"
+# read datadirname
+# echo ""
+# setupdir $dirname $datadirname
+# echo "Done"
+# echo ""
+
+for dir in $dirnamelist; do
+    setupdir $dir $datadirname
+    echo "Setup for $dir done"
+    echo ""
+done
+
+
+exit 0
