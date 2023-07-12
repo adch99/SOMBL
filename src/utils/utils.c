@@ -13,6 +13,8 @@
 #define TOL 1e-6
 #define THRESHOLD TOL
 
+enum Spin {UP=0, DOWN};
+
 /*
     Calculates the localization length from the so-called
     "Lyapunov exponent" which is computed from the given
@@ -1498,4 +1500,44 @@ int utils_create_keldysh_vector(void * initial_cond, char type, int num_states)
         }
     }
     return(0);
+}
+
+int utils_diag_energysubspace_to_updown(CDTYPE * eigvecs, int Lsq)
+{
+    // We have v_1 and v_2 as the eigenvectors for an energy
+    // subspace
+    // Construct v_down = (v_1 + i λ v_2) / (1 + λ^2)^0.5
+    // and       v_up   = (v_1 - i λ v_2) / (1 + λ^2)^0.5
+    
+    int twoLsq = 2 * Lsq;
+    CDTYPE lambda = 0;
+    DTYPE norm; 
+    int n;
+    CDTYPE elem1, elem2;
+    int samples = 0;
+    
+    
+    for(n = 0; n < Lsq; n++)
+    {
+        for(p = 0; p < Lsq; p++)
+        {
+            elem1 = *(eigvecs + RTC(2*p+DOWN,2*n,twoLsq));
+            elem2 = *(eigvecs + RTC(2*p+DOWN,2*n+1,twoLsq));
+            if (cabs(elem2) > EPSILON)
+            {
+                lambda += I * elem1 / elem2;
+                samples++;
+            }
+        }
+        lambda /= samples;
+
+        for(i = 0; i < twoLsq; i++)
+        {
+            elem1 = *(eigvecs + RTC(i,2*n,twoLsq));
+            elem2 = *(eigvecs + RTC(i,2*n+1,twoLsq));
+            *(eigvecs + RTC(i,2*n,twoLsq)) = elem1 + lambda
+        }
+
+
+    }
 }
