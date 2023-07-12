@@ -245,7 +245,7 @@ def outputPattern(upList, downList, filename):
 
 
 def main():
-    length = 60
+    length = 20
     # filename = f"data/pnjunction_L{length}.dat"
     # filename = f"data/testing_sample_initial_cond_L{length}.dat"
 

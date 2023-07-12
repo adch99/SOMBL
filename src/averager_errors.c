@@ -7,13 +7,12 @@
 /* Constant Declarations */
 #define MAXLEN 128
 const char *argp_program_version =
-    "keldysh_energy_batch_average 1.0";
+    "averager 2.0";
 const char *argp_program_bug_address =
     "<aditya.chincholi@students.iiserpune.ac.in>";
 // Program documentation.
 static char doc[] =
-    "keldysh_energy_batch_average -- a simulation of spin-orbit coupled" 
-    "2d many-body localized systems.";
+    "averager - Averages the green's functions created in batches";
 // A description of the arguments we accept.
 static char args_doc[] = "-s <size> -c <coupling_const>"
                         "-w <disorder_strength>"
